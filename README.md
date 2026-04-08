@@ -1,6 +1,4 @@
-Here's a concise, professional README for your GitHub repository:
 
-```markdown
 # 🖐️ Gesture Control System - Server v1.0
 
 Control your computer cursor using hand gestures captured via webcam. Real-time gesture recognition with multi-device support.
