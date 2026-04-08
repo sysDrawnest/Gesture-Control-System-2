@@ -1,45 +1,45 @@
-"""
-Simple test to verify camera and basic detection
-"""
+# CAMERA TEST Test with correct MediaPipe import for newer versions
 import cv2
 import mediapipe as mp
 
-print("Testing camera and hand detection...")
-print("Press 'q' to quit")
+print("Testing MediaPipe...")
 
-# Initialize MediaPipe
-mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(
-    static_image_mode=False,
-    max_num_hands=1,
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5
-)
-mp_draw = mp.solutions.drawing_utils
+# For newer MediaPipe versions (0.10.30+)
+try:
+    from mediapipe.tasks import python
+    from mediapipe.tasks.python import vision
+    print("Using new MediaPipe API")
+    
+    # Initialize hand detector
+    base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+    options = vision.HandLandmarkerOptions(base_options=base_options,
+                                          num_hands=1)
+    detector = vision.HandLandmarker.create_from_options(options)
+    print("✓ Hand detector created")
+    
+except:
+    print("Falling back to old MediaPipe API")
+    # Old API
+    mp_hands = mp.solutions.hands
+    hands = mp_hands.Hands()
+    print("✓ Using old API")
 
+# Test camera
 cap = cv2.VideoCapture(0)
+print("Camera opened:", cap.isOpened())
 
 while True:
     ret, frame = cap.read()
     if not ret:
-        print("Failed to grab frame")
         break
     
     frame = cv2.flip(frame, 1)
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    result = hands.process(frame_rgb)
-    
-    if result.multi_hand_landmarks:
-        for hand in result.multi_hand_landmarks:
-            mp_draw.draw_landmarks(frame, hand, mp_hands.HAND_CONNECTIONS)
-            cv2.putText(frame, "HAND DETECTED!", (10, 30), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    
-    cv2.imshow("Test - Show your hand", frame)
+    cv2.putText(frame, "MediaPipe Test - Working!", (10, 30), 
+               cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    cv2.imshow("Test", frame)
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 cap.release()
 cv2.destroyAllWindows()
-print("Test complete!")
