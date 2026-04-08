@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Gesture Control System</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🖐️ GestureControl</h1>
+            </div>
+            <div class="nav-links">
+                <span id="userName" class="user-name"></span>
+                <button id="logoutBtn" class="btn btn-outline">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard">
+        <div class="container">
+            <div class="dashboard-grid">
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <div class="card">
+                        <h3>Devices</h3>
+                        <div id="devicesList" class="devices-list">
+                            <p>Loading devices...</p>
+                        </div>
+                        <button id="addDeviceBtn" class="btn btn-primary btn-small">+ Add Device</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>Gesture Stats</h3>
+                        <div id="statsContainer">
+                            <canvas id="statsChart" width="200" height="200"></canvas>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Main Content -->
+                <div class="main-content">
+                    <div class="card">
+                        <h2>Real-time Gesture Control</h2>
+                        <div class="status-indicator">
+                            <span class="status-dot" id="connectionStatus"></span>
+                            <span id="statusText">Disconnected</span>
+                        </div>
+
+                        <div class="gesture-preview">
+                            <div class="hand-visualization">
+                                <div id="gestureDisplay" class="gesture-display">✋</div>
+                                <p id="gestureName">Waiting for gesture...</p>
+                            </div>
+                        </div>
+
+                        <div class="gesture-guide">
+                            <h3>Gesture Guide</h3>
+                            <div class="gesture-grid">
+                                <div class="gesture-item">
+                                    <span class="gesture-icon">👆</span>
+                                    <span>Index Finger Up</span>
+                                    <span class="gesture-action">Move Cursor</span>
+                                </div>
+                                <div class="gesture-item">
+                                    <span class="gesture-icon">🤏</span>
+                                    <span>Pinch (Index+Thumb)</span>
+                                    <span class="gesture-action">Left Click</span>
+                                </div>
+                                <div class="gesture-item">
+                                    <span class="gesture-icon">✌️</span>
+                                    <span>Peace Sign</span>
+                                    <span class="gesture-action">Right Click</span>
+                                </div>
+                                <div class="gesture-item">
+                                    <span class="gesture-icon">✋</span>
+                                    <span>Open Palm</span>
+                                    <span class="gesture-action">Enable Control</span>
+                                </div>
+                                <div class="gesture-item">
+                                    <span class="gesture-icon">✊</span>
+                                    <span>Fist</span>
+                                    <span class="gesture-action">Disable Control</span>
+                                </div>
+                                <div class="gesture-item">
+                                    <span class="gesture-icon">🖐️⬆️⬇️</span>
+                                    <span>Two Fingers Scroll</span>
+                                    <span class="gesture-action">Scroll Page</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Recent Activity</h3>
+                        <div id="activityLog" class="activity-log">
+                            <p>No recent activity</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let socket = null;
+        let token = localStorage.getItem('token');
+        let currentDeviceId = null;
+
+        // Check authentication
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        // Initialize dashboard
+        async function init() {
+            await loadUserInfo();
+            await loadDevices();
+            initWebSocket();
+            startGestureSimulation(); // For demo purposes
+        }
+
+        async function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            document.getElementById('userName').textContent = `Welcome, ${user.username}`;
+        }
+
+        async function loadDevices() {
+            try {
+                const response = await fetch('/api/devices', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+
+                if (data.success && data.devices.length > 0) {
+                    displayDevices(data.devices);
+                    currentDeviceId = data.devices[0].id;
+                } else {
+                    document.getElementById('devicesList').innerHTML = '<p>No devices registered</p>';
+                }
+            } catch (error) {
+                console.error('Error loading devices:', error);
+            }
+        }
+
+        function displayDevices(devices) {
+            const container = document.getElementById('devicesList');
+            container.innerHTML = devices.map(device => `
+                <div class="device-item ${device.id === currentDeviceId ? 'active' : ''}" 
+                     onclick="selectDevice(${device.id})">
+                    <span class="device-icon">💻</span>
+                    <div class="device-info">
+                        <strong>${device.device_name}</strong>
+                        <small>${device.status}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectDevice(deviceId) {
+            currentDeviceId = deviceId;
+            loadDevices(); // Refresh to show active state
+            addActivity(`Switched to device ID: ${deviceId}`);
+        }
+
+        function initWebSocket() {
+            socket = io('/', {
+                query: {
+                    token: token
+                }
+            });
+
+            socket.on('connect', () => {
+                document.getElementById('connectionStatus').className = 'status-dot connected';
+                document.getElementById('statusText').textContent = 'Connected';
+                addActivity('WebSocket connected successfully');
+            });
+
+            socket.on('disconnect', () => {
+                document.getElementById('connectionStatus').className = 'status-dot disconnected';
+                document.getElementById('statusText').textContent = 'Disconnected';
+                addActivity('WebSocket disconnected');
+            });
+
+            socket.on('cursor_move', (data) => {
+                updateGestureDisplay('move', `Moving to (${Math.round(data.x)}, ${Math.round(data.y)})`);
+            });
+
+            socket.on('click_executed', (data) => {
+                updateGestureDisplay('click', `${data.type} click executed`);
+                addActivity(`${data.type.toUpperCase()} CLICK`);
+            });
+
+            socket.on('scroll', (data) => {
+                updateGestureDisplay('scroll', `Scrolling ${data.direction}`);
+                addActivity(`SCROLL ${data.direction.toUpperCase()}`);
+            });
+        }
+
+        function updateGestureDisplay(gesture, message) {
+            const icons = {
+                'move': '👉',
+                'click': '👆',
+                'scroll': '📜',
+                'enable': '✋',
+                'disable': '✊'
+            };
+
+            document.getElementById('gestureDisplay').textContent = icons[gesture] || '✋';
+            document.getElementById('gestureName').textContent = message;
+
+            // Clear after 2 seconds
+            setTimeout(() => {
+                if (document.getElementById('gestureName').textContent === message) {
+                    document.getElementById('gestureDisplay').textContent = '✋';
+                    document.getElementById('gestureName').textContent = 'Waiting for gesture...';
+                }
+            }, 2000);
+        }
+
+        function addActivity(message) {
+            const log = document.getElementById('activityLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'activity-entry';
+            entry.innerHTML = `<span class="time">[${timestamp}]</span> ${message}`;
+
+            log.insertBefore(entry, log.firstChild);
+
+            // Keep only last 20 entries
+            while (log.children.length > 20) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        // Demo gesture simulation (remove in production)
+        function startGestureSimulation() {
+            // This is just for UI demonstration
+            // In production, actual gestures come from the client app
+            setInterval(() => {
+                if (socket && socket.connected) {
+                    // Simulate random gestures for demo
+                    const gestures = ['move', 'click', 'scroll'];
+                    const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
+
+                    if (randomGesture === 'move') {
+                        socket.emit('gesture_move', {
+                            x: Math.random() * 1920,
+                            y: Math.random() * 1080
+                        });
+                    } else if (randomGesture === 'click') {
+                        socket.emit('gesture_click', {
+                            type: 'left',
+                            confidence: 0.95
+                        });
+                    } else if (randomGesture === 'scroll') {
+                        socket.emit('gesture_scroll', {
+                            direction: 'down',
+                            amount: 1
+                        });
+                    }
+                }
+            }, 5000);
+        }
+
+        // Add device modal
+        document.getElementById('addDeviceBtn').addEventListener('click', async() => {
+            const deviceName = prompt('Enter device name:');
+            if (deviceName) {
+                try {
+                    const response = await fetch('/api/devices', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            device_name: deviceName,
+                            device_type: 'laptop'
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        addActivity(`Device "${deviceName}" registered successfully`);
+                        loadDevices();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    alert('Error registering device');
+                }
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async() => {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        });
+
+        // Start the dashboard
+        init();
+    </script>
+</body>
+
+</html>

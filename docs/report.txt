@@ -1,0 +1,9 @@
+New Gestures Cheat Sheet:
+Right Click: Pinch Thumb + Middle finger.
+Copy (Ctrl+C): Left fist + Right peace sign.
+Paste (Ctrl+V): Left fist + Right open palm.
+Screenshot: Both hands in peace sign.
+Volume: Pinch Thumb + Ring finger.
+Drag: Hold a "partial pinch" (20-45px distance) between Thumb and Index.
+
+
