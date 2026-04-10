@@ -36,9 +36,33 @@
                     </div>
 
                     <div class="card">
-                        <h3>Gesture Stats</h3>
-                        <div id="statsContainer">
-                            <canvas id="statsChart" width="200" height="200"></canvas>
+                        <h3>Analytics Dashboard</h3>
+                        <div class="analytics-grid">
+                            <div class="stat-item">
+                                <h4>Gestures</h4>
+                                <div class="stat-value" id="gestureCountVal">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <h4>Accuracy</h4>
+                                <div class="stat-value" id="accuracyVal">-</div>
+                            </div>
+                            <div class="stat-item">
+                                <h4>Session</h4>
+                                <div class="stat-value" id="sessionTimerVal">00:00</div>
+                            </div>
+                            <div class="stat-item">
+                                <h4>Speed</h4>
+                                <div class="speed-badge speed-slow" id="speedBadgeVal">Wait</div>
+                            </div>
+                            <div class="goal-container">
+                                <div class="goal-header">
+                                    <span>Daily Goal</span>
+                                    <span id="goalTextVal">0 / 1000</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="goalProgressFill" style="width: 0%"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </aside>
@@ -112,6 +136,13 @@
         let token = localStorage.getItem('token');
         let currentDeviceId = null;
 
+        // Analytics State
+        let sessionStartTime = null;
+        let gestureCount = 0;
+        let gestureHistory = [];
+        let sessionInterval = null;
+        const DAILY_GOAL = 1000;
+
         // Check authentication
         if (!token) {
             window.location.href = '/login';
@@ -122,6 +153,7 @@
             await loadUserInfo();
             await loadDevices();
             initWebSocket();
+            startSessionTimer();
             startGestureSimulation(); // For demo purposes
         }
 
@@ -232,11 +264,13 @@
             socket.on('click_executed', (data) => {
                 updateGestureDisplay('click', `${data.type} click executed`);
                 addActivity(`${data.type.toUpperCase()} CLICK`);
+                registerGesture(data.confidence || 0.95);
             });
 
             socket.on('scroll', (data) => {
                 updateGestureDisplay('scroll', `Scrolling ${data.direction}`);
                 addActivity(`SCROLL ${data.direction.toUpperCase()}`);
+                registerGesture(0.90);
             });
         }
 
@@ -259,6 +293,47 @@
                     document.getElementById('gestureName').textContent = 'Waiting for gesture...';
                 }
             }, 2000);
+        }
+
+        function startSessionTimer() {
+            sessionStartTime = Date.now();
+            sessionInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const seconds = (elapsed % 60).toString().padStart(2, '0');
+                document.getElementById('sessionTimerVal').textContent = `${minutes}:${seconds}`;
+            }, 1000);
+        }
+
+        function registerGesture(confidence) {
+            gestureCount++;
+            document.getElementById('gestureCountVal').textContent = gestureCount;
+            
+            // Accuracy Meter
+            const accVal = Math.round(confidence * 100);
+            document.getElementById('accuracyVal').textContent = `${accVal}%`;
+            
+            // Speed Calculation (gestures in last 10 seconds)
+            const now = Date.now();
+            gestureHistory.push(now);
+            gestureHistory = gestureHistory.filter(time => now - time <= 10000);
+            
+            const badge = document.getElementById('speedBadgeVal');
+            if (gestureHistory.length > 5) {
+                badge.textContent = 'Fast';
+                badge.className = 'speed-badge speed-fast';
+            } else if (gestureHistory.length > 2) {
+                badge.textContent = 'Normal';
+                badge.className = 'speed-badge speed-normal';
+            } else {
+                badge.textContent = 'Slow';
+                badge.className = 'speed-badge speed-slow';
+            }
+            
+            // Gamification Goal
+            document.getElementById('goalTextVal').textContent = `${gestureCount} / ${DAILY_GOAL}`;
+            const progress = Math.min((gestureCount / DAILY_GOAL) * 100, 100);
+            document.getElementById('goalProgressFill').style.width = `${progress}%`;
         }
 
         function addActivity(message) {
@@ -294,7 +369,7 @@
                     } else if (randomGesture === 'click') {
                         socket.emit('gesture_click', {
                             type: 'left',
-                            confidence: 0.95
+                            confidence: 0.85 + Math.random() * 0.14
                         });
                     } else if (randomGesture === 'scroll') {
                         socket.emit('gesture_scroll', {
@@ -303,7 +378,7 @@
                         });
                     }
                 }
-            }, 5000);
+            }, 1000);
         }
 
         // Add device modal
