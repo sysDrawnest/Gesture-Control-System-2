@@ -121,6 +121,7 @@ class ServerConnector:
         @self.sio.event
         def disconnect():
             self.connected = False
+            self._enabled = False
             logger.info("[ServerConnector] WebSocket disconnected")
             print("[CONN] WebSocket disconnected from server")
 
@@ -141,9 +142,6 @@ class ServerConnector:
             logger.warning(f"[ServerConnector] Socket error: {data}")
             print(f"[WARN] Server socket error: {data.get('message', data)}")
 
-            # Echo from server (relay to other clients) - ignore on sender
-            pass
-
         @self.sio.on("click_executed")
         def on_click_executed(data):
             pass  # Confirmation - not needed on sender side
@@ -159,12 +157,13 @@ class ServerConnector:
 
         def _connect():
             try:
-                ws_url = self.server_url.replace("http://", "ws://").replace("https://", "wss://")
-                # Pass JWT token as query param (matches server-side expectation)
+                # CRITICAL FIX: Send token as query parameter (server expects request.args.get('token'))
+                connection_url = f"{self.server_url}?token={self.token}"
+                
+                print(f"[CONN] Connecting to WebSocket with authentication...")
+                
                 self.sio.connect(
-                    self.server_url,
-                    headers={"Authorization": f"Bearer {self.token}"},
-                    auth={"token": self.token},
+                    connection_url,
                     transports=["websocket", "polling"],
                     wait=True,
                     wait_timeout=10,
@@ -175,19 +174,21 @@ class ServerConnector:
                 print(f"[WARN] WebSocket connection failed: {e}")
             except Exception as e:
                 logger.error(f"[ServerConnector] WebSocket error: {e}")
+                print(f"[ERROR] WebSocket error: {e}")
 
         self._ws_thread = threading.Thread(target=_connect, daemon=True)
         self._ws_thread.start()
 
         # Give the connection a moment to establish
-        time.sleep(1.5)
+        time.sleep(2)
         return self.connected
 
     def _register_device(self):
         """Send device registration event after WebSocket auth succeeds."""
-        if self.connected:
+        if self.connected and self.token:
             import socket as _socket
             device_name = _socket.gethostname()
+            print(f"[DEVICE] Registering device '{device_name}'...")
             self.sio.emit("register_device", {
                 "device_name": device_name,
                 "device_type": "laptop"
@@ -203,12 +204,12 @@ class ServerConnector:
                 pass
 
     # ------------------------------------------------------------------
-    # Gesture Event Senders ...real time re hebo
+    # Gesture Event Senders
     # ------------------------------------------------------------------
 
     def send_gesture_move(self, x: int, y: int):
         """Stream cursor position to the server (high-frequency OK)."""
-        if not self._enabled or not self.connected:
+        if not self._enabled or not self.connected or not self.device_id:
             return
         try:
             self.sio.emit("gesture_move", {
@@ -230,7 +231,7 @@ class ServerConnector:
 
         gesture_type: one of 'PINCH', 'PEACE', 'THREE_FINGERS', 'FIST', 'OPEN_PALM', ...
         """
-        if not self._enabled or not self.connected:
+        if not self._enabled or not self.connected or not self.device_id:
             return
 
         try:
@@ -241,12 +242,14 @@ class ServerConnector:
                     "confidence": confidence,
                     "device_id": self.device_id,
                 })
+                print(f"[SERVER] Sent left click")
             elif gesture_type == "PEACE":
                 self.sio.emit("gesture_click", {
                     "type": "right",
                     "confidence": confidence,
                     "device_id": self.device_id,
                 })
+                print(f"[SERVER] Sent right click")
             elif gesture_type == "THREE_FINGERS":
                 amount = (extra or {}).get("amount", 1)
                 direction = (extra or {}).get("direction", "down")
@@ -256,9 +259,19 @@ class ServerConnector:
                     "confidence": confidence,
                     "device_id": self.device_id,
                 })
-            elif gesture_type in ("FIST", "OPEN_PALM"):
-                # Control toggle events - send via REST for logging
-                self._post_toggle(gesture_type == "OPEN_PALM")
+                print(f"[SERVER] Sent scroll: {direction}")
+            elif gesture_type == "FIST":
+                self.sio.emit("gesture_toggle", {
+                    "enabled": False,
+                    "device_id": self.device_id,
+                    "confidence": confidence
+                })
+            elif gesture_type == "OPEN_PALM":
+                self.sio.emit("gesture_toggle", {
+                    "enabled": True,
+                    "device_id": self.device_id,
+                    "confidence": confidence
+                })
         except Exception as e:
             logger.debug(f"[ServerConnector] send_gesture_event error: {e}")
 
