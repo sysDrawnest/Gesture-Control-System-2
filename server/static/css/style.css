@@ -389,6 +389,26 @@ body {
     font-size: 0.75rem;
 }
 
+.btn-delete {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    opacity: 0.3;
+    transition: all 0.2s;
+}
+
+.device-item:hover .btn-delete {
+    opacity: 1;
+}
+
+.btn-delete:hover {
+    background: #fee2e2;
+    transform: scale(1.1);
+}
+
 .status-indicator {
     display: flex;
     align-items: center;

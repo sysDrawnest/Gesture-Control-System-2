@@ -274,3 +274,35 @@ def register_socket_events(socketio):
                 'is_registered': False,
                 'message': 'No device registered yet'
             })
+
+    @socketio.on('delete_device')
+    def handle_delete_device(data):
+        """Delete a device via WebSocket"""
+        if request.sid not in connected_clients:
+            emit('error', {'message': 'Not authenticated'})
+            return
+            
+        user_id = connected_clients[request.sid]['user_id']
+        device_id = data.get('device_id')
+        
+        if not device_id:
+            emit('error', {'message': 'Device ID is required'})
+            return
+            
+        print(f"Device Delete Request: User {user_id} deleting device {device_id}")
+        
+        success = DeviceModel.delete_device(device_id, user_id)
+        
+        if success:
+            emit('device_deleted', {
+                'device_id': device_id,
+                'message': 'Device deleted successfully'
+            })
+            print(f"Status: Device {device_id} deleted successfully")
+            
+            # If the deleted device is the one currently used by this connection, clear it
+            if connected_clients[request.sid].get('device_id') == device_id:
+                connected_clients[request.sid]['device_id'] = None
+        else:
+            emit('error', {'message': 'Failed to delete device or device not found'})
+            print(f"Error: Device deletion failed for device {device_id}")

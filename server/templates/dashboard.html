@@ -160,8 +160,44 @@
                         <strong>${device.device_name}</strong>
                         <small>${device.status}</small>
                     </div>
+                    <button class="btn-delete" title="Delete Device" 
+                            onclick="deleteDevice(${device.id}, event)">🗑️</button>
                 </div>
             `).join('');
+        }
+
+        async function deleteDevice(deviceId, event) {
+            // Prevent triggering selectDevice
+            if (event) {
+                event.stopPropagation();
+            }
+
+            if (!confirm('Are you sure you want to delete this device? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/devices/${deviceId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    addActivity(`Device deleted successfully`);
+                    if (currentDeviceId === deviceId) {
+                        currentDeviceId = null;
+                    }
+                    await loadDevices();
+                } else {
+                    alert('Error deleting device: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error deleting device:', error);
+                alert('An error occurred while deleting the device');
+            }
         }
 
         function selectDevice(deviceId) {
