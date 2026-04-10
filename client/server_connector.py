@@ -264,6 +264,16 @@ class ServerConnector:
 
     def _post_toggle(self, enabled: bool):
         """Notify server that gesture control was enabled/disabled."""
+        if self._enabled and self.connected:
+            try:
+                self.sio.emit("gesture_toggle", {
+                    "enabled": enabled,
+                    "device_id": self.device_id,
+                    "confidence": 0.95
+                })
+            except Exception as e:
+                logger.debug(f"[ServerConnector] emit gesture_toggle error: {e}")
+
         if not self.token:
             return
         try:

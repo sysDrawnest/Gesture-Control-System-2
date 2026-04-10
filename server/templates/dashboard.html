@@ -720,6 +720,14 @@
                 addActivity(`<i class="fas fa-arrows-alt-v"></i> SCROLL ${data.direction.toUpperCase()}`);
                 registerGesture(0.90);
             });
+
+            socket.on('toggle', (data) => {
+                const action = data.enabled ? 'enable' : 'disable';
+                const message = data.enabled ? 'Control Enabled' : 'Control Disabled';
+                updateGestureDisplay(action, message, data.confidence || 0.95);
+                addActivity(`<i class="fas fa-hand-${data.enabled ? 'paper' : 'rock'}"></i> CONTROL ${data.enabled ? 'ENABLED' : 'DISABLED'}`);
+                registerGesture(data.confidence || 0.95);
+            });
         }
 
         function updateGestureDisplay(gesture, message, confidence = 0.95) {

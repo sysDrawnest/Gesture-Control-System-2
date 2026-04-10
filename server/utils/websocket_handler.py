@@ -233,6 +233,35 @@ def register_socket_events(socketio):
             'username': client_info.get('username')
         }, room=f"user_{user_id}")
     
+    @socketio.on('gesture_toggle')
+    def handle_gesture_toggle(data):
+        """Handle enable/disable via WebSocket"""
+        if request.sid not in connected_clients:
+            return
+        
+        client_info = connected_clients[request.sid]
+        device_id = client_info.get('device_id')
+        user_id = client_info.get('user_id')
+        
+        if not device_id:
+            return
+            
+        enabled = data.get('enabled', True)
+        confidence = data.get('confidence', 0.95)
+        
+        try:
+            action = 'enable_control' if enabled else 'disable_control'
+            DeviceModel.log_gesture(user_id, device_id, action, confidence, 0.01)
+        except Exception as e:
+            print(f"Error logging toggle gesture: {e}")
+            
+        emit('toggle', {
+            'device_id': device_id,
+            'enabled': enabled,
+            'confidence': confidence,
+            'username': client_info.get('username')
+        }, room=f"user_{user_id}")
+    
     @socketio.on('get_online_users')
     def handle_get_online_users():
         """Get list of online users (admin feature)"""

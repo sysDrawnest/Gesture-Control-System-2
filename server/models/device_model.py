@@ -29,8 +29,8 @@ class DeviceModel:
             ).fetchone()
             
             if existing:
-                logger.warning(f"Device '{device_name}' already exists for user {user_id}")
-                return None, "Device name already exists"
+                logger.info(f"Device '{device_name}' already exists for user {user_id}. Returning existing ID.")
+                return existing['id'], "Device already registered"
             
             # Insert new device
             cursor = db.execute(
