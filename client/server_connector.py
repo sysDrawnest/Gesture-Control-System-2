@@ -203,7 +203,7 @@ class ServerConnector:
                 pass
 
     # ------------------------------------------------------------------
-    # Gesture Event Senders
+    # Gesture Event Senders ...real time re hebo
     # ------------------------------------------------------------------
 
     def send_gesture_move(self, x: int, y: int):
