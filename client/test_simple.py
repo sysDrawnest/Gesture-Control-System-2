@@ -15,14 +15,14 @@ try:
     options = vision.HandLandmarkerOptions(base_options=base_options,
                                           num_hands=1)
     detector = vision.HandLandmarker.create_from_options(options)
-    print("✓ Hand detector created")
+    print("[OK] Hand detector created")
     
 except:
     print("Falling back to old MediaPipe API")
     # Old API
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands()
-    print("✓ Using old API")
+    print("[OK] Using old API")
 
 # Test camera
 cap = cv2.VideoCapture(0)

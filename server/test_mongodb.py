@@ -10,7 +10,7 @@ def test_mongodb_connection():
     mongodb_uri = os.environ.get('MONGODB_URI')
     
     if not mongodb_uri:
-        print("❌ MONGODB_URI not found in .env file")
+        print("[FAIL] MONGODB_URI not found in .env file")
         return False
     
     try:
@@ -20,7 +20,7 @@ def test_mongodb_connection():
         # Ping the database
         client.admin.command('ping')
         
-        print("✅ MongoDB Atlas connection successful!")
+        print("[OK] MongoDB Atlas connection successful!")
         print(f"   Server info: {client.server_info()['version']}")
         
         # Test database access
@@ -32,14 +32,14 @@ def test_mongodb_connection():
         return True
         
     except ConnectionFailure as e:
-        print(f"❌ Connection failed: {e}")
+        print(f"[FAIL] Connection failed: {e}")
         print("\nTroubleshooting tips:")
         print("1. Check if IP address is whitelisted in MongoDB Atlas")
         print("2. Verify username/password in connection string")
         print("3. Ensure network allows outbound connections to port 27017")
         return False
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"[FAIL] Unexpected error: {e}")
         return False
 
 if __name__ == '__main__':

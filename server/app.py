@@ -242,7 +242,7 @@ if __name__ == '__main__':
         )
     except KeyboardInterrupt:
         print("\n" + "=" * 60)
-        print("🛑 Server stopped by user")
+        print("[STOP] Server stopped by user")
         print("=" * 60)
     except Exception as e:
         logger.error(f"Server failed to start: {e}")

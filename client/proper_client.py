@@ -26,19 +26,19 @@ gesture_enabled = True
 
 @sio.event
 def connect():
-    print("✓ Connected to server!")
+    print("[OK] Connected to server!")
     # Register device immediately after connection
     register_device()
 
 @sio.event
 def disconnect():
-    print("✗ Disconnected from server")
+    print("[FAIL] Disconnected from server")
 
 @sio.event
 def device_registered(data):
     global is_device_registered
     is_device_registered = True
-    print(f"✓ {data.get('message')}")
+    print(f"[OK] {data.get('message')}")
     print(f"  Device ID: {data.get('device_id')}")
     print(f"  Device Name: {data.get('device_name')}")
 
@@ -73,7 +73,7 @@ while not is_device_registered and time.time() - start_wait < 10:
     time.sleep(0.1)
 
 if not is_device_registered:
-    print("❌ ERROR: Device registration timed out. Exiting...")
+    print("[ERROR] Device registration timed out. Exiting...")
     sio.disconnect()
     exit(1)
 
@@ -109,14 +109,14 @@ prev_x, prev_y = screen_w // 2, screen_h // 2
 last_click_time = 0
 
 print("\n" + "="*60)
-print("🎯 GESTURE CONTROL ACTIVE")
+print("[STATUS] GESTURE CONTROL ACTIVE")
 print("="*60)
 print("Controls:")
-print("  👆 POINT = Move cursor")
-print("  🤏 PINCH = Left click")
-print("  ✌️ PEACE = Right click")
-print("  ✊ FIST = Disable")
-print("  ✋ OPEN PALM = Enable")
+print("  POINT = Move cursor")
+print("  PINCH = Left click")
+print("  PEACE = Right click")
+print("  FIST = Disable")
+print("  PALM = Enable")
 print("\nPress 'q' to quit")
 print("="*60 + "\n")
 
@@ -169,7 +169,7 @@ while True:
         elif gesture == "PINCH" and gesture_enabled:
             if current_time - last_click_time > 0.3:
                 pyautogui.click()
-                print("🔴 Click sent to server!")
+                print("[EVENT] Click sent to server!")
                 sio.emit('gesture_click', {'type': 'left', 'confidence': 0.95})
                 last_click_time = current_time
         

@@ -1,5 +1,5 @@
 """
-GESTURE CONTROL CLIENT  –  Server-Connected Edition
+GESTURE CONTROL CLIENT - Server-Connected Edition
 ====================================================
 MediaPipe 0.10.x (Tasks API) + Flask-SocketIO server integration.
 
@@ -8,16 +8,16 @@ Features
 * Detects hand gestures via MediaPipe and executes them locally (pyautogui).
 * Simultaneously streams events to the Flask server over WebSocket so the
   server can log analytics, relay to dashboards, and support multi-device.
-* Works fully offline if the server is unreachable – graceful degradation.
+* Works fully offline if the server is unreachable - graceful degradation.
 
 Gestures
 --------
-  OPEN PALM  → Enable gesture control
-  FIST       → Disable gesture control
-  POINT      → Move cursor (index finger tip)
-  PINCH      → Left click  (thumb + index touching)
-  PEACE      → Right click (index + middle extended)
-  3 FINGERS  → Scroll
+  OPEN PALM  -> Enable gesture control
+  FIST       -> Disable gesture control
+  POINT      -> Move cursor (index finger tip)
+  PINCH      -> Left click  (thumb + index touching)
+  PEACE      -> Right click (index + middle extended)
+  3 FINGERS  -> Scroll
 """
 
 import cv2
@@ -45,9 +45,9 @@ from config import (
 )
 from server_connector import ServerConnector
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Initialisation
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 # Suppress pyautogui fail-safe
 pyautogui.FAILSAFE = False
@@ -64,16 +64,16 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAM_HEIGHT)
 model_path = "hand_landmarker.task"
 if not os.path.exists(model_path):
     import urllib.request
-    print("Downloading hand landmarker model …")
+    print("Downloading hand landmarker model...")
     url = (
         "https://storage.googleapis.com/mediapipe-models/"
         "hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"
     )
     try:
         urllib.request.urlretrieve(url, model_path)
-        print("✓ Model downloaded")
+        print("[OK] Model downloaded")
     except Exception as e:
-        print(f"✗ Download failed: {e}")
+        print(f"[FAIL] Download failed: {e}")
         exit(1)
 
 # MediaPipe
@@ -89,11 +89,11 @@ options = vision.HandLandmarkerOptions(
     min_tracking_confidence=0.5,
 )
 detector = vision.HandLandmarker.create_from_options(options)
-print("✓ MediaPipe Hand Landmarker initialised")
+print("[OK] MediaPipe Hand Landmarker initialised")
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Cursor smoothing
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 cursor_history_x: deque = deque(maxlen=CURSOR_SMOOTHING_WINDOW)
 cursor_history_y: deque = deque(maxlen=CURSOR_SMOOTHING_WINDOW)
@@ -108,9 +108,9 @@ def smooth_cursor(x: int, y: int) -> tuple[int, int]:
     )
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Gesture detection helpers
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 def calculate_distance(lm1, lm2) -> float:
     return math.hypot(lm1.x - lm2.x, lm1.y - lm2.y)
@@ -150,9 +150,9 @@ def detect_gesture(lms) -> tuple[str, float]:
         return "UNKNOWN", 0.50
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Landmark drawing
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 CONNECTIONS = [
     (0, 1), (1, 2), (2, 3), (3, 4),
@@ -178,9 +178,9 @@ def draw_hand_landmarks(frame, lms):
         cv2.circle(frame, (px, py), radius, color, -1)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Argument parsing
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Gesture Control Client")
@@ -191,27 +191,27 @@ def parse_args():
     return parser.parse_args()
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Main loop
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 def main():
     args = parse_args()
 
-    # ── Server connection ──────────────────────────────────────────────────────
+    # -- Server connection ------------------------------------------------------
     connector = ServerConnector(server_url=args.server)
 
     if not args.offline:
         print("=" * 60)
-        print("🔐 Connecting to server …")
+        print("[CONN] Connecting to server...")
         logged_in = connector.login(args.username, args.password)
         if logged_in:
             connector.connect()
             time.sleep(0.5)  # let WebSocket handshake settle
     else:
-        print("⚠️  Offline mode – no server connection.")
+        print("[WARN] Offline mode - no server connection.")
 
-    # ── Runtime state ──────────────────────────────────────────────────────────
+    # -- Runtime state ----------------------------------------------------------
     last_click_time = 0.0
     last_right_click_time = 0.0
     pinch_start_time = 0.0
@@ -224,22 +224,22 @@ def main():
     fps_timer = time.time()
     move_frame_counter = 0
 
-    # ── Banner ─────────────────────────────────────────────────────────────────
+    # -- Banner -----------------------------------------------------------------
     print("=" * 60)
-    print("🎯 GESTURE CONTROL SYSTEM – Server-Connected Edition")
+    print("[STATUS] GESTURE CONTROL SYSTEM - Server-Connected Edition")
     print("=" * 60)
-    print(f"MediaPipe {mp.__version__}  |  Screen {screen_width}×{screen_height}")
-    print(f"Server:  {'🟢 online' if connector.is_online else '🔴 offline'}")
+    print(f"MediaPipe {mp.__version__}  |  Screen {screen_width}x{screen_height}")
+    print(f"Server:  {'[online]' if connector.is_online else '[offline]'}")
     print()
-    print("📋 GESTURES:")
-    print("   ✋ OPEN PALM  → Enable control")
-    print("   ✊ FIST       → Disable control")
-    print("   👆 POINT      → Move cursor")
-    print("   🤏 PINCH      → Left click")
-    print("   ✌️ PEACE      → Right click")
-    print("   🖐️ 3 FINGERS  → Scroll")
+    print("LIST GESTURES:")
+    print("   OPEN PALM  -> Enable control")
+    print("   FIST       -> Disable control")
+    print("   POINT      -> Move cursor")
+    print("   PINCH      -> Left click")
+    print("   PEACE      -> Right click")
+    print("   3 FINGERS  -> Scroll")
     print()
-    print("⌨️  KEYS:  q=quit  r=reset smoothing  d=debug  o=online status")
+    print("KEYS:  q=quit  r=reset smoothing  d=debug  o=online status")
     print("=" * 60)
 
     while True:
@@ -278,13 +278,13 @@ def main():
             if gesture == "FIST":
                 if gesture_enabled:
                     gesture_enabled = False
-                    print("✊ Gesture control DISABLED")
+                    print("[FIST] Gesture control DISABLED")
                     connector.send_gesture_event("FIST", confidence)
 
             elif gesture == "OPEN_PALM":
                 if not gesture_enabled:
                     gesture_enabled = True
-                    print("✋ Gesture control ENABLED")
+                    print("[PALM] Gesture control ENABLED")
                     connector.send_gesture_event("OPEN_PALM", confidence)
 
             # ── Active gestures ────────────────────────────────────────────────
@@ -307,10 +307,10 @@ def main():
                             and current_time - pinch_start_time < DOUBLE_CLICK_WINDOW
                         ):
                             pyautogui.doubleClick()
-                            print("🔴🔴 DOUBLE CLICK!")
+                            print("[EVENT] DOUBLE CLICK!")
                         else:
                             pyautogui.click()
-                            print("🔴 LEFT CLICK!")
+                            print("[EVENT] LEFT CLICK!")
                         connector.send_gesture_event("PINCH", confidence)
                         last_click_time = current_time
                         pinch_start_time = current_time
@@ -319,7 +319,7 @@ def main():
                 elif gesture == "PEACE":
                     if current_time - last_right_click_time > CLICK_COOLDOWN:
                         pyautogui.rightClick()
-                        print("🔵 RIGHT CLICK!")
+                        print("[EVENT] RIGHT CLICK!")
                         connector.send_gesture_event("PEACE", confidence)
                         last_right_click_time = current_time
 
@@ -331,7 +331,7 @@ def main():
                         pyautogui.scroll(scroll_amt)
                         direction = "up" if scroll_amt > 0 else "down"
                         if abs(scroll_amt) > 5:
-                            print(f"📜 SCROLL {direction}: {abs(scroll_amt)}")
+                            print(f"[SCROLL] {direction.upper()}: {abs(scroll_amt)}")
                         connector.send_gesture_event(
                             "THREE_FINGERS", confidence,
                             extra={"direction": direction, "amount": abs(scroll_amt)},
@@ -397,22 +397,22 @@ def main():
         elif key == ord("r"):
             cursor_history_x.clear()
             cursor_history_y.clear()
-            print("✅ Cursor smoothing reset")
+            print("[OK] Cursor smoothing reset")
         elif key == ord("d"):
             show_debug = not show_debug
             print(f"Debug: {'ON' if show_debug else 'OFF'}")
         elif key == ord("o"):
             print(
-                f"📡 Server status: {'🟢 online' if connector.is_online else '🔴 offline'}"
+                f"[SIGNAL] Server status: {'[online]' if connector.is_online else '[offline]'}"
                 + (f" | user={connector.username}" if connector.username else "")
                 + (f" | device_id={connector.device_id}" if connector.device_id else "")
             )
 
-    # ── Cleanup ────────────────────────────────────────────────────────────────
+    # -- Cleanup ----------------------------------------------------------------
     connector.disconnect()
     cap.release()
     cv2.destroyAllWindows()
-    print("\n✅ Gesture control stopped")
+    print("\n[OK] Gesture control stopped")
 
 
 if __name__ == "__main__":

@@ -70,20 +70,20 @@ class ServerConnector:
                 self.username = payload.get("username", username)
                 self.authenticated = True
                 logger.info(f"[ServerConnector] Logged in as '{self.username}'")
-                print(f"✅ Logged into server as '{self.username}'")
+                print(f"[OK] Logged into server as '{self.username}'")
                 return True
             else:
                 err = data.get("error", "Unknown error")
                 logger.warning(f"[ServerConnector] Login failed: {err}")
-                print(f"❌ Server login failed: {err}")
+                print(f"[FAIL] Server login failed: {err}")
                 return False
         except requests.exceptions.ConnectionError:
-            logger.warning("[ServerConnector] Cannot reach server – running offline.")
-            print("⚠️  Server unreachable – running in OFFLINE mode (local control only).")
+            logger.warning("[ServerConnector] Cannot reach server - running offline.")
+            print("[WARN] Server unreachable - running in OFFLINE mode (local control only).")
             return False
         except Exception as e:
             logger.error(f"[ServerConnector] Login error: {e}")
-            print(f"⚠️  Login error: {e} – running in OFFLINE mode.")
+            print(f"[WARN] Login error: {e} - running in OFFLINE mode.")
             return False
 
     def register(self, username: str, email: str, password: str) -> bool:
@@ -96,13 +96,13 @@ class ServerConnector:
             )
             data = resp.json()
             if resp.status_code == 201 and data.get("success"):
-                print(f"✅ Registered as '{username}'. You can now log in.")
+                print(f"[OK] Registered as '{username}'. You can now log in.")
                 return True
             else:
-                print(f"❌ Registration failed: {data.get('error', 'Unknown')}")
+                print(f"[FAIL] Registration failed: {data.get('error', 'Unknown')}")
                 return False
         except Exception as e:
-            print(f"⚠️  Registration error: {e}")
+            print(f"[WARN] Registration error: {e}")
             return False
 
     # ------------------------------------------------------------------
@@ -116,17 +116,17 @@ class ServerConnector:
         def connect():
             self.connected = True
             logger.info("[ServerConnector] WebSocket connected")
-            print("🔌 WebSocket connected to server")
+            print("[CONN] WebSocket connected to server")
 
         @self.sio.event
         def disconnect():
             self.connected = False
             logger.info("[ServerConnector] WebSocket disconnected")
-            print("🔌 WebSocket disconnected from server")
+            print("[CONN] WebSocket disconnected from server")
 
         @self.sio.on("connected")
         def on_authenticated(data):
-            print(f"🔐 WebSocket authenticated: {data.get('message', 'OK')}")
+            print(f"[AUTH] WebSocket authenticated: {data.get('message', 'OK')}")
             # Register device after auth
             self._register_device()
 
@@ -134,29 +134,27 @@ class ServerConnector:
         def on_device_registered(data):
             self.device_id = data.get("device_id")
             self._enabled = True
-            print(f"📱 Device registered: {data.get('device_name')} (id={self.device_id})")
+            print(f"[DEVICE] Device registered: {data.get('device_name')} (id={self.device_id})")
 
         @self.sio.on("error")
         def on_error(data):
             logger.warning(f"[ServerConnector] Socket error: {data}")
-            print(f"⚠️  Server socket error: {data.get('message', data)}")
+            print(f"[WARN] Server socket error: {data.get('message', data)}")
 
-        @self.sio.on("cursor_move")
-        def on_cursor_move(data):
-            # Echo from server (relay to other clients) – ignore on sender
+            # Echo from server (relay to other clients) - ignore on sender
             pass
 
         @self.sio.on("click_executed")
         def on_click_executed(data):
-            pass  # Confirmation – not needed on sender side
+            pass  # Confirmation - not needed on sender side
 
     def connect(self) -> bool:
         """
-        Open the WebSocket connection (non-blocking – runs in background thread).
+        Open the WebSocket connection (non-blocking - runs in background thread).
         Requires a valid token from login().
         """
         if not self.authenticated or not self.token:
-            logger.warning("[ServerConnector] Cannot connect – not authenticated.")
+            logger.warning("[ServerConnector] Cannot connect - not authenticated.")
             return False
 
         def _connect():
@@ -174,7 +172,7 @@ class ServerConnector:
                 self.sio.wait()  # blocks until disconnect
             except socketio.exceptions.ConnectionError as e:
                 logger.warning(f"[ServerConnector] WebSocket connection failed: {e}")
-                print(f"⚠️  WebSocket connection failed: {e}")
+                print(f"[WARN] WebSocket connection failed: {e}")
             except Exception as e:
                 logger.error(f"[ServerConnector] WebSocket error: {e}")
 
@@ -259,7 +257,7 @@ class ServerConnector:
                     "device_id": self.device_id,
                 })
             elif gesture_type in ("FIST", "OPEN_PALM"):
-                # Control toggle events – send via REST for logging
+                # Control toggle events - send via REST for logging
                 self._post_toggle(gesture_type == "OPEN_PALM")
         except Exception as e:
             logger.debug(f"[ServerConnector] send_gesture_event error: {e}")

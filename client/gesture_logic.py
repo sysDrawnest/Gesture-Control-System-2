@@ -26,7 +26,7 @@ def detect_gesture(hand1, hand2, w, h):
         if fingers1 == [0,1,1,0,0]:
             return "SCROLL"
 
-        # CLICK → PINCH (IMPORTANT FIX 🔥)
+        # CLICK -> PINCH (IMPORTANT FIX)
         dist = distance(hand1[4], hand1[8], w, h)
 
         if dist < 30:

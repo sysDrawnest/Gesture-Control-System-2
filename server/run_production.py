@@ -42,7 +42,7 @@ def main():
     if local_ip != "unknown":
         print(f"   http://{local_ip}:{config.PORT}    (network - other devices)")
     print("-" * 60)
-    print("🔐 Default Login:")
+    print("[AUTH] Default Login:")
     print("   Username: admin")
     print("   Password: admin123")
     print("-" * 60)
@@ -71,7 +71,7 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         print("\n" + "=" * 60)
-        print("🛑 Server stopped by user")
+        print("[STOP] Server stopped by user")
         print("=" * 60)
     except Exception as e:
         logger.error(f"Server failed to start: {e}")
