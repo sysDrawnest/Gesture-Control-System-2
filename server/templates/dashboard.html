@@ -6,18 +6,398 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Gesture Control System</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        /* Dashboard Specific Styles */
+        .dashboard {
+            padding: 100px 2rem 2rem;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Sidebar Cards */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Devices List */
+        .devices-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .device-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .device-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateX(5px);
+        }
+
+        .device-item.active {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border-left: 3px solid var(--primary);
+        }
+
+        .device-icon {
+            font-size: 1.5rem;
+        }
+
+        .device-info {
+            flex: 1;
+        }
+
+        .device-info strong {
+            display: block;
+            font-size: 0.9rem;
+        }
+
+        .device-info small {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn-delete {
+            background: rgba(255, 68, 68, 0.2);
+            border: none;
+            color: #ff4444;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            background: #ff4444;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Analytics Grid */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+        }
+
+        .stat-item h4 {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        /* Speed Badge */
+        .speed-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .speed-slow {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .speed-normal {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+
+        .speed-fast {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        /* Goal Container */
+        .goal-container {
+            grid-column: span 2;
+            margin-top: 0.5rem;
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Status Indicator */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #28a745;
+            box-shadow: 0 0 10px #28a745;
+        }
+
+        .status-dot.disconnected {
+            background: #dc3545;
+        }
+
+        /* Gesture Preview */
+        .gesture-preview {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+        }
+
+        .hand-visualization {
+            position: relative;
+        }
+
+        .gesture-display {
+            font-size: 6rem;
+            animation: bounce 0.5s ease;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* Gesture Guide */
+        .gesture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .gesture-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .gesture-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateX(5px);
+        }
+
+        .gesture-icon {
+            font-size: 1.5rem;
+        }
+
+        .gesture-action {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: var(--primary);
+        }
+
+        /* Activity Log */
+        .activity-log {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .activity-entry {
+            padding: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .activity-entry .time {
+            color: var(--primary);
+            margin-right: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                padding: 80px 1rem 1rem;
+            }
+
+            .gesture-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+
+        /* Button Styles */
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            width: 100%;
+        }
+    </style>
 </head>
 
 <body>
     <nav class="navbar">
         <div class="container">
             <div class="nav-brand">
-                <h1>🖐️ GestureControl</h1>
+                <div class="logo-icon">
+                    <i class="fas fa-hand-peace"></i>
+                </div>
+                <h1>Gesture<span>Control</span></h1>
             </div>
             <div class="nav-links">
-                <span id="userName" class="user-name"></span>
-                <button id="logoutBtn" class="btn btn-outline">Logout</button>
+                <span id="userName" class="user-name">
+                    <i class="fas fa-user-circle"></i> Loading...
+                </span>
+                <button id="logoutBtn" class="btn btn-outline">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
             </div>
         </div>
     </nav>
@@ -28,35 +408,41 @@
                 <!-- Sidebar -->
                 <aside class="sidebar">
                     <div class="card">
-                        <h3>Devices</h3>
+                        <h3><i class="fas fa-microchip"></i> Devices</h3>
                         <div id="devicesList" class="devices-list">
-                            <p>Loading devices...</p>
+                            <div class="loading-spinner">
+                                <i class="fas fa-spinner fa-spin"></i> Loading devices...
+                            </div>
                         </div>
-                        <button id="addDeviceBtn" class="btn btn-primary btn-small">+ Add Device</button>
+                        <button id="addDeviceBtn" class="btn btn-primary btn-small">
+                            <i class="fas fa-plus"></i> Add Device
+                        </button>
                     </div>
 
                     <div class="card">
-                        <h3>Analytics Dashboard</h3>
+                        <h3><i class="fas fa-chart-line"></i> Analytics Dashboard</h3>
                         <div class="analytics-grid">
                             <div class="stat-item">
-                                <h4>Gestures</h4>
+                                <h4><i class="fas fa-hand-peace"></i> Gestures</h4>
                                 <div class="stat-value" id="gestureCountVal">0</div>
                             </div>
                             <div class="stat-item">
-                                <h4>Accuracy</h4>
-                                <div class="stat-value" id="accuracyVal">-</div>
+                                <h4><i class="fas fa-bullseye"></i> Accuracy</h4>
+                                <div class="stat-value" id="accuracyVal">0%</div>
                             </div>
                             <div class="stat-item">
-                                <h4>Session</h4>
+                                <h4><i class="fas fa-clock"></i> Session</h4>
                                 <div class="stat-value" id="sessionTimerVal">00:00</div>
                             </div>
                             <div class="stat-item">
-                                <h4>Speed</h4>
-                                <div class="speed-badge speed-slow" id="speedBadgeVal">Wait</div>
+                                <h4><i class="fas fa-tachometer-alt"></i> Speed</h4>
+                                <div class="speed-badge speed-slow" id="speedBadgeVal">
+                                    <i class="fas fa-turtle"></i> Slow
+                                </div>
                             </div>
                             <div class="goal-container">
                                 <div class="goal-header">
-                                    <span>Daily Goal</span>
+                                    <span><i class="fas fa-trophy"></i> Daily Goal</span>
                                     <span id="goalTextVal">0 / 1000</span>
                                 </div>
                                 <div class="progress-bar">
@@ -70,60 +456,75 @@
                 <!-- Main Content -->
                 <div class="main-content">
                     <div class="card">
-                        <h2>Real-time Gesture Control</h2>
+                        <h3><i class="fas fa-video"></i> Real-time Gesture Control</h3>
                         <div class="status-indicator">
                             <span class="status-dot" id="connectionStatus"></span>
                             <span id="statusText">Disconnected</span>
+                            <span id="deviceInfo" style="margin-left: auto; font-size: 0.8rem;">
+                                <i class="fas fa-microchip"></i> No device selected
+                            </span>
                         </div>
 
                         <div class="gesture-preview">
                             <div class="hand-visualization">
                                 <div id="gestureDisplay" class="gesture-display">✋</div>
-                                <p id="gestureName">Waiting for gesture...</p>
+                                <p id="gestureName" style="margin-top: 1rem; color: var(--primary);">
+                                    Waiting for gesture...
+                                </p>
+                                <div id="confidenceBar" style="width: 80%; margin: 1rem auto 0;">
+                                    <div
+                                        style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                                        <div id="confidenceFill"
+                                            style="width: 0%; height: 100%; background: var(--gradient); transition: width 0.3s ease;">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <div class="gesture-guide">
-                            <h3>Gesture Guide</h3>
+                            <h3><i class="fas fa-book"></i> Gesture Guide</h3>
                             <div class="gesture-grid">
                                 <div class="gesture-item">
                                     <span class="gesture-icon">👆</span>
                                     <span>Index Finger Up</span>
-                                    <span class="gesture-action">Move Cursor</span>
+                                    <span class="gesture-action"><i class="fas fa-mouse-pointer"></i> Move Cursor</span>
                                 </div>
                                 <div class="gesture-item">
                                     <span class="gesture-icon">🤏</span>
                                     <span>Pinch (Index+Thumb)</span>
-                                    <span class="gesture-action">Left Click</span>
+                                    <span class="gesture-action"><i class="fas fa-hand-pointer"></i> Left Click</span>
                                 </div>
                                 <div class="gesture-item">
                                     <span class="gesture-icon">✌️</span>
                                     <span>Peace Sign</span>
-                                    <span class="gesture-action">Right Click</span>
+                                    <span class="gesture-action"><i class="fas fa-hand-peace"></i> Right Click</span>
                                 </div>
                                 <div class="gesture-item">
                                     <span class="gesture-icon">✋</span>
                                     <span>Open Palm</span>
-                                    <span class="gesture-action">Enable Control</span>
+                                    <span class="gesture-action"><i class="fas fa-play"></i> Enable Control</span>
                                 </div>
                                 <div class="gesture-item">
                                     <span class="gesture-icon">✊</span>
                                     <span>Fist</span>
-                                    <span class="gesture-action">Disable Control</span>
+                                    <span class="gesture-action"><i class="fas fa-stop"></i> Disable Control</span>
                                 </div>
                                 <div class="gesture-item">
                                     <span class="gesture-icon">🖐️⬆️⬇️</span>
                                     <span>Two Fingers Scroll</span>
-                                    <span class="gesture-action">Scroll Page</span>
+                                    <span class="gesture-action"><i class="fas fa-arrows-alt-v"></i> Scroll Page</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="card">
-                        <h3>Recent Activity</h3>
+                        <h3><i class="fas fa-history"></i> Recent Activity</h3>
                         <div id="activityLog" class="activity-log">
-                            <p>No recent activity</p>
+                            <div class="activity-entry">
+                                <span class="time">🔄</span> Ready to detect gestures
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -154,12 +555,21 @@
             await loadDevices();
             initWebSocket();
             startSessionTimer();
-            startGestureSimulation(); // For demo purposes
         }
 
         async function loadUserInfo() {
-            const user = JSON.parse(localStorage.getItem('user'));
-            document.getElementById('userName').textContent = `Welcome, ${user.username}`;
+            try {
+                const response = await fetch('/api/auth/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const user = await response.json();
+                document.getElementById('userName').innerHTML = `<i class="fas fa-user-circle"></i> Welcome, ${user.username}`;
+                localStorage.setItem('user', JSON.stringify(user));
+            } catch (error) {
+                console.error('Error loading user:', error);
+            }
         }
 
         async function loadDevices() {
@@ -171,14 +581,18 @@
                 });
                 const data = await response.json();
 
-                if (data.success && data.devices.length > 0) {
+                if (data.success && data.devices && data.devices.length > 0) {
                     displayDevices(data.devices);
-                    currentDeviceId = data.devices[0].id;
+                    if (!currentDeviceId) {
+                        currentDeviceId = data.devices[0].id;
+                        updateDeviceInfo();
+                    }
                 } else {
-                    document.getElementById('devicesList').innerHTML = '<p>No devices registered</p>';
+                    document.getElementById('devicesList').innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.6);"><i class="fas fa-microchip"></i><br>No devices registered</p>';
                 }
             } catch (error) {
                 console.error('Error loading devices:', error);
+                document.getElementById('devicesList').innerHTML = '<p style="text-align: center; color: #ff4444;"><i class="fas fa-exclamation-triangle"></i><br>Error loading devices</p>';
             }
         }
 
@@ -187,26 +601,29 @@
             container.innerHTML = devices.map(device => `
                 <div class="device-item ${device.id === currentDeviceId ? 'active' : ''}" 
                      onclick="selectDevice(${device.id})">
-                    <span class="device-icon">💻</span>
+                    <span class="device-icon"><i class="fas fa-${device.device_type === 'laptop' ? 'laptop' : 'desktop'}"></i></span>
                     <div class="device-info">
-                        <strong>${device.device_name}</strong>
-                        <small>${device.status}</small>
+                        <strong>${escapeHtml(device.device_name)}</strong>
+                        <small><i class="fas fa-${device.status === 'online' ? 'circle' : 'circle-notch'}"></i> ${device.status || 'offline'}</small>
                     </div>
                     <button class="btn-delete" title="Delete Device" 
-                            onclick="deleteDevice(${device.id}, event)">🗑️</button>
+                            onclick="deleteDevice(${device.id}, event)">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
             `).join('');
         }
 
-        async function deleteDevice(deviceId, event) {
-            // Prevent triggering selectDevice
-            if (event) {
-                event.stopPropagation();
-            }
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-            if (!confirm('Are you sure you want to delete this device? This action cannot be undone.')) {
-                return;
-            }
+        async function deleteDevice(deviceId, event) {
+            if (event) event.stopPropagation();
+
+            if (!confirm('Are you sure you want to delete this device?')) return;
 
             try {
                 const response = await fetch(`/api/devices/${deviceId}`, {
@@ -218,9 +635,10 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    addActivity(`Device deleted successfully`);
+                    addActivity(`<i class="fas fa-trash"></i> Device deleted successfully`);
                     if (currentDeviceId === deviceId) {
                         currentDeviceId = null;
+                        updateDeviceInfo();
                     }
                     await loadDevices();
                 } else {
@@ -232,49 +650,79 @@
             }
         }
 
-        function selectDevice(deviceId) {
+        window.selectDevice = function (deviceId) {
             currentDeviceId = deviceId;
+            updateDeviceInfo();
             loadDevices(); // Refresh to show active state
-            addActivity(`Switched to device ID: ${deviceId}`);
+            addActivity(`<i class="fas fa-exchange-alt"></i> Switched to device ID: ${deviceId}`);
+
+            // Register device with WebSocket
+            if (socket && socket.connected) {
+                socket.emit('register_device', {
+                    device_id: deviceId,
+                    device_name: 'Web Dashboard'
+                });
+            }
+        };
+
+        function updateDeviceInfo() {
+            const deviceInfo = document.getElementById('deviceInfo');
+            if (currentDeviceId) {
+                deviceInfo.innerHTML = `<i class="fas fa-microchip"></i> Device: ${currentDeviceId}`;
+            } else {
+                deviceInfo.innerHTML = `<i class="fas fa-exclamation-triangle"></i> No device selected`;
+            }
         }
 
         function initWebSocket() {
             socket = io('/', {
-                query: {
-                    token: token
-                }
+                query: { token: token },
+                transports: ['websocket', 'polling']
             });
 
             socket.on('connect', () => {
-                document.getElementById('connectionStatus').className = 'status-dot connected';
-                document.getElementById('statusText').textContent = 'Connected';
-                addActivity('WebSocket connected successfully');
+                const statusDot = document.getElementById('connectionStatus');
+                statusDot.className = 'status-dot connected';
+                document.getElementById('statusText').innerHTML = '<i class="fas fa-link"></i> Connected';
+                addActivity('<i class="fas fa-plug"></i> WebSocket connected successfully');
+
+                // Register current device
+                if (currentDeviceId) {
+                    socket.emit('register_device', {
+                        device_id: currentDeviceId,
+                        device_name: 'Web Dashboard'
+                    });
+                }
             });
 
             socket.on('disconnect', () => {
                 document.getElementById('connectionStatus').className = 'status-dot disconnected';
-                document.getElementById('statusText').textContent = 'Disconnected';
-                addActivity('WebSocket disconnected');
+                document.getElementById('statusText').innerHTML = '<i class="fas fa-unlink"></i> Disconnected';
+                addActivity('<i class="fas fa-exclamation-triangle"></i> WebSocket disconnected');
+            });
+
+            socket.on('connected', (data) => {
+                console.log('Server confirmation:', data);
             });
 
             socket.on('cursor_move', (data) => {
-                updateGestureDisplay('move', `Moving to (${Math.round(data.x)}, ${Math.round(data.y)})`);
+                updateGestureDisplay('move', `Moving cursor to (${Math.round(data.x)}, ${Math.round(data.y)})`, 0.95);
             });
 
             socket.on('click_executed', (data) => {
-                updateGestureDisplay('click', `${data.type} click executed`);
-                addActivity(`${data.type.toUpperCase()} CLICK`);
+                updateGestureDisplay('click', `${data.type.toUpperCase()} click executed`, data.confidence || 0.95);
+                addActivity(`<i class="fas fa-hand-pointer"></i> ${data.type.toUpperCase()} CLICK`);
                 registerGesture(data.confidence || 0.95);
             });
 
             socket.on('scroll', (data) => {
-                updateGestureDisplay('scroll', `Scrolling ${data.direction}`);
-                addActivity(`SCROLL ${data.direction.toUpperCase()}`);
+                updateGestureDisplay('scroll', `Scrolling ${data.direction}`, 0.90);
+                addActivity(`<i class="fas fa-arrows-alt-v"></i> SCROLL ${data.direction.toUpperCase()}`);
                 registerGesture(0.90);
             });
         }
 
-        function updateGestureDisplay(gesture, message) {
+        function updateGestureDisplay(gesture, message, confidence = 0.95) {
             const icons = {
                 'move': '👉',
                 'click': '👆',
@@ -283,14 +731,22 @@
                 'disable': '✊'
             };
 
-            document.getElementById('gestureDisplay').textContent = icons[gesture] || '✋';
-            document.getElementById('gestureName').textContent = message;
+            const display = document.getElementById('gestureDisplay');
+            display.textContent = icons[gesture] || '✋';
+            display.style.animation = 'none';
+            display.offsetHeight; // Trigger reflow
+            display.style.animation = 'bounce 0.5s ease';
 
-            // Clear after 2 seconds
+            document.getElementById('gestureName').innerHTML = `<i class="fas fa-${gesture === 'click' ? 'hand-pointer' : 'hand-peace'}"></i> ${message}`;
+
+            // Update confidence bar
+            const confidenceFill = document.getElementById('confidenceFill');
+            confidenceFill.style.width = `${confidence * 100}%`;
+
+            // Reset confidence bar after 2 seconds
             setTimeout(() => {
-                if (document.getElementById('gestureName').textContent === message) {
-                    document.getElementById('gestureDisplay').textContent = '✋';
-                    document.getElementById('gestureName').textContent = 'Waiting for gesture...';
+                if (document.getElementById('gestureName').innerHTML.includes(message)) {
+                    confidenceFill.style.width = '0%';
                 }
             }, 2000);
         }
@@ -308,32 +764,65 @@
         function registerGesture(confidence) {
             gestureCount++;
             document.getElementById('gestureCountVal').textContent = gestureCount;
-            
+
             // Accuracy Meter
             const accVal = Math.round(confidence * 100);
             document.getElementById('accuracyVal').textContent = `${accVal}%`;
-            
+
             // Speed Calculation (gestures in last 10 seconds)
             const now = Date.now();
             gestureHistory.push(now);
             gestureHistory = gestureHistory.filter(time => now - time <= 10000);
-            
+
             const badge = document.getElementById('speedBadgeVal');
             if (gestureHistory.length > 5) {
-                badge.textContent = 'Fast';
+                badge.innerHTML = '<i class="fas fa-rocket"></i> Fast';
                 badge.className = 'speed-badge speed-fast';
             } else if (gestureHistory.length > 2) {
-                badge.textContent = 'Normal';
+                badge.innerHTML = '<i class="fas fa-car"></i> Normal';
                 badge.className = 'speed-badge speed-normal';
             } else {
-                badge.textContent = 'Slow';
+                badge.innerHTML = '<i class="fas fa-turtle"></i> Slow';
                 badge.className = 'speed-badge speed-slow';
             }
-            
+
             // Gamification Goal
-            document.getElementById('goalTextVal').textContent = `${gestureCount} / ${DAILY_GOAL}`;
+            document.getElementById('goalTextVal').innerHTML = `${gestureCount} / ${DAILY_GOAL}`;
             const progress = Math.min((gestureCount / DAILY_GOAL) * 100, 100);
             document.getElementById('goalProgressFill').style.width = `${progress}%`;
+
+            // Celebration effect when reaching goal
+            if (gestureCount === DAILY_GOAL) {
+                celebrateGoal();
+            }
+        }
+
+        function celebrateGoal() {
+            addActivity('<i class="fas fa-trophy"></i> 🎉 CONGRATULATIONS! Daily goal reached! 🎉');
+            // Add confetti effect
+            for (let i = 0; i < 50; i++) {
+                createConfetti();
+            }
+        }
+
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.innerHTML = '🎉';
+            confetti.style.position = 'fixed';
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.top = '-20px';
+            confetti.style.fontSize = (Math.random() * 20 + 10) + 'px';
+            confetti.style.opacity = '1';
+            confetti.style.transition = 'all 3s ease';
+            confetti.style.pointerEvents = 'none';
+            confetti.style.zIndex = '9999';
+            document.body.appendChild(confetti);
+
+            setTimeout(() => {
+                confetti.style.top = '100vh';
+                confetti.style.opacity = '0';
+                setTimeout(() => confetti.remove(), 3000);
+            }, 10);
         }
 
         function addActivity(message) {
@@ -341,7 +830,7 @@
             const timestamp = new Date().toLocaleTimeString();
             const entry = document.createElement('div');
             entry.className = 'activity-entry';
-            entry.innerHTML = `<span class="time">[${timestamp}]</span> ${message}`;
+            entry.innerHTML = `<span class="time"><i class="far fa-clock"></i> [${timestamp}]</span> ${message}`;
 
             log.insertBefore(entry, log.firstChild);
 
@@ -351,40 +840,12 @@
             }
         }
 
-        // Demo gesture simulation (remove in production)
-        function startGestureSimulation() {
-            // This is just for UI demonstration
-            // In production, actual gestures come from the client app
-            setInterval(() => {
-                if (socket && socket.connected) {
-                    // Simulate random gestures for demo
-                    const gestures = ['move', 'click', 'scroll'];
-                    const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
-
-                    if (randomGesture === 'move') {
-                        socket.emit('gesture_move', {
-                            x: Math.random() * 1920,
-                            y: Math.random() * 1080
-                        });
-                    } else if (randomGesture === 'click') {
-                        socket.emit('gesture_click', {
-                            type: 'left',
-                            confidence: 0.85 + Math.random() * 0.14
-                        });
-                    } else if (randomGesture === 'scroll') {
-                        socket.emit('gesture_scroll', {
-                            direction: 'down',
-                            amount: 1
-                        });
-                    }
-                }
-            }, 1000);
-        }
-
         // Add device modal
-        document.getElementById('addDeviceBtn').addEventListener('click', async() => {
-            const deviceName = prompt('Enter device name:');
+        document.getElementById('addDeviceBtn').addEventListener('click', async () => {
+            const deviceName = prompt('Enter device name:', 'My Computer');
             if (deviceName) {
+                const deviceType = confirm('Is this a laptop?') ? 'laptop' : 'desktop';
+
                 try {
                     const response = await fetch('/api/devices', {
                         method: 'POST',
@@ -394,25 +855,26 @@
                         },
                         body: JSON.stringify({
                             device_name: deviceName,
-                            device_type: 'laptop'
+                            device_type: deviceType
                         })
                     });
 
                     const data = await response.json();
                     if (data.success) {
-                        addActivity(`Device "${deviceName}" registered successfully`);
-                        loadDevices();
+                        addActivity(`<i class="fas fa-plus-circle"></i> Device "${deviceName}" registered successfully`);
+                        await loadDevices();
                     } else {
                         alert('Error: ' + data.error);
                     }
                 } catch (error) {
+                    console.error('Error registering device:', error);
                     alert('Error registering device');
                 }
             }
         });
 
         // Logout
-        document.getElementById('logoutBtn').addEventListener('click', async() => {
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
                 await fetch('/api/auth/logout', {
                     method: 'POST',
@@ -422,6 +884,10 @@
                 });
             } catch (error) {
                 console.error('Logout error:', error);
+            }
+
+            if (socket) {
+                socket.disconnect();
             }
 
             localStorage.removeItem('token');
