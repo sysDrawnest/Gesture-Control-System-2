@@ -1,3 +1,4 @@
+from flask import request
 from flask_socketio import emit, join_room, leave_room
 from models.user_model import UserModel
 from models.device_model import DeviceModel
