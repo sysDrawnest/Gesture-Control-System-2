@@ -21,7 +21,7 @@ TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ1c2VybmFtZSI6Im
 sio = socketio.Client()
 
 # State
-device_registered = False
+is_device_registered = False
 gesture_enabled = True
 
 @sio.event
@@ -36,8 +36,8 @@ def disconnect():
 
 @sio.event
 def device_registered(data):
-    global device_registered
-    device_registered = True
+    global is_device_registered
+    is_device_registered = True
     print(f"✓ {data.get('message')}")
     print(f"  Device ID: {data.get('device_id')}")
     print(f"  Device Name: {data.get('device_name')}")
@@ -66,11 +66,14 @@ except Exception as e:
     print(f"Failed to connect: {e}")
     exit(1)
 
-# Wait for device registration
-time.sleep(2)
+# Wait for device registration (max 10 seconds)
+print("Waiting for device registration acknowledged by server...")
+start_wait = time.time()
+while not is_device_registered and time.time() - start_wait < 10:
+    time.sleep(0.1)
 
-if not device_registered:
-    print("Device not registered. Exiting...")
+if not is_device_registered:
+    print("❌ ERROR: Device registration timed out. Exiting...")
     sio.disconnect()
     exit(1)
 

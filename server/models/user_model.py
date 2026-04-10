@@ -99,6 +99,8 @@ class UserModel:
     def verify_token(token):
         """Verify JWT token"""
         try:
+            # Use import inside to avoid circular deps if any
+            from config import Config
             payload = jwt.decode(token, Config.JWT_SECRET, algorithms=['HS256'])
             
             # Check if token is revoked
@@ -108,7 +110,10 @@ class UserModel:
                 (token,)
             ).fetchone()
             
-            if not session or session['is_revoked']:
+            if not session:
+                return None, "Token not found in session store"
+                
+            if session['is_revoked']:
                 return None, "Token revoked"
             
             return payload, "Valid token"
@@ -116,6 +121,8 @@ class UserModel:
             return None, "Token expired"
         except jwt.InvalidTokenError:
             return None, "Invalid token"
+        except Exception as e:
+            return None, f"Token verification error: {str(e)}"
     
     @staticmethod
     def logout_user(token):

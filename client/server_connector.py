@@ -127,13 +127,13 @@ class ServerConnector:
         @self.sio.on("connected")
         def on_authenticated(data):
             print(f"🔐 WebSocket authenticated: {data.get('message', 'OK')}")
-            self._enabled = True
             # Register device after auth
             self._register_device()
 
         @self.sio.on("device_registered")
         def on_device_registered(data):
             self.device_id = data.get("device_id")
+            self._enabled = True
             print(f"📱 Device registered: {data.get('device_name')} (id={self.device_id})")
 
         @self.sio.on("error")

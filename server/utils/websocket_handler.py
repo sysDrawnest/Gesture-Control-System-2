@@ -14,12 +14,20 @@ connected_clients = {}
 def register_socket_events(socketio):
     
     @socketio.on('connect')
-    def handle_connect():
+    def handle_connect(auth=None):
         """Handle client connection with authentication"""
-        print(f'Client connected: {request.sid}')
+        print(f"Connect attempt, SID: {request.sid}, Auth: {auth}")
+        logger.info(f"Connect attempt from {request.sid} with auth={auth}")
         
-        # Authenticate via token in query string
+        # Authenticate via token covers query string (browser), auth payload (clients), or headers (standard)
         token = request.args.get('token')
+        if not token and auth:
+            token = auth.get('token') if isinstance(auth, dict) else auth
+        if not token:
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+            
         if token:
             payload, message = UserModel.verify_token(token)
             if payload:
@@ -30,11 +38,13 @@ def register_socket_events(socketio):
                 }
                 join_room(f"user_{payload['user_id']}")
                 emit('connected', {'message': 'Authenticated successfully'})
-                print(f"✓ User {payload['username']} authenticated")
-                return
+                print(f"Auth Success: User {payload['username']} authenticated")
+                return # Connection allowed
         
+        # If we get here, authentication failed
         emit('error', {'message': 'Authentication required'})
-        print(f"✗ Client {request.sid} failed authentication")
+        print(f"Auth Failed: Client {request.sid} failed authentication")
+        return False # Explicitly reject connection
     
     @socketio.on('disconnect')
     def handle_disconnect():
@@ -48,9 +58,9 @@ def register_socket_events(socketio):
             if device_id and user_id:
                 try:
                     DeviceModel.update_device_status(device_id, user_id, 'offline')
-                    print(f"✓ Device {device_id} marked offline")
+                    print(f"Status: Device {device_id} marked offline")
                 except Exception as e:
-                    print(f"✗ Error updating device status: {e}")
+                    print(f"Error: Error updating device status: {e}")
             
             leave_room(f"user_{user_id}")
             del connected_clients[request.sid]
@@ -69,7 +79,7 @@ def register_socket_events(socketio):
         device_type = data.get('device_type', 'laptop')
         ip_address = request.remote_addr
         
-        print(f"📱 Registering device for user {user_id}: {device_name}")
+        print(f"Device Register: Registering device for user {user_id}: {device_name}")
         
         # Register device in database
         device_id, message = DeviceModel.register_device(
@@ -86,16 +96,16 @@ def register_socket_events(socketio):
                 'device_name': device_name,
                 'message': message
             })
-            print(f"✓ Device registered: {device_name} (ID: {device_id})")
+            print(f"Status: Device registered: {device_name} (ID: {device_id})")
         else:
             emit('error', {'message': message})
-            print(f"✗ Device registration failed: {message}")
+            print(f"Error: Device registration failed: {message}")
     
     @socketio.on('gesture_move')
     def handle_gesture_move(data):
         """Handle real-time cursor movement via WebSocket"""
         if request.sid not in connected_clients:
-            print(f"⚠ Unauthorized gesture_move from {request.sid}")
+            print(f"Warn: Unauthorized gesture_move from {request.sid}")
             return
         
         client_info = connected_clients[request.sid]
@@ -109,7 +119,7 @@ def register_socket_events(socketio):
             # Check if device is registered
             if not device_id:
                 emit('error', {'message': 'Device not registered. Please register device first.'})
-                print(f"⚠ Move event from {request.sid} without device registration")
+                print(f"Warn: Move event from {request.sid} without device registration")
                 return
             
             # Log gesture to database (optional - can be disabled for performance)
@@ -122,7 +132,7 @@ def register_socket_events(socketio):
                     0.01
                 )
             except Exception as e:
-                print(f"✗ Error logging move gesture: {e}")
+                print(f"Error: Error logging move gesture: {e}")
             
             # Broadcast to dashboard
             emit('cursor_move', {
@@ -136,7 +146,7 @@ def register_socket_events(socketio):
     def handle_gesture_click(data):
         """Handle click via WebSocket with proper device validation"""
         if request.sid not in connected_clients:
-            print(f"⚠ Unauthorized gesture_click from {request.sid}")
+            print(f"Warn: Unauthorized gesture_click from {request.sid}")
             return
         
         client_info = connected_clients[request.sid]
@@ -146,7 +156,7 @@ def register_socket_events(socketio):
         # Validate device is registered
         if not device_id:
             emit('error', {'message': 'Device not registered. Please register device first.'})
-            print(f"⚠ Click event from {request.sid} without device registration")
+            print(f"Warn: Click event from {request.sid} without device registration")
             return
         
         click_type = data.get('type', 'left')
@@ -162,9 +172,9 @@ def register_socket_events(socketio):
                 confidence,
                 time.time() - start_time
             )
-            print(f"✓ Gesture logged: {click_type}_click from device {device_id}")
+            print(f"Status: Gesture logged: {click_type}_click from device {device_id}")
         except Exception as e:
-            print(f"✗ Error logging click gesture: {e}")
+            print(f"Error: Error logging click gesture: {e}")
             emit('error', {'message': f'Failed to log gesture: {str(e)}'})
             return
         
@@ -195,7 +205,7 @@ def register_socket_events(socketio):
         # Validate device is registered
         if not device_id:
             emit('error', {'message': 'Device not registered. Please register device first.'})
-            print(f"⚠ Scroll event from {request.sid} without device registration")
+            print(f"Warn: Scroll event from {request.sid} without device registration")
             return
         
         direction = data.get('direction', 'down')
@@ -211,9 +221,9 @@ def register_socket_events(socketio):
                 confidence,
                 0.01
             )
-            print(f"✓ Scroll logged: {direction} from device {device_id}")
+            print(f"Status: Scroll logged: {direction} from device {device_id}")
         except Exception as e:
-            print(f"✗ Error logging scroll gesture: {e}")
+            print(f"Error: Error logging scroll gesture: {e}")
         
         # Broadcast to dashboard
         emit('scroll', {
@@ -240,7 +250,7 @@ def register_socket_events(socketio):
                 }
         
         emit('online_users', online_users)
-        print(f"📊 Online users: {len(online_users)}")
+        print(f"Stats: Online users: {len(online_users)}")
     
     @socketio.on('get_device_status')
     def handle_get_device_status():

@@ -207,7 +207,7 @@ if __name__ == '__main__':
         local_ip = "unknown"
     
     print("=" * 60)
-    print("🎯 Gesture Control Server")
+    print("Gesture Control Server")
     print("=" * 60)
     print(f"Environment: {env}")
     print(f"Python Version: {sys.version.split()[0]}")
@@ -215,18 +215,18 @@ if __name__ == '__main__':
     print(f"Database: SQLite")
     print(f"WebSocket: Enabled (async_mode='threading')")
     print("-" * 60)
-    print("📍 Access the server at:")
-    print(f"   → http://localhost:{current_config.PORT}     (local - recommended)")
-    print(f"   → http://127.0.0.1:{current_config.PORT}     (loopback)")
+    print("Access the server at:")
+    print(f"   http://localhost:{current_config.PORT}     (local - recommended)")
+    print(f"   http://127.0.0.1:{current_config.PORT}     (loopback)")
     if local_ip != "unknown":
-        print(f"   → http://{local_ip}:{current_config.PORT}    (network - other devices)")
+        print(f"   http://{local_ip}:{current_config.PORT}    (network - other devices)")
     print("-" * 60)
-    print("🔐 Default Login:")
+    print("Default Login:")
     print("   Username: admin")
     print("   Password: admin123")
     print("-" * 60)
-    print("📡 WebSocket Status: Ready for connections")
-    print("💡 Press CTRL+C to stop the server")
+    print("WebSocket Status: Ready for connections")
+    print("Press CTRL+C to stop the server")
     print("=" * 60)
     print()
     
@@ -246,6 +246,6 @@ if __name__ == '__main__':
         print("=" * 60)
     except Exception as e:
         logger.error(f"Server failed to start: {e}")
-        print(f"\n❌ Error: {e}")
+        print(f"\nError: {e}")
         print("Try running: python app.py")
         sys.exit(1)
