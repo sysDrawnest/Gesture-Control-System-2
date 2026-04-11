@@ -445,11 +445,11 @@
             border-radius: 50%;
         }
 
-        input:checked + .slider {
+        input:checked+.slider {
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
         }
 
-        input:checked + .slider:before {
+        input:checked+.slider:before {
             transform: translateX(20px);
         }
 
@@ -475,13 +475,20 @@
             max-width: 500px;
             width: 90%;
             text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
             animation: modalFadeIn 0.3s ease;
         }
 
         @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         .calibration-timer {
@@ -777,6 +784,15 @@
         </div>
     </div>
 
+    <!-- Add to the main content area -->
+    <div class="card">
+        <h3><i class="fas fa-paintbrush"></i> Air Canvas</h3>
+        <p>Draw in the air with your fingers!</p>
+        <a href="/air_canvas" class="btn btn-primary">
+            <i class="fas fa-paintbrush"></i> Launch Air Canvas
+        </a>
+    </div>
+
     <script>
         let socket = null;
         let token = localStorage.getItem('token');
@@ -1061,10 +1077,10 @@
 
         function updateGestureDisplay(gesture, message, confidence, deviceId) {
             const icons = {
-                'move':    '\ud83d\udc49',
-                'click':   '\ud83d\udc46',
-                'scroll':  '\ud83d\udcdc',
-                'enable':  '\u270b',
+                'move': '\ud83d\udc49',
+                'click': '\ud83d\udc46',
+                'scroll': '\ud83d\udcdc',
+                'enable': '\u270b',
                 'disable': '\u270a'
             };
 
@@ -1236,7 +1252,7 @@
             document.querySelectorAll('.tutorial-step').forEach(s => s.classList.remove('active'));
             const targetStep = document.querySelector(`.tutorial-step[data-step="${step}"]`);
             if (targetStep) targetStep.classList.add('active');
-            
+
             document.getElementById('prevStepBtn').style.display = step === 1 ? 'none' : 'block';
             document.getElementById('nextStepBtn').textContent = step === totalTutorialSteps ? 'Finish' : 'Next Step';
             currentTutorialStep = step;
@@ -1271,7 +1287,7 @@
 
         // Calibration Logic
         let calibrationTimerInterval = null;
-        
+
         document.getElementById('startCalibrationBtn').addEventListener('click', () => {
             document.getElementById('calibrationOverlay').style.display = 'flex';
             document.getElementById('calibrationProgress').style.width = '0%';
@@ -1292,7 +1308,7 @@
             calibrationTimerInterval = setInterval(() => {
                 timeLeft--;
                 document.getElementById('calibrationTimer').textContent = timeLeft;
-                
+
                 const progress = ((30 - timeLeft) / 30) * 100;
                 document.getElementById('calibrationProgress').style.width = `${progress}%`;
 

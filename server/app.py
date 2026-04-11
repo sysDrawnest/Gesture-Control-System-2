@@ -1,6 +1,7 @@
 import gevent.monkey
 gevent.monkey.patch_all()
 
+
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from flask_socketio import SocketIO
 from flask_cors import CORS
@@ -13,6 +14,8 @@ import logging
 import socket
 import sys
 import os
+from routes.canvas_routes import canvas_bp
+app.register_blueprint(canvas_bp, url_prefix='/api')
 
 # Configure logging
 logging.basicConfig(
@@ -96,6 +99,10 @@ except Exception as e:
 def index():
     """Landing page"""
     return render_template('index.html')
+
+@app.route('/air_canvas')
+def air_canvas():
+    return render_template('air_canvas.html')
 
 @app.route('/login')
 def login_page():
