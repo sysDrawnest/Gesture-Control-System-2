@@ -6,4 +6,12 @@ Screenshot: Both hands in peace sign.
 Volume: Pinch Thumb + Ring finger.
 Drag: Hold a "partial pinch" (20-45px distance) between Thumb and Index.
 
-
+# Get and kill process on port 5000
+$port = 5000
+$connection = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
+if ($connection) {
+    Stop-Process -Id $connection.OwningProcess -Force
+    Write-Host "Process on port $port has been terminated."
+}
+# Then start server
+python app.py

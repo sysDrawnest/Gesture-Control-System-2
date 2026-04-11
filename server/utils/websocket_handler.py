@@ -300,52 +300,94 @@ def register_socket_events(socketio):
 
     @socketio.on('register_drawing_client')
     def handle_register_drawing_client(data):
-        """Identify a client specifically used for Air Canvas drawing."""
+        """Register a drawing client for Air Canvas"""
         sid = request.sid
-        if sid in connected_clients:
-            connected_clients[sid]['device_name'] = data.get('device_name', 'Drawing Client')
-            connected_clients[sid]['is_drawing_client'] = True
-            print(f"[WS] Drawing client registered: {sid} ({connected_clients[sid]['device_name']})")
+        device_name = data.get('device_name', 'Unknown')
+        
+        if sid not in connected_clients:
+            connected_clients[sid] = {'type': 'drawing_client'}
+        
+        connected_clients[sid]['device_name'] = device_name
+        connected_clients[sid]['is_drawing'] = True
+        
+        print(f"[Canvas] Drawing client registered: {device_name}")
+        
+        # Join drawing room for real-time collaboration
+        join_room('drawing_room')
+        emit('drawing_ready', {'message': 'Ready to draw', 'device': device_name})
 
     @socketio.on('drawing_stroke')
     def handle_drawing_stroke(data):
-        """Broadcast a single stroke to other clients in the room."""
+        """Handle drawing stroke from gesture client and broadcast to all connected canvases"""
         sid = request.sid
-        if sid not in connected_clients:
-            return
-
-        client = connected_clients[sid]
-        user_id = client['user_id']
-        room_id = data.get('room_id') or f"user_{user_id}"
-
-        # Broadcast to all clients in the room except the sender
-        emit('drawing_stroke', data, room=room_id, include_self=False)
+        
+        # Get drawing data
+        x1 = data.get('x1')
+        y1 = data.get('y1')
+        x2 = data.get('x2')
+        y2 = data.get('y2')
+        color = data.get('color', '#ff4444')
+        size = data.get('size', 5)
+        
+        # Broadcast to ALL connected clients in drawing_room (including web canvas)
+        emit('drawing_data', {
+            'type': 'draw',
+            'x1': x1, 'y1': y1,
+            'x2': x2, 'y2': y2,
+            'color': color,
+            'size': size,
+            'timestamp': time.time()
+        }, room='drawing_room', broadcast=True, include_self=False)
+        
+        # Also broadcast to any shared session room if exists
+        if 'room_id' in data:
+            emit('drawing_data', {
+                'type': 'draw',
+                'x1': x1, 'y1': y1,
+                'x2': x2, 'y2': y2,
+                'color': color,
+                'size': size
+            }, room=data['room_id'], broadcast=True)
 
     @socketio.on('drawing_clear')
     def handle_drawing_clear(data):
-        """Broadcast a canvas clear command."""
-        sid = request.sid
-        if sid not in connected_clients:
-            return
-
-        client = connected_clients[sid]
-        user_id = client['user_id']
-        room_id = data.get('room_id') or f"user_{user_id}"
-
-        emit('drawing_clear', data, room=room_id, include_self=False)
+        """Handle clear canvas command"""
+        print(f"[Canvas] Clear canvas requested")
+        emit('drawing_data', {
+            'type': 'clear',
+            'timestamp': time.time()
+        }, room='drawing_room', broadcast=True)
 
     @socketio.on('drawing_undo')
     def handle_drawing_undo(data):
-        """Broadcast an undo command."""
-        sid = request.sid
-        if sid not in connected_clients:
-            return
+        """Handle undo command"""
+        print(f"[Canvas] Undo requested")
+        emit('drawing_data', {
+            'type': 'undo',
+            'timestamp': time.time()
+        }, room='drawing_room', broadcast=True)
 
-        client = connected_clients[sid]
-        user_id = client['user_id']
-        room_id = data.get('room_id') or f"user_{user_id}"
+    @socketio.on('drawing_toggle')
+    def handle_drawing_toggle(data):
+        """Handle toggle drawing mode"""
+        enabled = data.get('enabled', True)
+        print(f"[Canvas] Drawing mode: {'ON' if enabled else 'OFF'}")
+        emit('drawing_mode_toggle', {
+            'enabled': enabled,
+            'timestamp': time.time()
+        }, room='drawing_room', broadcast=True)
 
-        emit('drawing_undo', data, room=room_id, include_self=False)
+    @socketio.on('share_drawing')
+    def handle_share_drawing(data):
+        """Create a shared drawing session"""
+        import uuid
+        room_id = str(uuid.uuid4())[:8]
+        join_room(room_id)
+        print(f"[Canvas] Shared drawing session created: {room_id}")
+        emit('drawing_shared', {
+            'room_id': room_id,
+            'message': 'Drawing session shared'
+        })
 
     # ------------------------------------------------------------------
     # Admin / Utility
