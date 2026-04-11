@@ -140,7 +140,8 @@ def register_socket_events(socketio):
                 'x': x, 
                 'y': y,
                 'username': client_info.get('username')
-            }, room=f"user_{user_id}", skip_sid=request.sid)
+            }, room=f"user_{user_id}", include_self=False)
+            logger.debug(f"Broadcast cursor_move to user_{user_id} from {device_id}")
     
     @socketio.on('gesture_click')
     def handle_gesture_click(data):
@@ -183,8 +184,11 @@ def register_socket_events(socketio):
             'device_id': device_id,
             'type': click_type,
             'username': client_info.get('username'),
-            'timestamp': time.time()
-        }, room=f"user_{user_id}")
+            'timestamp': time.time(),
+            'confidence': confidence
+        }, room=f"user_{user_id}", include_self=False)
+        
+        logger.info(f"Broadcast click_executed ({click_type}) to user_{user_id}")
         
         # Send confirmation back to client
         emit('click_confirmed', {
@@ -230,8 +234,11 @@ def register_socket_events(socketio):
             'device_id': device_id,
             'direction': direction, 
             'amount': amount,
-            'username': client_info.get('username')
-        }, room=f"user_{user_id}")
+            'username': client_info.get('username'),
+            'confidence': confidence
+        }, room=f"user_{user_id}", include_self=False)
+        
+        logger.info(f"Broadcast scroll ({direction}) to user_{user_id}")
     
     @socketio.on('gesture_toggle')
     def handle_gesture_toggle(data):
@@ -259,8 +266,11 @@ def register_socket_events(socketio):
             'device_id': device_id,
             'enabled': enabled,
             'confidence': confidence,
-            'username': client_info.get('username')
-        }, room=f"user_{user_id}")
+            'username': client_info.get('username'),
+            'timestamp': time.time()
+        }, room=f"user_{user_id}", include_self=False)
+        
+        logger.info(f"Broadcast toggle ({'enabled' if enabled else 'disabled'}) to user_{user_id}")
     
     @socketio.on('get_online_users')
     def handle_get_online_users():

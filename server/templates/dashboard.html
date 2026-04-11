@@ -706,31 +706,31 @@
             });
 
             socket.on('cursor_move', (data) => {
-                updateGestureDisplay('move', `Moving cursor to (${Math.round(data.x)}, ${Math.round(data.y)})`, 0.95);
+                updateGestureDisplay('move', `Moving cursor to (${Math.round(data.x)}, ${Math.round(data.y)})`, 0.95, data.device_id);
             });
 
             socket.on('click_executed', (data) => {
-                updateGestureDisplay('click', `${data.type.toUpperCase()} click executed`, data.confidence || 0.95);
-                addActivity(`<i class="fas fa-hand-pointer"></i> ${data.type.toUpperCase()} CLICK`);
+                updateGestureDisplay('click', `${data.type.toUpperCase()} click executed`, data.confidence || 0.95, data.device_id);
+                addActivity(`<i class="fas fa-hand-pointer"></i> ${data.type.toUpperCase()} CLICK from device ${data.device_id}`);
                 registerGesture(data.confidence || 0.95);
             });
 
             socket.on('scroll', (data) => {
-                updateGestureDisplay('scroll', `Scrolling ${data.direction}`, 0.90);
-                addActivity(`<i class="fas fa-arrows-alt-v"></i> SCROLL ${data.direction.toUpperCase()}`);
+                updateGestureDisplay('scroll', `Scrolling ${data.direction}`, 0.90, data.device_id);
+                addActivity(`<i class="fas fa-arrows-alt-v"></i> SCROLL ${data.direction.toUpperCase()} from device ${data.device_id}`);
                 registerGesture(0.90);
             });
 
             socket.on('toggle', (data) => {
                 const action = data.enabled ? 'enable' : 'disable';
                 const message = data.enabled ? 'Control Enabled' : 'Control Disabled';
-                updateGestureDisplay(action, message, data.confidence || 0.95);
-                addActivity(`<i class="fas fa-hand-${data.enabled ? 'paper' : 'rock'}"></i> CONTROL ${data.enabled ? 'ENABLED' : 'DISABLED'}`);
+                updateGestureDisplay(action, message, data.confidence || 0.95, data.device_id);
+                addActivity(`<i class="fas fa-hand-${data.enabled ? 'paper' : 'rock'}"></i> CONTROL ${data.enabled ? 'ENABLED' : 'DISABLED'} from device ${data.device_id}`);
                 registerGesture(data.confidence || 0.95);
             });
         }
 
-        function updateGestureDisplay(gesture, message, confidence = 0.95) {
+        function updateGestureDisplay(gesture, message, confidence = 0.95, deviceId = null) {
             const icons = {
                 'move': '👉',
                 'click': '👆',
@@ -745,7 +745,17 @@
             display.offsetHeight; // Trigger reflow
             display.style.animation = 'bounce 0.5s ease';
 
-            document.getElementById('gestureName').innerHTML = `<i class="fas fa-${gesture === 'click' ? 'hand-pointer' : 'hand-peace'}"></i> ${message}`;
+            let displayMessage = message;
+            if (deviceId) {
+                displayMessage += ` <small>(Device: ${deviceId})</small>`;
+                // Update device info if not selected or current
+                if (!currentDeviceId) {
+                    currentDeviceId = deviceId;
+                    updateDeviceInfo();
+                }
+            }
+
+            document.getElementById('gestureName').innerHTML = `<i class="fas fa-${gesture === 'click' ? 'hand-pointer' : 'hand-peace'}"></i> ${displayMessage}`;
 
             // Update confidence bar
             const confidenceFill = document.getElementById('confidenceFill');

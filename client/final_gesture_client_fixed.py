@@ -223,6 +223,8 @@ def main():
     fps = 0
     fps_timer = time.time()
     move_frame_counter = 0
+    last_server_toggle_time = 0.0
+    TOGGLE_REPEAT_INTERVAL = 3.0  # seconds between repeated status updates
 
     # -- Banner -----------------------------------------------------------------
     print("=" * 60)
@@ -276,16 +278,18 @@ def main():
 
             # ── Enable / Disable ───────────────────────────────────────────────
             if gesture == "FIST":
-                if gesture_enabled:
+                if gesture_enabled or (current_time - last_server_toggle_time > TOGGLE_REPEAT_INTERVAL):
                     gesture_enabled = False
-                    print("[FIST] Gesture control DISABLED")
+                    print(f"[{'FIST' if not gesture_enabled else 'STATUS'}] Gesture control DISABLED")
                     connector.send_gesture_event("FIST", confidence)
+                    last_server_toggle_time = current_time
 
             elif gesture == "OPEN_PALM":
-                if not gesture_enabled:
+                if not gesture_enabled or (current_time - last_server_toggle_time > TOGGLE_REPEAT_INTERVAL):
                     gesture_enabled = True
-                    print("[PALM] Gesture control ENABLED")
+                    print(f"[{'PALM' if gesture_enabled else 'STATUS'}] Gesture control ENABLED")
                     connector.send_gesture_event("OPEN_PALM", confidence)
+                    last_server_toggle_time = current_time
 
             # ── Active gestures ────────────────────────────────────────────────
             elif gesture_enabled:
