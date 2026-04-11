@@ -226,12 +226,28 @@ def main():
     last_server_toggle_time = 0.0
     TOGGLE_REPEAT_INTERVAL = 3.0  # seconds between repeated status updates
 
+    # Device-ready flag: in online mode gestures only work after registration
+    device_ready = args.offline  # True immediately in offline mode
+
+    if not args.offline:
+        # Wait a moment for device registration to complete
+        for _ in range(10):
+            if connector.device_id:
+                device_ready = True
+                break
+            time.sleep(0.3)
+        if device_ready:
+            print("[OK] Device registered - gestures are active")
+        else:
+            print("[WAIT] Device not yet registered - gestures will activate once registered")
+
     # -- Banner -----------------------------------------------------------------
     print("=" * 60)
     print("[STATUS] GESTURE CONTROL SYSTEM - Server-Connected Edition")
     print("=" * 60)
     print(f"MediaPipe {mp.__version__}  |  Screen {screen_width}x{screen_height}")
     print(f"Server:  {'[online]' if connector.is_online else '[offline]'}")
+    print(f"Device:  {'[registered: ' + str(connector.device_id) + ']' if connector.device_id else '[pending]'}")
     print()
     print("LIST GESTURES:")
     print("   OPEN PALM  -> Enable control")
@@ -268,6 +284,11 @@ def main():
 
             gesture, confidence = detect_gesture(lms)
 
+            # Check if device became ready (async registration may complete late)
+            if not device_ready and not args.offline and connector.device_id:
+                device_ready = True
+                print(f"[OK] Device registered (id={connector.device_id}) - gestures now active!")
+
             # Cursor position from index tip
             index_tip = lms[8]
             cursor_x = max(0, min(int(index_tip.x * screen_width), screen_width - 1))
@@ -276,81 +297,92 @@ def main():
 
             current_time = time.time()
 
-            # ── Enable / Disable ───────────────────────────────────────────────
-            if gesture == "FIST":
-                if gesture_enabled or (current_time - last_server_toggle_time > TOGGLE_REPEAT_INTERVAL):
-                    gesture_enabled = False
-                    print(f"[{'FIST' if not gesture_enabled else 'STATUS'}] Gesture control DISABLED")
-                    connector.send_gesture_event("FIST", confidence)
-                    last_server_toggle_time = current_time
+            # ── BLOCK GESTURES UNTIL DEVICE IS REGISTERED ──────────────────────
+            if not device_ready:
+                if show_debug:
+                    cv2.putText(frame, "WAITING FOR DEVICE REGISTRATION...", (10, 28),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2)
+                    cv2.putText(frame, f"Detected: {gesture} (not executing)", (10, 56),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (150, 150, 150), 1)
+                    cv2.putText(frame, f"Server: {'online' if connector.is_online else 'offline'}", (10, 80),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (150, 150, 150), 1)
+            else:
+                # ── Enable / Disable ───────────────────────────────────────────
+                if gesture == "FIST":
+                    if gesture_enabled or (current_time - last_server_toggle_time > TOGGLE_REPEAT_INTERVAL):
+                        gesture_enabled = False
+                        print("[FIST] Gesture control DISABLED")
+                        connector.send_gesture_event("FIST", confidence)
+                        last_server_toggle_time = current_time
 
-            elif gesture == "OPEN_PALM":
-                if not gesture_enabled or (current_time - last_server_toggle_time > TOGGLE_REPEAT_INTERVAL):
-                    gesture_enabled = True
-                    print(f"[{'PALM' if gesture_enabled else 'STATUS'}] Gesture control ENABLED")
-                    connector.send_gesture_event("OPEN_PALM", confidence)
-                    last_server_toggle_time = current_time
+                elif gesture == "OPEN_PALM":
+                    if not gesture_enabled or (current_time - last_server_toggle_time > TOGGLE_REPEAT_INTERVAL):
+                        gesture_enabled = True
+                        print("[PALM] Gesture control ENABLED")
+                        connector.send_gesture_event("OPEN_PALM", confidence)
+                        last_server_toggle_time = current_time
 
-            # ── Active gestures ────────────────────────────────────────────────
-            elif gesture_enabled:
+                # ── Active gestures ────────────────────────────────────────────
+                elif gesture_enabled:
 
-                # POINT → move cursor
-                if gesture in ("POINT", "UNKNOWN"):
-                    pyautogui.moveTo(smooth_x, smooth_y, duration=0.01)
-                    # Throttle move events to avoid flooding the server
-                    move_frame_counter += 1
-                    if move_frame_counter >= MOVE_SEND_INTERVAL_FRAMES:
-                        connector.send_gesture_move(smooth_x, smooth_y)
-                        move_frame_counter = 0
+                    # POINT -> move cursor
+                    if gesture in ("POINT", "UNKNOWN"):
+                        pyautogui.moveTo(smooth_x, smooth_y, duration=0.01)
+                        # Throttle move events to avoid flooding the server
+                        move_frame_counter += 1
+                        if move_frame_counter >= MOVE_SEND_INTERVAL_FRAMES:
+                            connector.send_gesture_move(smooth_x, smooth_y)
+                            move_frame_counter = 0
 
-                # PINCH → left click (double-click on rapid repeat)
-                elif gesture == "PINCH":
-                    if current_time - last_click_time > CLICK_COOLDOWN:
-                        if (
-                            last_gesture == "PINCH"
-                            and current_time - pinch_start_time < DOUBLE_CLICK_WINDOW
-                        ):
-                            pyautogui.doubleClick()
-                            print("[EVENT] DOUBLE CLICK!")
-                        else:
-                            pyautogui.click()
-                            print("[EVENT] LEFT CLICK!")
-                        connector.send_gesture_event("PINCH", confidence)
-                        last_click_time = current_time
-                        pinch_start_time = current_time
+                    # PINCH -> left click (double-click on rapid repeat)
+                    elif gesture == "PINCH":
+                        if current_time - last_click_time > CLICK_COOLDOWN:
+                            if (
+                                last_gesture == "PINCH"
+                                and current_time - pinch_start_time < DOUBLE_CLICK_WINDOW
+                            ):
+                                pyautogui.doubleClick()
+                                print("[EVENT] DOUBLE CLICK!")
+                            else:
+                                pyautogui.click()
+                                print("[EVENT] LEFT CLICK!")
+                            connector.send_gesture_event("PINCH", confidence)
+                            last_click_time = current_time
+                            pinch_start_time = current_time
 
-                # PEACE → right click
-                elif gesture == "PEACE":
-                    if current_time - last_right_click_time > CLICK_COOLDOWN:
-                        pyautogui.rightClick()
-                        print("[EVENT] RIGHT CLICK!")
-                        connector.send_gesture_event("PEACE", confidence)
-                        last_right_click_time = current_time
+                    # PEACE -> right click
+                    elif gesture == "PEACE":
+                        if current_time - last_right_click_time > CLICK_COOLDOWN:
+                            pyautogui.rightClick()
+                            print("[EVENT] RIGHT CLICK!")
+                            connector.send_gesture_event("PEACE", confidence)
+                            last_right_click_time = current_time
 
-                # THREE FINGERS → scroll
-                elif gesture == "THREE_FINGERS":
-                    middle_tip = lms[12]
-                    scroll_amt = int((index_tip.y - middle_tip.y) * 15)
-                    if abs(scroll_amt) > 2:
-                        pyautogui.scroll(scroll_amt)
-                        direction = "up" if scroll_amt > 0 else "down"
-                        if abs(scroll_amt) > 5:
-                            print(f"[SCROLL] {direction.upper()}: {abs(scroll_amt)}")
-                        connector.send_gesture_event(
-                            "THREE_FINGERS", confidence,
-                            extra={"direction": direction, "amount": abs(scroll_amt)},
-                        )
+                    # THREE FINGERS -> scroll
+                    elif gesture == "THREE_FINGERS":
+                        middle_tip = lms[12]
+                        scroll_amt = int((index_tip.y - middle_tip.y) * 15)
+                        if abs(scroll_amt) > 2:
+                            pyautogui.scroll(scroll_amt)
+                            direction = "up" if scroll_amt > 0 else "down"
+                            if abs(scroll_amt) > 5:
+                                print(f"[SCROLL] {direction.upper()}: {abs(scroll_amt)}")
+                            connector.send_gesture_event(
+                                "THREE_FINGERS", confidence,
+                                extra={"direction": direction, "amount": abs(scroll_amt)},
+                            )
 
             last_gesture = gesture
 
             # ── Debug overlay ──────────────────────────────────────────────────
-            if show_debug:
+            if show_debug and device_ready:
                 overlay = frame.copy()
-                cv2.rectangle(overlay, (5, 5), (290, 200), (0, 0, 0), -1)
+                cv2.rectangle(overlay, (5, 5), (290, 220), (0, 0, 0), -1)
                 frame = cv2.addWeighted(overlay, 0.35, frame, 0.65, 0)
 
                 status_color = (0, 255, 0) if gesture_enabled else (0, 0, 255)
                 net_color = (0, 255, 0) if connector.is_online else (0, 165, 255)
+                dev_color = (0, 255, 0) if connector.device_id else (0, 0, 255)
 
                 cv2.putText(frame, f"Gesture: {gesture}", (10, 28),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
@@ -365,13 +397,16 @@ def main():
                 net_label = "Server: online" if connector.is_online else "Server: offline"
                 cv2.putText(frame, net_label,
                             (10, 148), cv2.FONT_HERSHEY_SIMPLEX, 0.5, net_color, 1)
+                dev_label = f"Device: {connector.device_id}" if connector.device_id else "Device: NONE"
+                cv2.putText(frame, dev_label,
+                            (10, 172), cv2.FONT_HERSHEY_SIMPLEX, 0.5, dev_color, 1)
 
                 # Pinch distance bar
                 pinch_dist = calculate_distance(lms[8], lms[4])
                 bar_w = min(200, int(pinch_dist * 500))
-                cv2.rectangle(frame, (10, 168), (10 + bar_w, 182), (0, 255, 255), -1)
+                cv2.rectangle(frame, (10, 192), (10 + bar_w, 206), (0, 255, 255), -1)
                 cv2.putText(frame, f"Pinch: {pinch_dist:.3f}",
-                            (10, 165), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (255, 255, 255), 1)
+                            (10, 189), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (255, 255, 255), 1)
 
             # Pinch flash indicator
             pinch_dist = calculate_distance(lms[8], lms[4])

@@ -960,91 +960,136 @@
             });
 
             socket.on('connect', () => {
+                console.log('[Dashboard] WebSocket connected');
                 const statusDot = document.getElementById('connectionStatus');
                 statusDot.className = 'status-dot connected';
                 document.getElementById('statusText').innerHTML = '<i class="fas fa-link"></i> Connected';
-                addActivity('<i class="fas fa-plug"></i> WebSocket connected successfully');
+                addActivity('<i class="fas fa-plug"></i> Dashboard connected to server');
             });
 
             socket.on('disconnect', () => {
+                console.log('[Dashboard] WebSocket disconnected');
                 document.getElementById('connectionStatus').className = 'status-dot disconnected';
                 document.getElementById('statusText').innerHTML = '<i class="fas fa-unlink"></i> Disconnected';
                 addActivity('<i class="fas fa-exclamation-triangle"></i> WebSocket disconnected');
             });
 
             socket.on('connected', (data) => {
-                console.log('Server confirmation:', data);
+                console.log('[Dashboard] Server confirmed:', data);
+                addActivity('<i class="fas fa-check-circle"></i> Server authenticated dashboard');
             });
 
-            socket.on('cursor_move', (data) => {
-                updateGestureDisplay('move', `Moving cursor to (${Math.round(data.x)}, ${Math.round(data.y)})`, 0.95, data.device_id);
-            });
+            // ──────────────────────────────────────────────────────────
+            //  UNIFIED gesture_activity listener
+            //  The server broadcasts ALL gesture events under this
+            //  single event name.  The payload always contains:
+            //    gesture   : string  (OPEN_PALM, FIST, LEFT_CLICK, ...)
+            //    device_id : int
+            //    device_name : string
+            //    username  : string
+            //    confidence: float
+            //    timestamp : float
+            // ──────────────────────────────────────────────────────────
+            socket.on('gesture_activity', (data) => {
+                console.log('[Dashboard] gesture_activity received:', data);
 
-            socket.on('click_executed', (data) => {
-                updateGestureDisplay('click', `${data.type.toUpperCase()} click executed`, data.confidence || 0.95, data.device_id);
-                addActivity(`<i class="fas fa-hand-pointer"></i> ${data.type.toUpperCase()} CLICK from ${data.device_name || 'device'}`);
-                registerGesture(data.confidence || 0.95);
-                
-                // UX Effects
-                playClickSound(data.type === 'right' ? 600 : 800);
-                announce(`${data.type} click`);
-                triggerHaptic(60);
-            });
+                const gesture = data.gesture || 'UNKNOWN';
+                const deviceName = data.device_name || 'Unknown device';
+                const deviceId = data.device_id;
+                const confidence = data.confidence || 0.9;
 
-            socket.on('scroll', (data) => {
-                updateGestureDisplay('scroll', `Scrolling ${data.direction}`, 0.90, data.device_id);
-                addActivity(`<i class="fas fa-arrows-alt-v"></i> SCROLL ${data.direction.toUpperCase()} from ${data.device_name || 'device'}`);
-                registerGesture(0.90);
-                
-                // UX Effects
-                playClickSound(400, 'triangle');
-                triggerHaptic(30);
-            });
+                // Map gesture name to display category
+                let displayType = 'move';
+                let displayMessage = gesture;
+                let icon = 'fa-hand-peace';
+                let activityIcon = 'fa-hand-peace';
 
-            socket.on('toggle', (data) => {
-                const action = data.enabled ? 'enable' : 'disable';
-                const message = data.enabled ? 'Control Enabled' : 'Control Disabled';
-                updateGestureDisplay(action, message, data.confidence || 0.95, data.device_id);
-                addActivity(`<i class="fas fa-hand-${data.enabled ? 'paper' : 'rock'}"></i> CONTROL ${data.enabled ? 'ENABLED' : 'DISABLED'} from ${data.device_name || 'device'}`);
-                registerGesture(data.confidence || 0.95);
-                
-                // UX Effects
-                playClickSound(data.enabled ? 1000 : 300);
-                announce(message);
-                triggerHaptic(100);
+                if (gesture.includes('CLICK')) {
+                    displayType = 'click';
+                    displayMessage = gesture.replace('_', ' ');
+                    icon = 'fa-hand-pointer';
+                    activityIcon = 'fa-hand-pointer';
+                    playClickSound(gesture.includes('RIGHT') ? 600 : 800);
+                    announce(gesture.replace('_', ' ').toLowerCase());
+                    triggerHaptic(60);
+                } else if (gesture.includes('SCROLL')) {
+                    displayType = 'scroll';
+                    const dir = data.direction || (gesture.includes('UP') ? 'up' : 'down');
+                    displayMessage = 'Scroll ' + dir.toUpperCase();
+                    icon = 'fa-arrows-alt-v';
+                    activityIcon = 'fa-arrows-alt-v';
+                    playClickSound(400, 'triangle');
+                    triggerHaptic(30);
+                } else if (gesture === 'OPEN_PALM') {
+                    displayType = 'enable';
+                    displayMessage = 'Control ENABLED';
+                    icon = 'fa-hand-paper';
+                    activityIcon = 'fa-hand-paper';
+                    playClickSound(1000);
+                    announce('Control enabled');
+                    triggerHaptic(100);
+                } else if (gesture === 'FIST') {
+                    displayType = 'disable';
+                    displayMessage = 'Control DISABLED';
+                    icon = 'fa-hand-rock';
+                    activityIcon = 'fa-hand-rock';
+                    playClickSound(300);
+                    announce('Control disabled');
+                    triggerHaptic(100);
+                } else if (gesture === 'CURSOR_MOVE') {
+                    displayType = 'move';
+                    displayMessage = `Cursor (${Math.round(data.x || 0)}, ${Math.round(data.y || 0)})`;
+                    // Don't log every move to activity
+                    updateGestureDisplay(displayType, displayMessage, confidence, deviceId);
+                    return;
+                } else if (gesture === 'DEVICE_CONNECTED') {
+                    addActivity(`<i class="fas fa-plug"></i> <b>${deviceName}</b> connected (${data.username})`);
+                    loadDevices();  // refresh device list
+                    return;
+                }
+
+                // Update the big gesture display
+                updateGestureDisplay(displayType, displayMessage, confidence, deviceId);
+
+                // Add to Recent Activity log
+                addActivity(`<i class="fas ${activityIcon}"></i> <b>${displayMessage}</b> from ${deviceName}`);
+
+                // Update analytics counters
+                registerGesture(confidence);
             });
         }
 
-        function updateGestureDisplay(gesture, message, confidence = 0.95, deviceId = null) {
+        function updateGestureDisplay(gesture, message, confidence, deviceId) {
             const icons = {
-                'move': '👉',
-                'click': '👆',
-                'scroll': '📜',
-                'enable': '✋',
-                'disable': '✊'
+                'move':    '\ud83d\udc49',
+                'click':   '\ud83d\udc46',
+                'scroll':  '\ud83d\udcdc',
+                'enable':  '\u270b',
+                'disable': '\u270a'
             };
 
             const display = document.getElementById('gestureDisplay');
-            display.textContent = icons[gesture] || '✋';
+            display.textContent = icons[gesture] || '\u270b';
             display.style.animation = 'none';
-            display.offsetHeight;
+            display.offsetHeight;  // trigger reflow
             display.style.animation = 'bounce 0.5s ease';
 
-            let displayMessage = message;
+            let label = message;
             if (deviceId) {
-                displayMessage += ` <small>(Device: ${deviceId})</small>`;
+                label += ` <small style="opacity:0.7">(Device ${deviceId})</small>`;
             }
 
-            document.getElementById('gestureName').innerHTML = `<i class="fas fa-${gesture === 'click' ? 'hand-pointer' : 'hand-peace'}"></i> ${displayMessage}`;
+            document.getElementById('gestureName').innerHTML =
+                `<i class="fas fa-hand-sparkles"></i> ${label}`;
 
-            const confidenceFill = document.getElementById('confidenceFill');
-            confidenceFill.style.width = `${confidence * 100}%`;
+            // Confidence bar
+            const fill = document.getElementById('confidenceFill');
+            fill.style.width = `${(confidence || 0.9) * 100}%`;
 
-            setTimeout(() => {
-                if (document.getElementById('gestureName').innerHTML.includes(message)) {
-                    confidenceFill.style.width = '0%';
-                }
-            }, 2000);
+            clearTimeout(window._confidenceTimer);
+            window._confidenceTimer = setTimeout(() => {
+                fill.style.width = '0%';
+            }, 3000);
         }
 
         function startSessionTimer() {
