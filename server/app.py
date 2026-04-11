@@ -1,7 +1,6 @@
 import gevent.monkey
 gevent.monkey.patch_all()
 
-
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from flask_socketio import SocketIO
 from flask_cors import CORS
@@ -14,8 +13,6 @@ import logging
 import socket
 import sys
 import os
-from routes.canvas_routes import canvas_bp
-app.register_blueprint(canvas_bp, url_prefix='/api')
 
 # Configure logging
 logging.basicConfig(
@@ -86,10 +83,12 @@ try:
     from routes.auth_routes import auth_bp
     from routes.device_routes import device_bp
     from routes.control_routes import control_bp
+    from routes.canvas_routes import canvas_bp  # MOVED THIS INSIDE THE TRY BLOCK
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(device_bp, url_prefix='/api')
     app.register_blueprint(control_bp, url_prefix='/api')
+    app.register_blueprint(canvas_bp, url_prefix='/api')  # Register canvas routes
     logger.info("Blueprints registered successfully")
 except Exception as e:
     logger.error(f"Blueprint registration failed: {e}")
@@ -102,6 +101,7 @@ def index():
 
 @app.route('/air_canvas')
 def air_canvas():
+    """Air Canvas drawing page"""
     return render_template('air_canvas.html')
 
 @app.route('/login')
@@ -163,6 +163,12 @@ def api_info():
                 'register': 'POST /api/devices',
                 'update': 'PUT /api/devices/<id>',
                 'delete': 'DELETE /api/devices/<id>'
+            },
+            'canvas': {
+                'save': 'POST /api/drawings/save',
+                'list': 'GET /api/drawings/list',
+                'get': 'GET /api/drawings/<id>',
+                'delete': 'DELETE /api/drawings/<id>'
             }
         }
     })
@@ -234,6 +240,9 @@ if __name__ == '__main__':
     print("Default Login:")
     print("   Username: admin")
     print("   Password: admin123")
+    print("-" * 60)
+    print("🎨 Air Canvas Available at:")
+    print(f"   http://localhost:{current_config.PORT}/air_canvas")
     print("-" * 60)
     print("WebSocket Status: Ready for connections")
     print("Press CTRL+C to stop the server")
