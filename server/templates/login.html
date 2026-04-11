@@ -3,80 +3,566 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Gesture Control System</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>GestureFlow | Login</title>
+    <!-- Google Fonts for a premium, non-generic feel -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome 6 (free icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 10% 30%, rgba(2, 10, 30, 1) 0%, rgba(5, 5, 20, 1) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* animated orbs / gesture-inspired background elements */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            z-index: 0;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+
+        .orb1 {
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.3), rgba(0, 150, 255, 0.1));
+            top: -20vh;
+            left: -20vw;
+        }
+
+        .orb2 {
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(180, 70, 255, 0.3), rgba(80, 30, 200, 0.1));
+            bottom: -30vh;
+            right: -15vw;
+            animation-duration: 25s;
+        }
+
+        .orb3 {
+            width: 40vw;
+            height: 40vw;
+            background: radial-gradient(circle, rgba(255, 80, 120, 0.2), rgba(255, 40, 80, 0.05));
+            top: 40%;
+            left: 60%;
+            animation-duration: 18s;
+            filter: blur(100px);
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(5%, 8%) scale(1.1);
+            }
+        }
+
+        /* glassmorphism + modern container */
+        .auth-container {
+            width: 100%;
+            max-width: 460px;
+            margin: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .auth-card {
+            background: rgba(15, 25, 45, 0.65);
+            backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+            padding: 2rem 2rem 2.2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .auth-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 35px 50px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FFFFFF, #B2F0FF, #A07CFE);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-header p {
+            color: rgba(220, 235, 255, 0.7);
+            font-weight: 400;
+            font-size: 0.95rem;
+        }
+
+        /* Form styling */
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #CCE6FF;
+            margin-left: 0.25rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 1rem;
+            color: #8AAAE0;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+            pointer-events: none;
+        }
+
+        .auth-form input {
+            width: 100%;
+            padding: 0.9rem 1rem 0.9rem 2.8rem;
+            background: rgba(10, 18, 32, 0.7);
+            border: 1px solid rgba(80, 130, 200, 0.5);
+            border-radius: 1.2rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #F0F6FF;
+            transition: all 0.25s ease;
+            outline: none;
+            backdrop-filter: blur(4px);
+        }
+
+        .auth-form input:focus {
+            border-color: #6C9EFF;
+            box-shadow: 0 0 0 3px rgba(108, 158, 255, 0.3);
+            background: rgba(12, 22, 38, 0.9);
+        }
+
+        .auth-form input::placeholder {
+            color: #6A7F9F;
+            font-weight: 400;
+            font-size: 0.9rem;
+        }
+
+        /* Error message */
+        .error-message {
+            background: rgba(255, 70, 90, 0.2);
+            border-left: 4px solid #FF4D6D;
+            backdrop-filter: blur(8px);
+            border-radius: 1rem;
+            padding: 0.8rem 1rem;
+            font-size: 0.85rem;
+            color: #FFB3C1;
+            font-weight: 500;
+            margin-top: -0.5rem;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-4px);
+            }
+
+            75% {
+                transform: translateX(4px);
+            }
+        }
+
+        /* Button premium style */
+        .btn {
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(105deg, #3C6EFF, #905EFF);
+            color: white;
+            padding: 0.9rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 1rem;
+            letter-spacing: 0.3px;
+            box-shadow: 0 8px 20px rgba(60, 110, 255, 0.25);
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.01);
+            background: linear-gradient(105deg, #4F7CFF, #A16EFF);
+            box-shadow: 0 12px 28px rgba(80, 100, 255, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        /* Footer links */
+        .auth-footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-footer p {
+            color: #B0CAF0;
+            font-size: 0.85rem;
+            margin: 0.5rem 0;
+        }
+
+        .auth-footer a {
+            color: #9BC0FF;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+            border-bottom: 1px dotted rgba(155, 192, 255, 0.4);
+        }
+
+        .auth-footer a:hover {
+            color: #FFFFFF;
+            border-bottom-color: white;
+        }
+
+        small {
+            opacity: 0.7;
+            font-size: 0.75rem;
+        }
+
+        /* custom gesture hint */
+        .gesture-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            margin-top: 1.2rem;
+            font-size: 0.7rem;
+            color: #7F9BC5;
+            background: rgba(0, 0, 0, 0.25);
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .gesture-hint i {
+            font-size: 0.8rem;
+        }
+
+        /* responsive */
+        @media (max-width: 500px) {
+            .auth-container {
+                margin: 1rem;
+            }
+
+            .auth-card {
+                padding: 1.5rem;
+            }
+
+            .auth-header h2 {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* loading spinner (optional inline) */
+        .loading-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
 </head>
 
 <body>
+
+    <!-- dynamic organic blobs for depth -->
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <h2>Welcome Back</h2>
-                <p>Login to control your devices with gestures</p>
+                <h2>✧ GestureFlow ✧</h2>
+                <p>Seamless control · intelligent gestures</p>
             </div>
 
             <form id="loginForm" class="auth-form">
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required placeholder="Enter your username">
+                    <label for="username"><i class="far fa-user-circle" style="margin-right: 6px;"></i> Username</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-fingerprint"></i>
+                        <input type="text" id="username" name="username" required placeholder="Your unique handle"
+                            autocomplete="username">
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                    <label for="password"><i class="fas fa-lock" style="margin-right: 6px;"></i> Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-hand-peace"></i>
+                        <input type="password" id="password" name="password" required placeholder="••••••••"
+                            autocomplete="current-password">
+                    </div>
                 </div>
 
                 <div id="errorMessage" class="error-message" style="display: none;"></div>
 
-                <button type="submit" class="btn btn-primary btn-block">Login</button>
+                <button type="submit" id="loginBtn" class="btn btn-primary">
+                    <span id="btnText">Login</span>
+                    <i class="fas fa-arrow-right-to-bracket"></i>
+                </button>
             </form>
 
+            <div class="gesture-hint">
+                <i class="fas fa-hand-peace"></i> <span>Wave right → next device | ✌️ peace sign → toggle</span> <i
+                    class="fas fa-hand-peace fa-flip-horizontal"></i>
+            </div>
+
             <div class="auth-footer">
-                <p>Don't have an account? <a href="/register">Register here</a></p>
-                <p><small>Demo: admin / admin123</small></p>
+                <p>New to gesture control? <a href="/register">Create account</a></p>
+                <p><small><i class="fas fa-magic"></i> demo: admin / admin123</small></p>
             </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async(e) => {
-            e.preventDefault();
-
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+        (function () {
+            const form = document.getElementById('loginForm');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
             const errorDiv = document.getElementById('errorMessage');
+            const loginBtn = document.getElementById('loginBtn');
+            const btnTextSpan = document.getElementById('btnText');
 
-            try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username,
-                        password
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    localStorage.setItem('token', data.data.token);
-                    localStorage.setItem('user', JSON.stringify({
-                        id: data.data.user_id,
-                        username: data.data.username
-                    }));
-                    window.location.href = '/dashboard';
-                } else {
-                    errorDiv.textContent = data.error;
-                    errorDiv.style.display = 'block';
-                }
-            } catch (error) {
-                errorDiv.textContent = 'Network error. Please try again.';
+            // Helper to show error with style
+            function showError(message) {
+                errorDiv.textContent = message;
                 errorDiv.style.display = 'block';
+                // Auto hide after 4 seconds? fine but let's keep visible until next attempt.
+                setTimeout(() => {
+                    if (errorDiv.style.display === 'block') {
+                        // optional fade out but not necessary
+                    }
+                }, 5000);
             }
-        });
+
+            function clearError() {
+                errorDiv.style.display = 'none';
+                errorDiv.textContent = '';
+            }
+
+            // Set loading state
+            function setLoading(isLoading) {
+                if (isLoading) {
+                    loginBtn.disabled = true;
+                    btnTextSpan.innerHTML = '<span class="loading-spinner"></span> Authenticating';
+                    loginBtn.style.opacity = '0.8';
+                } else {
+                    loginBtn.disabled = false;
+                    btnTextSpan.innerText = 'Login';
+                    loginBtn.style.opacity = '1';
+                }
+            }
+
+            // Simulate slight haptic / feedback (just visual)
+            function addSuccessGlow() {
+                const card = document.querySelector('.auth-card');
+                card.style.transition = 'box-shadow 0.2s';
+                card.style.boxShadow = '0 0 0 2px rgba(80, 200, 255, 0.5), 0 25px 45px rgba(0,0,0,0.3)';
+                setTimeout(() => {
+                    card.style.boxShadow = '';
+                }, 400);
+            }
+
+            // Real fetch call to backend endpoint: /api/auth/login
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                clearError();
+
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value;
+
+                if (!username || !password) {
+                    showError('Please fill in both username and password.');
+                    return;
+                }
+
+                setLoading(true);
+
+                try {
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    // Parse response regardless of status for error handling
+                    let data;
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        // fallback in case backend returns non-json (rare)
+                        throw new Error('Invalid server response');
+                    }
+
+                    if (response.ok && data.success) {
+                        // Success path
+                        localStorage.setItem('token', data.data.token);
+                        localStorage.setItem('user', JSON.stringify({
+                            id: data.data.user_id,
+                            username: data.data.username
+                        }));
+                        addSuccessGlow();
+                        // optional: small delay for smooth transition
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 200);
+                    } else {
+                        // Handle error from backend: data.error or fallback
+                        const errMsg = data.error || data.message || 'Authentication failed. Invalid credentials.';
+                        showError(errMsg);
+                        setLoading(false);
+                        // Shake animation on card for extra feedback
+                        const cardEl = document.querySelector('.auth-card');
+                        cardEl.style.animation = 'shake 0.4s ease';
+                        setTimeout(() => { cardEl.style.animation = ''; }, 500);
+                    }
+                } catch (error) {
+                    console.error('Login network error:', error);
+                    let friendlyMsg = 'Network error. Could not connect to gesture server.';
+                    if (error.message === 'Failed to fetch') {
+                        friendlyMsg = '⚠️ Cannot reach server. Make sure backend is running.';
+                    } else if (error.message.includes('JSON')) {
+                        friendlyMsg = 'Server response error. Please try again.';
+                    }
+                    showError(friendlyMsg);
+                    setLoading(false);
+                    // subtle card shake
+                    const cardEl = document.querySelector('.auth-card');
+                    cardEl.style.animation = 'shake 0.4s ease';
+                    setTimeout(() => { cardEl.style.animation = ''; }, 500);
+                } finally {
+                    // if not redirected, ensure loading is false, but if success redirect happens, it's fine.
+                    if (window.location.pathname !== '/dashboard') {
+                        // only reset if still on same page after short delay? 
+                        // but success redirect triggers page unload, so setLoading false would not matter.
+                        // we'll use a guard: after 500ms if still here and loading active, reset.
+                        setTimeout(() => {
+                            if (loginBtn.disabled === true && window.location.pathname !== '/dashboard') {
+                                setLoading(false);
+                            }
+                        }, 1500);
+                    }
+                }
+            });
+
+            // Optional: add some interactive placeholder effects (just for delight)
+            const inputs = [usernameInput, passwordInput];
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    const parentWrapper = input.closest('.form-group');
+                    if (parentWrapper) {
+                        parentWrapper.style.transform = 'translateX(2px)';
+                    }
+                });
+                input.addEventListener('blur', () => {
+                    const parentWrapper = input.closest('.form-group');
+                    if (parentWrapper) {
+                        parentWrapper.style.transform = '';
+                    }
+                });
+            });
+
+            // Prefill demo credentials for better UX? not automatically, but a small quick-fill via double-click on demo text
+            const demoHint = document.querySelector('.auth-footer small');
+            if (demoHint) {
+                demoHint.style.cursor = 'pointer';
+                demoHint.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    usernameInput.value = 'admin';
+                    passwordInput.value = 'admin123';
+                    // add little visual spark
+                    usernameInput.style.borderColor = '#A07CFE';
+                    passwordInput.style.borderColor = '#A07CFE';
+                    setTimeout(() => {
+                        usernameInput.style.borderColor = '';
+                        passwordInput.style.borderColor = '';
+                    }, 800);
+                });
+                demoHint.title = 'Click to fill demo credentials';
+            }
+        })();
     </script>
 </body>
 

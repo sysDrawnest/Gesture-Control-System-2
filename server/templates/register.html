@@ -3,102 +3,701 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Gesture Control System</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>GestureFlow | Join the motion revolution</title>
+    <!-- Premium Font & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #0B0C15;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* dynamic particle/gradient background with gesture-inspired waves */
+        .bg-aura {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .gradient-sphere {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.5;
+            animation: drift 18s infinite alternate;
+        }
+
+        .sphere-1 {
+            width: 70vw;
+            height: 70vw;
+            background: radial-gradient(circle, #6C2BD9, #2B6ED9);
+            top: -30vh;
+            left: -20vw;
+            animation-duration: 22s;
+        }
+
+        .sphere-2 {
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, #D92B8C, #6B2BD9);
+            bottom: -20vh;
+            right: -15vw;
+            animation-duration: 26s;
+            animation-delay: -5s;
+        }
+
+        .sphere-3 {
+            width: 40vw;
+            height: 40vw;
+            background: radial-gradient(circle, #FFB347, #FF6B4A);
+            top: 40%;
+            left: 55%;
+            opacity: 0.3;
+            filter: blur(120px);
+            animation-duration: 19s;
+        }
+
+        @keyframes drift {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(8%, -5%) scale(1.2);
+            }
+        }
+
+        /* main container */
+        .register-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .glass-card {
+            background: rgba(12, 18, 32, 0.7);
+            backdrop-filter: blur(16px);
+            border-radius: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+            padding: 2rem 2rem 2.2rem;
+            transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(110, 90, 255, 0.4);
+            box-shadow: 0 35px 55px rgba(0, 0, 0, 0.5);
+            transform: translateY(-3px);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(125deg, #FFFFFF, #B9B0FF, #A57CFF);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.6rem;
+        }
+
+        .badge-gesture {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(165, 124, 255, 0.15);
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            color: #C9B6FF;
+            margin-top: 0.25rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .auth-header p {
+            color: #99B2DD;
+            font-weight: 400;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        /* form style */
+        .register-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .input-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            color: #B8CDFF;
+            margin-left: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 1rem;
+            color: #7C93C9;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            pointer-events: none;
+        }
+
+        .register-form input {
+            width: 100%;
+            padding: 0.9rem 1rem 0.9rem 2.8rem;
+            background: rgba(5, 12, 24, 0.7);
+            border: 1px solid rgba(100, 120, 200, 0.5);
+            border-radius: 1.3rem;
+            font-family: 'Space Grotesk', monospace;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #F0F3FF;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .register-form input:focus {
+            border-color: #A07CFE;
+            box-shadow: 0 0 0 3px rgba(160, 124, 254, 0.3);
+            background: rgba(8, 16, 30, 0.9);
+        }
+
+        .register-form input::placeholder {
+            color: #4F6085;
+            font-weight: 400;
+            font-size: 0.85rem;
+        }
+
+        /* password strength indicator */
+        .strength-meter {
+            margin-top: 0.25rem;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .strength-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #FF4D6D, #FFB347, #3BE07F);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .strength-text {
+            font-size: 0.65rem;
+            margin-top: 0.25rem;
+            text-align: right;
+            color: #9AAFD9;
+        }
+
+        /* messages */
+        .message-card {
+            border-radius: 1rem;
+            padding: 0.8rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            backdrop-filter: blur(8px);
+            animation: slideUp 0.25s ease;
+        }
+
+        .error-message {
+            background: rgba(255, 70, 90, 0.2);
+            border-left: 3px solid #FF4D6D;
+            color: #FFB8C5;
+        }
+
+        .success-message {
+            background: rgba(80, 230, 140, 0.15);
+            border-left: 3px solid #5EFF9E;
+            color: #BFFFD9;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* button */
+        .btn-register {
+            background: linear-gradient(95deg, #5E2BFF, #B25CFF);
+            border: none;
+            padding: 1rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 1rem;
+            font-family: 'Space Grotesk', sans-serif;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            transition: all 0.25s ease;
+            margin-top: 0.6rem;
+            box-shadow: 0 6px 18px rgba(94, 43, 255, 0.3);
+        }
+
+        .btn-register:hover {
+            transform: scale(1.02);
+            background: linear-gradient(95deg, #6F3EFF, #C46CFF);
+            box-shadow: 0 10px 25px rgba(94, 43, 255, 0.5);
+        }
+
+        .btn-register:active {
+            transform: scale(0.98);
+        }
+
+        .btn-register:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* footer */
+        .auth-footer {
+            text-align: center;
+            margin-top: 1.8rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .auth-footer p {
+            color: #9AB0DD;
+            font-size: 0.85rem;
+        }
+
+        .auth-footer a {
+            color: #C5ADFF;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.2s;
+            border-bottom: 1px dashed rgba(197, 173, 255, 0.4);
+        }
+
+        .auth-footer a:hover {
+            color: white;
+            border-bottom-color: white;
+        }
+
+        /* gesture floating decoration */
+        .gesture-deco {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-top: 1rem;
+            font-size: 0.7rem;
+            color: #6D85B0;
+        }
+
+        .gesture-deco i {
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.3rem;
+            border-radius: 50%;
+        }
+
+        /* spinner */
+        .spinner-sm {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 550px) {
+            .glass-card {
+                padding: 1.5rem;
+            }
+
+            .auth-header h2 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <div class="auth-container">
-        <div class="auth-card">
+
+    <div class="bg-aura">
+        <div class="gradient-sphere sphere-1"></div>
+        <div class="gradient-sphere sphere-2"></div>
+        <div class="gradient-sphere sphere-3"></div>
+    </div>
+
+    <div class="register-container">
+        <div class="glass-card">
             <div class="auth-header">
-                <h2>Create Account</h2>
-                <p>Start controlling devices with gestures</p>
+                <h2>✧ join gesture space ✧</h2>
+                <div class="badge-gesture">
+                    <i class="fas fa-hand-peace"></i> <span>hands-free future</span> <i class="fas fa-hand-spock"></i>
+                </div>
+                <p>Create your identity & control devices with intuitive gestures</p>
             </div>
 
-            <form id="registerForm" class="auth-form">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required placeholder="3-20 characters">
+            <form id="registerForm" class="register-form">
+                <div class="input-group">
+                    <label><i class="fas fa-user-astronaut"></i> Username</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-fingerprint"></i>
+                        <input type="text" id="username" name="username" required placeholder="e.g., gesture_master"
+                            autocomplete="username">
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required placeholder="your@email.com">
+                <div class="input-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-at"></i>
+                        <input type="email" id="email" name="email" required placeholder="hello@gesture.space"
+                            autocomplete="email">
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required placeholder="Minimum 6 characters">
+                <div class="input-group">
+                    <label><i class="fas fa-key"></i> Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-hand-back-fist"></i>
+                        <input type="password" id="password" name="password" required
+                            placeholder="•••••••• (min 6 chars)">
+                    </div>
+                    <div class="strength-meter">
+                        <div class="strength-fill" id="strengthFill"></div>
+                    </div>
+                    <div class="strength-text" id="strengthLabel">⚡ password strength</div>
                 </div>
 
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" required placeholder="Confirm your password">
+                <div class="input-group">
+                    <label><i class="fas fa-check-circle"></i> Confirm password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-hand-peace"></i>
+                        <input type="password" id="confirmPassword" required placeholder="match your password">
+                    </div>
                 </div>
 
-                <div id="errorMessage" class="error-message" style="display: none;"></div>
-                <div id="successMessage" class="success-message" style="display: none;"></div>
+                <div id="errorMessage" class="message-card error-message" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i> <span id="errorText"></span>
+                </div>
+                <div id="successMessage" class="message-card success-message" style="display: none;">
+                    <i class="fas fa-hand-peace"></i> <span id="successText"></span>
+                </div>
 
-                <button type="submit" class="btn btn-primary btn-block">Register</button>
+                <button type="submit" id="registerBtn" class="btn-register">
+                    <span id="btnLabel">Start gesturing →</span>
+                    <i class="fas fa-arrow-right-to-bracket"></i>
+                </button>
             </form>
 
+            <div class="gesture-deco">
+                <i class="fas fa-hand-peace"></i> <span>✋ swipe left/right</span> <i
+                    class="fas fa-hand-peace fa-flip-horizontal"></i>
+                <i class="fas fa-hand-spock"></i> <span>🖐️ open palm → select</span>
+            </div>
+
             <div class="auth-footer">
-                <p>Already have an account? <a href="/login">Login here</a></p>
+                <p>⚡ already part of the motion? <a href="/login">sign in →</a></p>
             </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('registerForm').addEventListener('submit', async(e) => {
-            e.preventDefault();
-
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+        (function () {
+            // DOM elements
+            const form = document.getElementById('registerForm');
+            const usernameInput = document.getElementById('username');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const confirmInput = document.getElementById('confirmPassword');
             const errorDiv = document.getElementById('errorMessage');
+            const errorSpan = document.getElementById('errorText');
             const successDiv = document.getElementById('successMessage');
+            const successSpan = document.getElementById('successText');
+            const registerBtn = document.getElementById('registerBtn');
+            const btnLabel = document.getElementById('btnLabel');
 
-            if (password !== confirmPassword) {
-                errorDiv.textContent = 'Passwords do not match';
-                errorDiv.style.display = 'block';
-                return;
+            // strength elements
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthLabel = document.getElementById('strengthLabel');
+
+            // Helper: show error
+            function showError(msg) {
+                errorSpan.innerText = msg;
+                errorDiv.style.display = 'flex';
+                successDiv.style.display = 'none';
+                // auto hide after 4.5s but keep for feedback
+                setTimeout(() => {
+                    if (errorDiv.style.display === 'flex') errorDiv.style.display = 'none';
+                }, 4800);
             }
 
-            try {
-                const response = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username,
-                        email,
-                        password
-                    })
-                });
+            function showSuccess(msg) {
+                successSpan.innerText = msg;
+                successDiv.style.display = 'flex';
+                errorDiv.style.display = 'none';
+            }
 
-                const data = await response.json();
+            function clearMessages() {
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }
 
-                if (data.success) {
-                    successDiv.textContent = 'Registration successful! Redirecting to login...';
-                    successDiv.style.display = 'block';
-                    errorDiv.style.display = 'none';
+            // Password strength evaluator
+            function evaluatePasswordStrength(pwd) {
+                if (!pwd) return { score: 0, label: 'very weak', width: '10%' };
+                let score = 0;
+                if (pwd.length >= 6) score += 1;
+                if (pwd.length >= 10) score += 1;
+                if (/[A-Z]/.test(pwd)) score += 1;
+                if (/[0-9]/.test(pwd)) score += 1;
+                if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
+                // max score 5
+                const percent = Math.min(100, (score / 5) * 100);
+                let label = '';
+                if (score <= 1) label = '⚠️ very weak';
+                else if (score === 2) label = '🌱 weak';
+                else if (score === 3) label = '🌀 moderate';
+                else if (score === 4) label = '✨ strong';
+                else label = '💪 very strong';
+                return { width: `${percent}%`, label, score };
+            }
 
-                    setTimeout(() => {
-                        window.location.href = '/login';
-                    }, 2000);
-                } else {
-                    errorDiv.textContent = data.error;
-                    errorDiv.style.display = 'block';
-                    successDiv.style.display = 'none';
+            function updateStrengthMeter() {
+                const pwd = passwordInput.value;
+                const { width, label } = evaluatePasswordStrength(pwd);
+                strengthFill.style.width = width;
+                strengthLabel.innerHTML = `<i class="fas fa-shield-alt"></i> ${label}`;
+                if (pwd === '') {
+                    strengthFill.style.width = '0%';
+                    strengthLabel.innerHTML = '⚡ password strength';
                 }
-            } catch (error) {
-                errorDiv.textContent = 'Network error. Please try again.';
-                errorDiv.style.display = 'block';
             }
-        });
+
+            passwordInput.addEventListener('input', updateStrengthMeter);
+
+            // loading state
+            function setLoading(loading) {
+                if (loading) {
+                    registerBtn.disabled = true;
+                    btnLabel.innerHTML = '<span class="spinner-sm"></span> registering...';
+                } else {
+                    registerBtn.disabled = false;
+                    btnLabel.innerHTML = 'Start gesturing →';
+                }
+            }
+
+            // validation (frontend)
+            function validateForm() {
+                const username = usernameInput.value.trim();
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                const confirm = confirmInput.value;
+
+                if (!username || !email || !password || !confirm) {
+                    showError('All fields are required to join the gesture realm.');
+                    return false;
+                }
+                if (username.length < 3 || username.length > 20) {
+                    showError('Username must be between 3 and 20 characters.');
+                    return false;
+                }
+                const usernameRegex = /^[a-zA-Z0-9_]+$/;
+                if (!usernameRegex.test(username)) {
+                    showError('Username can only contain letters, numbers, and underscores.');
+                    return false;
+                }
+                const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showError('Please enter a valid email address.');
+                    return false;
+                }
+                if (password.length < 6) {
+                    showError('Password must be at least 6 characters long.');
+                    return false;
+                }
+                if (password !== confirm) {
+                    showError('Passwords do not match — please confirm correctly.');
+                    return false;
+                }
+                return true;
+            }
+
+            // actual fetch registration
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                clearMessages();
+
+                if (!validateForm()) return;
+
+                const username = usernameInput.value.trim();
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+
+                setLoading(true);
+
+                try {
+                    const response = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username,
+                            email,
+                            password
+                        })
+                    });
+
+                    let data;
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        throw new Error('Invalid server response format');
+                    }
+
+                    if (response.ok && data.success) {
+                        showSuccess('✨ Registration successful! Redirecting to login page...');
+                        // subtle haptic feedback effect
+                        const card = document.querySelector('.glass-card');
+                        card.style.transform = 'scale(1.01)';
+                        setTimeout(() => { card.style.transform = ''; }, 200);
+
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 1800);
+                    } else {
+                        const errMsg = data.error || data.message || 'Registration failed. Username or email might exist.';
+                        showError(errMsg);
+                        setLoading(false);
+                        // shake animation on card
+                        const glassCard = document.querySelector('.glass-card');
+                        glassCard.style.animation = 'shakeCard 0.3s ease';
+                        setTimeout(() => { glassCard.style.animation = ''; }, 400);
+                    }
+                } catch (error) {
+                    console.error('Registration network error:', error);
+                    let friendlyMsg = 'Network error. Could not connect to GestureFlow server.';
+                    if (error.message === 'Failed to fetch') {
+                        friendlyMsg = '⚠️ Cannot reach backend. Is the server running?';
+                    }
+                    showError(friendlyMsg);
+                    setLoading(false);
+                    // gentle animation
+                    const glassCard = document.querySelector('.glass-card');
+                    glassCard.style.animation = 'shakeCard 0.3s ease';
+                    setTimeout(() => { glassCard.style.animation = ''; }, 400);
+                } finally {
+                    // if not redirected after 2.5 sec and loading still active, reset (safety)
+                    setTimeout(() => {
+                        if (registerBtn.disabled === true && window.location.pathname !== '/login') {
+                            setLoading(false);
+                        }
+                    }, 3000);
+                }
+            });
+
+            // real-time confirm highlight & extra match validation on confirm field
+            function checkPasswordMatchVisual() {
+                const pwd = passwordInput.value;
+                const confirm = confirmInput.value;
+                if (confirm !== '' && pwd !== confirm) {
+                    confirmInput.style.borderColor = '#FF6B7C';
+                    confirmInput.style.boxShadow = '0 0 0 2px rgba(255, 70, 90, 0.2)';
+                } else if (confirm !== '' && pwd === confirm) {
+                    confirmInput.style.borderColor = '#5EFF9E';
+                    confirmInput.style.boxShadow = '0 0 0 2px rgba(94, 255, 158, 0.2)';
+                } else {
+                    confirmInput.style.borderColor = '';
+                    confirmInput.style.boxShadow = '';
+                }
+            }
+
+            passwordInput.addEventListener('input', checkPasswordMatchVisual);
+            confirmInput.addEventListener('input', checkPasswordMatchVisual);
+            usernameInput.addEventListener('input', () => clearMessages());
+            emailInput.addEventListener('input', () => clearMessages());
+
+            // extra style: add keyframe shake to the card
+            const styleSheet = document.createElement("style");
+            styleSheet.textContent = `
+            @keyframes shakeCard {
+                0% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                75% { transform: translateX(5px); }
+                100% { transform: translateX(0); }
+            }
+        `;
+            document.head.appendChild(styleSheet);
+
+            // initial strength
+            updateStrengthMeter();
+        })();
     </script>
 </body>
 
