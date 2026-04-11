@@ -5,343 +5,317 @@ from models.device_model import DeviceModel
 import time
 import logging
 
-# Setup logging
 logger = logging.getLogger(__name__)
 
-# Store connected clients with device info
+# Store connected clients
 connected_clients = {}
 
 def register_socket_events(socketio):
     
     @socketio.on('connect')
-    def handle_connect(auth=None):
-        """Handle client connection with authentication"""
-        print(f"Connect attempt, SID: {request.sid}, Auth: {auth}")
-        logger.info(f"Connect attempt from {request.sid} with auth={auth}")
-        
-        # Authenticate via token covers query string (browser), auth payload (clients), or headers (standard)
+    def handle_connect():
+        """Handle client connection"""
+        sid = request.sid
         token = request.args.get('token')
-        if not token and auth:
-            token = auth.get('token') if isinstance(auth, dict) else auth
-        if not token:
-            auth_header = request.headers.get('Authorization')
-            if auth_header and auth_header.startswith('Bearer '):
-                token = auth_header.split(' ')[1]
-            
+        
+        print(f"[WebSocket] Connect attempt: {sid}")
+        
+        # For dashboard connections (browser)
+        user_agent = request.headers.get('User-Agent', '')
+        is_browser = 'Mozilla' in user_agent or 'Chrome' in user_agent or 'Safari' in user_agent
+        
+        if is_browser:
+            # Dashboard connection
+            connected_clients[sid] = {
+                'user_id': 1,
+                'username': 'admin',
+                'device_id': None,
+                'device_name': 'Web Dashboard',
+                'is_dashboard': True
+            }
+            join_room("dashboard_room")
+            join_room("user_1")
+            emit('connected', {'message': 'Dashboard connected'})
+            print(f"[WebSocket] Dashboard connected: {sid}")
+            return
+        
+        # Client connection (gesture client)
         if token:
             payload, message = UserModel.verify_token(token)
             if payload:
-                connected_clients[request.sid] = {
+                connected_clients[sid] = {
                     'user_id': payload['user_id'],
                     'username': payload['username'],
-                    'device_id': None  # Will be set when device registers
+                    'device_id': None,
+                    'device_name': None,
+                    'is_dashboard': False
                 }
                 join_room(f"user_{payload['user_id']}")
                 emit('connected', {'message': 'Authenticated successfully'})
-                print(f"Auth Success: User {payload['username']} authenticated")
-                return # Connection allowed
+                print(f"[WebSocket] Client authenticated: {payload['username']}")
+                return
         
-        # If we get here, authentication failed
-        emit('error', {'message': 'Authentication required'})
-        print(f"Auth Failed: Client {request.sid} failed authentication")
-        return False # Explicitly reject connection
+        # Reject connection
+        print(f"[WebSocket] Connection rejected: {sid}")
+        return False
     
     @socketio.on('disconnect')
     def handle_disconnect():
-        """Handle client disconnection and cleanup"""
-        if request.sid in connected_clients:
-            client_info = connected_clients[request.sid]
-            user_id = client_info.get('user_id')
-            device_id = client_info.get('device_id')
-            
-            # Update device status to offline if device exists
-            if device_id and user_id:
+        sid = request.sid
+        if sid in connected_clients:
+            client = connected_clients[sid]
+            if client.get('device_id'):
+                # Update device status to offline
                 try:
-                    DeviceModel.update_device_status(device_id, user_id, 'offline')
-                    print(f"Status: Device {device_id} marked offline")
+                    DeviceModel.update_device_status(client['device_id'], client['user_id'], 'offline')
+                    print(f"[WebSocket] Device {client['device_id']} marked offline")
                 except Exception as e:
-                    print(f"Error: Error updating device status: {e}")
-            
-            leave_room(f"user_{user_id}")
-            del connected_clients[request.sid]
-        
-        print(f'Client disconnected: {request.sid}')
+                    print(f"[WebSocket] Error updating device status: {e}")
+            del connected_clients[sid]
+        print(f"[WebSocket] Disconnected: {sid}")
     
     @socketio.on('register_device')
     def handle_register_device(data):
         """Register device for real-time control"""
-        if request.sid not in connected_clients:
+        sid = request.sid
+        if sid not in connected_clients:
             emit('error', {'message': 'Not authenticated'})
             return
         
-        user_id = connected_clients[request.sid]['user_id']
-        device_name = data.get('device_name', f'Device_{request.sid[:8]}')
+        client = connected_clients[sid]
+        user_id = client['user_id']
+        device_name = data.get('device_name', f'Device_{sid[:8]}')
         device_type = data.get('device_type', 'laptop')
         ip_address = request.remote_addr
         
-        print(f"Device Register: Registering device for user {user_id}: {device_name}")
+        print(f"[WebSocket] Registering device: {device_name} for user {user_id}")
         
         # Register device in database
-        device_id, message = DeviceModel.register_device(
-            user_id, 
-            device_name, 
-            device_type, 
-            ip_address
-        )
+        device_id, message = DeviceModel.register_device(user_id, device_name, device_type, ip_address)
         
         if device_id:
-            connected_clients[request.sid]['device_id'] = device_id
+            client['device_id'] = device_id
+            client['device_name'] = device_name
+            
+            # Confirm to client
             emit('device_registered', {
                 'device_id': device_id,
                 'device_name': device_name,
                 'message': message
             })
-            print(f"Status: Device registered: {device_name} (ID: {device_id})")
+            
+            # Broadcast to dashboard
+            dashboard_data = {
+                'device_id': device_id,
+                'device_name': device_name,
+                'device_type': device_type,
+                'username': client['username'],
+                'status': 'online',
+                'timestamp': time.time()
+            }
+            print(f"[WebSocket] Broadcasting device registration to dashboard: {dashboard_data}")
+            emit('device_registered_broadcast', dashboard_data, room="dashboard_room", broadcast=True)
+            emit('gesture_activity', {
+                'device_name': device_name,
+                'username': client['username'],
+                'gesture': 'DEVICE_REGISTERED',
+                'timestamp': time.time()
+            }, room="dashboard_room", broadcast=True)
         else:
             emit('error', {'message': message})
-            print(f"Error: Device registration failed: {message}")
     
     @socketio.on('gesture_move')
     def handle_gesture_move(data):
-        """Handle real-time cursor movement via WebSocket"""
-        if request.sid not in connected_clients:
-            print(f"Warn: Unauthorized gesture_move from {request.sid}")
+        """Handle cursor movement"""
+        sid = request.sid
+        if sid not in connected_clients:
             return
         
-        client_info = connected_clients[request.sid]
-        device_id = client_info.get('device_id')
-        user_id = client_info.get('user_id')
+        client = connected_clients[sid]
+        if client.get('is_dashboard'):
+            return  # Don't process moves from dashboard
+        
+        device_id = client.get('device_id')
+        if not device_id:
+            return
         
         x = data.get('x')
         y = data.get('y')
         
         if x is not None and y is not None:
-            # Check if device is registered
-            if not device_id:
-                emit('error', {'message': 'Device not registered. Please register device first.'})
-                print(f"Warn: Move event from {request.sid} without device registration")
-                return
-            
-            # Log gesture to database (optional - can be disabled for performance)
-            try:
-                DeviceModel.log_gesture(
-                    user_id, 
-                    device_id, 
-                    'cursor_move', 
-                    data.get('confidence', 0.9),
-                    0.01
-                )
-            except Exception as e:
-                print(f"Error: Error logging move gesture: {e}")
-            
-            # Broadcast to dashboard
+            # Broadcast to dashboard for live cursor
             emit('cursor_move', {
                 'device_id': device_id,
-                'x': x, 
+                'device_name': client.get('device_name', 'Unknown'),
+                'x': x,
                 'y': y,
-                'username': client_info.get('username')
-            }, room=f"user_{user_id}", include_self=False)
-            logger.debug(f"Broadcast cursor_move to user_{user_id} from {device_id}")
+                'username': client['username'],
+                'timestamp': time.time()
+            }, room="dashboard_room", broadcast=True)
     
     @socketio.on('gesture_click')
     def handle_gesture_click(data):
-        """Handle click via WebSocket with proper device validation"""
-        if request.sid not in connected_clients:
-            print(f"Warn: Unauthorized gesture_click from {request.sid}")
+        """Handle click events"""
+        sid = request.sid
+        if sid not in connected_clients:
             return
         
-        client_info = connected_clients[request.sid]
-        device_id = client_info.get('device_id')
-        user_id = client_info.get('user_id')
+        client = connected_clients[sid]
+        if client.get('is_dashboard'):
+            return
         
-        # Validate device is registered
+        device_id = client.get('device_id')
         if not device_id:
-            emit('error', {'message': 'Device not registered. Please register device first.'})
-            print(f"Warn: Click event from {request.sid} without device registration")
+            emit('error', {'message': 'Device not registered'})
             return
         
         click_type = data.get('type', 'left')
         confidence = data.get('confidence', 0.95)
+        device_name = client.get('device_name', 'Unknown')
+        username = client['username']
         
-        # Log gesture to database
-        start_time = time.time()
+        print(f"[WebSocket] Click: {click_type} from {device_name} (User: {username})")
+        
+        # Log to database
         try:
-            DeviceModel.log_gesture(
-                user_id, 
-                device_id, 
-                f'{click_type}_click', 
-                confidence,
-                time.time() - start_time
-            )
-            print(f"Status: Gesture logged: {click_type}_click from device {device_id}")
+            DeviceModel.log_gesture(client['user_id'], device_id, f'{click_type}_click', confidence, 0.01)
         except Exception as e:
-            print(f"Error: Error logging click gesture: {e}")
-            emit('error', {'message': f'Failed to log gesture: {str(e)}'})
-            return
+            print(f"[WebSocket] Error logging: {e}")
         
         # Broadcast to dashboard
+        activity_data = {
+            'device_id': device_id,
+            'device_name': device_name,
+            'username': username,
+            'gesture': f'{click_type.upper()}_CLICK',
+            'action': 'click',
+            'confidence': confidence,
+            'timestamp': time.time()
+        }
+        print(f"[WebSocket] Broadcasting click to dashboard: {activity_data}")
+        emit('gesture_activity', activity_data, room="dashboard_room", broadcast=True)
         emit('click_executed', {
             'device_id': device_id,
+            'device_name': device_name,
             'type': click_type,
-            'username': client_info.get('username'),
-            'timestamp': time.time(),
-            'confidence': confidence
-        }, room=f"user_{user_id}", include_self=False)
+            'username': username,
+            'timestamp': time.time()
+        }, room="dashboard_room", broadcast=True)
         
-        logger.info(f"Broadcast click_executed ({click_type}) to user_{user_id}")
-        
-        # Send confirmation back to client
-        emit('click_confirmed', {
-            'type': click_type,
-            'status': 'success'
-        })
+        # Confirm to client
+        emit('click_confirmed', {'type': click_type, 'status': 'success'})
     
     @socketio.on('gesture_scroll')
     def handle_gesture_scroll(data):
-        """Handle scroll via WebSocket with device validation"""
-        if request.sid not in connected_clients:
+        """Handle scroll events"""
+        sid = request.sid
+        if sid not in connected_clients:
             return
         
-        client_info = connected_clients[request.sid]
-        device_id = client_info.get('device_id')
-        user_id = client_info.get('user_id')
+        client = connected_clients[sid]
+        if client.get('is_dashboard'):
+            return
         
-        # Validate device is registered
+        device_id = client.get('device_id')
         if not device_id:
-            emit('error', {'message': 'Device not registered. Please register device first.'})
-            print(f"Warn: Scroll event from {request.sid} without device registration")
             return
         
         direction = data.get('direction', 'down')
         amount = data.get('amount', 1)
         confidence = data.get('confidence', 0.9)
+        device_name = client.get('device_name', 'Unknown')
+        username = client['username']
         
-        # Log gesture
+        print(f"[WebSocket] Scroll: {direction} from {device_name}")
+        
+        # Log to database
         try:
-            DeviceModel.log_gesture(
-                user_id, 
-                device_id, 
-                f'scroll_{direction}', 
-                confidence,
-                0.01
-            )
-            print(f"Status: Scroll logged: {direction} from device {device_id}")
+            DeviceModel.log_gesture(client['user_id'], device_id, f'scroll_{direction}', confidence, 0.01)
         except Exception as e:
-            print(f"Error: Error logging scroll gesture: {e}")
+            print(f"[WebSocket] Error logging: {e}")
         
         # Broadcast to dashboard
-        emit('scroll', {
+        activity_data = {
             'device_id': device_id,
-            'direction': direction, 
+            'device_name': device_name,
+            'username': username,
+            'gesture': f'SCROLL_{direction.upper()}',
+            'action': 'scroll',
             'amount': amount,
-            'username': client_info.get('username'),
-            'confidence': confidence
-        }, room=f"user_{user_id}", include_self=False)
-        
-        logger.info(f"Broadcast scroll ({direction}) to user_{user_id}")
+            'confidence': confidence,
+            'timestamp': time.time()
+        }
+        print(f"[WebSocket] Broadcasting scroll to dashboard: {activity_data}")
+        emit('gesture_activity', activity_data, room="dashboard_room", broadcast=True)
+        emit('scroll_executed', {
+            'device_id': device_id,
+            'device_name': device_name,
+            'direction': direction,
+            'amount': amount,
+            'username': username,
+            'timestamp': time.time()
+        }, room="dashboard_room", broadcast=True)
     
     @socketio.on('gesture_toggle')
     def handle_gesture_toggle(data):
-        """Handle enable/disable via WebSocket"""
-        if request.sid not in connected_clients:
+        """Handle enable/disable toggle events"""
+        sid = request.sid
+        if sid not in connected_clients:
             return
         
-        client_info = connected_clients[request.sid]
-        device_id = client_info.get('device_id')
-        user_id = client_info.get('user_id')
+        client = connected_clients[sid]
+        if client.get('is_dashboard'):
+            return
         
+        device_id = client.get('device_id')
         if not device_id:
             return
-            
+        
         enabled = data.get('enabled', True)
         confidence = data.get('confidence', 0.95)
+        device_name = client.get('device_name', 'Unknown')
+        username = client['username']
         
+        print(f"[WebSocket] Toggle: {'ENABLED' if enabled else 'DISABLED'} from {device_name}")
+        
+        # Log to database
+        action = 'enable_control' if enabled else 'disable_control'
         try:
-            action = 'enable_control' if enabled else 'disable_control'
-            DeviceModel.log_gesture(user_id, device_id, action, confidence, 0.01)
+            DeviceModel.log_gesture(client['user_id'], device_id, action, confidence, 0.01)
         except Exception as e:
-            print(f"Error logging toggle gesture: {e}")
-            
-        emit('toggle', {
-            'device_id': device_id,
-            'enabled': enabled,
-            'confidence': confidence,
-            'username': client_info.get('username'),
-            'timestamp': time.time()
-        }, room=f"user_{user_id}", include_self=False)
+            print(f"[WebSocket] Error logging: {e}")
         
-        logger.info(f"Broadcast toggle ({'enabled' if enabled else 'disabled'}) to user_{user_id}")
+        # Broadcast to dashboard
+        activity_data = {
+            'device_id': device_id,
+            'device_name': device_name,
+            'username': username,
+            'gesture': 'ENABLED' if enabled else 'DISABLED',
+            'action': 'toggle',
+            'status': 'ON' if enabled else 'OFF',
+            'confidence': confidence,
+            'timestamp': time.time()
+        }
+        print(f"[WebSocket] Broadcasting toggle to dashboard: {activity_data}")
+        emit('gesture_activity', activity_data, room="dashboard_room", broadcast=True)
+        emit('toggle_executed', {
+            'device_id': device_id,
+            'device_name': device_name,
+            'enabled': enabled,
+            'username': username,
+            'timestamp': time.time()
+        }, room="dashboard_room", broadcast=True)
     
     @socketio.on('get_online_users')
     def handle_get_online_users():
-        """Get list of online users (admin feature)"""
-        if request.sid not in connected_clients:
-            return
-        
+        """Get list of online users"""
         online_users = {}
         for sid, info in connected_clients.items():
-            if 'user_id' in info and info.get('device_id'):
+            if info.get('device_id') and not info.get('is_dashboard'):
                 online_users[info['username']] = {
                     'user_id': info['user_id'],
                     'device_id': info.get('device_id'),
                     'device_name': info.get('device_name', 'Unknown'),
                     'sid': sid
                 }
-        
         emit('online_users', online_users)
-        print(f"Stats: Online users: {len(online_users)}")
-    
-    @socketio.on('get_device_status')
-    def handle_get_device_status():
-        """Get status of current device"""
-        if request.sid not in connected_clients:
-            emit('error', {'message': 'Not authenticated'})
-            return
-        
-        client_info = connected_clients[request.sid]
-        device_id = client_info.get('device_id')
-        
-        if device_id:
-            emit('device_status', {
-                'device_id': device_id,
-                'device_name': client_info.get('device_name', 'Unknown'),
-                'is_registered': True,
-                'status': 'active'
-            })
-        else:
-            emit('device_status', {
-                'is_registered': False,
-                'message': 'No device registered yet'
-            })
-
-    @socketio.on('delete_device')
-    def handle_delete_device(data):
-        """Delete a device via WebSocket"""
-        if request.sid not in connected_clients:
-            emit('error', {'message': 'Not authenticated'})
-            return
-            
-        user_id = connected_clients[request.sid]['user_id']
-        device_id = data.get('device_id')
-        
-        if not device_id:
-            emit('error', {'message': 'Device ID is required'})
-            return
-            
-        print(f"Device Delete Request: User {user_id} deleting device {device_id}")
-        
-        success = DeviceModel.delete_device(device_id, user_id)
-        
-        if success:
-            emit('device_deleted', {
-                'device_id': device_id,
-                'message': 'Device deleted successfully'
-            })
-            print(f"Status: Device {device_id} deleted successfully")
-            
-            # If the deleted device is the one currently used by this connection, clear it
-            if connected_clients[request.sid].get('device_id') == device_id:
-                connected_clients[request.sid]['device_id'] = None
-        else:
-            emit('error', {'message': 'Failed to delete device or device not found'})
-            print(f"Error: Device deletion failed for device {device_id}")
