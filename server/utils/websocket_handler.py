@@ -295,6 +295,59 @@ def register_socket_events(socketio):
         }, socketio, client['user_id'])
 
     # ------------------------------------------------------------------
+    # Air Canvas Drawing Events
+    # ------------------------------------------------------------------
+
+    @socketio.on('register_drawing_client')
+    def handle_register_drawing_client(data):
+        """Identify a client specifically used for Air Canvas drawing."""
+        sid = request.sid
+        if sid in connected_clients:
+            connected_clients[sid]['device_name'] = data.get('device_name', 'Drawing Client')
+            connected_clients[sid]['is_drawing_client'] = True
+            print(f"[WS] Drawing client registered: {sid} ({connected_clients[sid]['device_name']})")
+
+    @socketio.on('drawing_stroke')
+    def handle_drawing_stroke(data):
+        """Broadcast a single stroke to other clients in the room."""
+        sid = request.sid
+        if sid not in connected_clients:
+            return
+
+        client = connected_clients[sid]
+        user_id = client['user_id']
+        room_id = data.get('room_id') or f"user_{user_id}"
+
+        # Broadcast to all clients in the room except the sender
+        emit('drawing_stroke', data, room=room_id, include_self=False)
+
+    @socketio.on('drawing_clear')
+    def handle_drawing_clear(data):
+        """Broadcast a canvas clear command."""
+        sid = request.sid
+        if sid not in connected_clients:
+            return
+
+        client = connected_clients[sid]
+        user_id = client['user_id']
+        room_id = data.get('room_id') or f"user_{user_id}"
+
+        emit('drawing_clear', data, room=room_id, include_self=False)
+
+    @socketio.on('drawing_undo')
+    def handle_drawing_undo(data):
+        """Broadcast an undo command."""
+        sid = request.sid
+        if sid not in connected_clients:
+            return
+
+        client = connected_clients[sid]
+        user_id = client['user_id']
+        room_id = data.get('room_id') or f"user_{user_id}"
+
+        emit('drawing_undo', data, room=room_id, include_self=False)
+
+    # ------------------------------------------------------------------
     # Admin / Utility
     # ------------------------------------------------------------------
 

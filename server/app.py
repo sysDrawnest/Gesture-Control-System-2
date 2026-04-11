@@ -241,7 +241,7 @@ if __name__ == '__main__':
     print("   Username: admin")
     print("   Password: admin123")
     print("-" * 60)
-    print("🎨 Air Canvas Available at:")
+    print("Air Canvas Available at:")
     print(f"   http://localhost:{current_config.PORT}/air_canvas")
     print("-" * 60)
     print("WebSocket Status: Ready for connections")

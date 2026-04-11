@@ -48,14 +48,30 @@ function initWebSocket() {
         updateGestureHint('Reconnecting...', '⚠️');
     });
 
-    socket.on('drawing_data', (data) => {
-        // Receive drawing from other devices in shared session
-        if (data.type === 'draw') {
-            drawStroke(data);
-        } else if (data.type === 'clear') {
-            clearCanvas();
-        } else if (data.type === 'undo') {
-            undoLast();
+    socket.on('drawing_stroke', (data) => {
+        // Receive drawing strokes from other clients
+        drawStroke(data);
+    });
+
+    socket.on('drawing_clear', () => {
+        // Explicit clear from gesture or remote
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        saveToHistory();
+        updateGestureHint('Canvas Cleared (Remote)', '🗑️');
+    });
+
+    socket.on('drawing_undo', () => {
+        // Explicit undo from gesture or remote
+        if (currentStep > 0) {
+            currentStep--;
+            const img = new Image();
+            img.src = drawingHistory[currentStep];
+            img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+            };
+            updateGestureHint('Undo (Remote)', '↩️');
         }
     });
 

@@ -89,14 +89,42 @@ while True:
             middle_up = hand.landmark[12].y < hand.landmark[10].y
             
             # Determine color based on finger
-            if index_up and not middle_up:
+            # Index only = Red, Middle only = Blue
+            # Both = None (Stop), Fist = Undo, Palm = Clear
+            
+            ring_up = hand.landmark[16].y < hand.landmark[14].y
+            pinky_up = hand.landmark[20].y < hand.landmark[18].y
+            thumb_up = hand.landmark[4].x < hand.landmark[3].x if hand.landmark[5].x > hand.landmark[17].x else hand.landmark[4].x > hand.landmark[3].x
+
+            # Gesture Logic
+            gesture = "UNKNOWN"
+            if index_up and not middle_up and not ring_up and not pinky_up:
                 color = "red"
                 is_drawing = True
-            elif middle_up and not index_up:
+                gesture = "DRAW_RED"
+            elif middle_up and not index_up and not ring_up and not pinky_up:
                 color = "blue"
                 is_drawing = True
+                gesture = "DRAW_BLUE"
+            elif not index_up and not middle_up and not ring_up and not pinky_up:
+                # FIST -> Undo
+                if gesture != "FIST":
+                    sio.emit('drawing_undo', {})
+                    print("[GESTURE] Fist -> Undo")
+                    time.sleep(0.5) # Throttle
+                is_drawing = False
+                gesture = "FIST"
+            elif index_up and middle_up and ring_up and pinky_up:
+                # PALM -> Clear
+                if gesture != "PALM":
+                    sio.emit('drawing_clear', {})
+                    print("[GESTURE] Palm -> Clear")
+                    time.sleep(0.5) # Throttle
+                is_drawing = False
+                gesture = "PALM"
             else:
                 is_drawing = False
+                gesture = "IDLE"
             
             # Draw line
             if is_drawing and prev_x is not None:
@@ -111,7 +139,7 @@ while True:
             
             # Display on frame
             cv2.circle(frame, (int(index_tip.x * 640), int(index_tip.y * 480)), 10, (0, 255, 0), -1)
-            cv2.putText(frame, f"Drawing: {color if is_drawing else 'No'}", (10, 30), 
+            cv2.putText(frame, f"Gesture: {gesture}", (10, 30), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
     
     cv2.imshow("Air Canvas Gesture Control", frame)
