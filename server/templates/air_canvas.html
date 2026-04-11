@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Canvas - Gesture Drawing</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/canvas.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <div class="logo-icon">
+                    <i class="fas fa-paintbrush"></i>
+                </div>
+                <h1>Air<span>Canvas</span></h1>
+            </div>
+            <div class="nav-links">
+                <a href="/dashboard" class="btn btn-outline">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <button id="logoutBtn" class="btn btn-outline">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="canvas-container">
+        <!-- Main Canvas -->
+        <div class="canvas-wrapper">
+            <canvas id="drawingCanvas" width="1200" height="700"></canvas>
+
+            <!-- Connection Status -->
+            <div class="canvas-status" id="canvasStatus">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Connecting...</span>
+            </div>
+
+            <!-- Gesture Guide Overlay -->
+            <div class="gesture-overlay" id="gestureOverlay">
+                <div class="gesture-hint" id="gestureHint">
+                    <i class="fas fa-hand-peace"></i>
+                    <span>Waiting for gesture...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="canvas-toolbar">
+            <div class="tool-group">
+                <button class="tool-btn" id="colorRed" style="background: #ff4444;">
+                    <i class="fas fa-palette"></i>
+                </button>
+                <button class="tool-btn" id="colorBlue" style="background: #4444ff;">
+                    <i class="fas fa-palette"></i>
+                </button>
+                <button class="tool-btn" id="colorGreen" style="background: #44ff44;">
+                    <i class="fas fa-palette"></i>
+                </button>
+                <button class="tool-btn" id="colorYellow" style="background: #ffaa44;">
+                    <i class="fas fa-palette"></i>
+                </button>
+                <button class="tool-btn" id="colorPurple" style="background: #aa44ff;">
+                    <i class="fas fa-palette"></i>
+                </button>
+            </div>
+
+            <div class="tool-group">
+                <button class="tool-btn" id="brushSmall" title="Small Brush">
+                    <i class="fas fa-pen-fancy"></i> S
+                </button>
+                <button class="tool-btn" id="brushMedium" title="Medium Brush">
+                    <i class="fas fa-pen-fancy"></i> M
+                </button>
+                <button class="tool-btn" id="brushLarge" title="Large Brush">
+                    <i class="fas fa-pen-fancy"></i> L
+                </button>
+            </div>
+
+            <div class="tool-group">
+                <button class="tool-btn" id="undoBtn" title="Undo (Fist Gesture)">
+                    <i class="fas fa-undo"></i> Undo
+                </button>
+                <button class="tool-btn" id="clearBtn" title="Clear Canvas">
+                    <i class="fas fa-trash"></i> Clear
+                </button>
+            </div>
+
+            <div class="tool-group">
+                <button class="tool-btn" id="saveDrawingBtn" title="Save to Gallery">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button class="tool-btn" id="exportImageBtn" title="Export as Image">
+                    <i class="fas fa-image"></i> PNG
+                </button>
+                <button class="tool-btn" id="exportPdfBtn" title="Export as PDF">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+            </div>
+
+            <div class="tool-group">
+                <button class="tool-btn" id="shareCanvasBtn" title="Share Canvas">
+                    <i class="fas fa-share-alt"></i> Share
+                </button>
+                <button class="tool-btn" id="galleryBtn" title="View Gallery">
+                    <i class="fas fa-images"></i> Gallery
+                </button>
+            </div>
+        </div>
+
+        <!-- Color Info Panel -->
+        <div class="color-info">
+            <h4><i class="fas fa-fingerprint"></i> Finger Colors</h4>
+            <div class="color-list">
+                <div class="color-item"><span class="color-swatch" style="background: #ff4444;"></span> Index Finger -
+                    Red</div>
+                <div class="color-item"><span class="color-swatch" style="background: #4444ff;"></span> Middle Finger -
+                    Blue</div>
+                <div class="color-item"><span class="color-swatch" style="background: #44ff44;"></span> Ring Finger -
+                    Green</div>
+                <div class="color-item"><span class="color-swatch" style="background: #ffaa44;"></span> Pinky Finger -
+                    Yellow</div>
+                <div class="color-item"><span class="color-swatch" style="background: #aa44ff;"></span> Thumb - Purple
+                </div>
+            </div>
+            <div class="brush-info">
+                <i class="fas fa-arrows-alt-h"></i> Hand Distance = Brush Size
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery Modal -->
+    <div id="galleryModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-images"></i> Drawing Gallery</h2>
+            <div id="galleryList" class="gallery-grid"></div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-share-alt"></i> Share Canvas</h2>
+            <p>Share this drawing session with other devices:</p>
+            <div class="share-url">
+                <input type="text" id="shareUrl" readonly>
+                <button id="copyUrlBtn" class="btn btn-primary">Copy URL</button>
+            </div>
+            <div id="connectedDevices" class="connected-devices"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/air_canvas.js"></script>
+</body>
+
+</html>
