@@ -1,3 +1,6 @@
+import gevent.monkey
+gevent.monkey.patch_all()
+
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from flask_socketio import SocketIO
 from flask_cors import CORS
@@ -38,7 +41,7 @@ socketio = SocketIO(
     cors_allowed_origins="*",
     ping_interval=current_config.WEBSOCKET_PING_INTERVAL,
     ping_timeout=current_config.WEBSOCKET_PING_TIMEOUT,
-    async_mode='threading'  # Use threading for better Windows compatibility
+    async_mode='gevent'  # Use gevent for reliable WebSocket upgrades
 )
 
 # Initialize Flask-Login
@@ -213,7 +216,7 @@ if __name__ == '__main__':
     print(f"Python Version: {sys.version.split()[0]}")
     print(f"Debug Mode: {current_config.DEBUG}")
     print(f"Database: SQLite")
-    print(f"WebSocket: Enabled (async_mode='threading')")
+    print(f"WebSocket: Enabled (async_mode='gevent')")
     print("-" * 60)
     print("Access the server at:")
     print(f"   http://localhost:{current_config.PORT}     (local - recommended)")
@@ -236,9 +239,7 @@ if __name__ == '__main__':
             app, 
             host=current_config.HOST, 
             port=current_config.PORT, 
-            debug=current_config.DEBUG,
-            allow_unsafe_werkzeug=True,  # Required for Windows
-            use_reloader=False if not current_config.DEBUG else True
+            debug=current_config.DEBUG
         )
     except KeyboardInterrupt:
         print("\n" + "=" * 60)
