@@ -26,12 +26,13 @@ logger = logging.getLogger(__name__)
 class ServerConnector:
     """Manages authentication and WebSocket connection to the gesture server."""
 
-    def __init__(self, server_url: str = SERVER_URL):
+    def __init__(self, server_url: str = SERVER_URL, device_name: str | None = None):
         self.server_url = server_url.rstrip("/")
         self.token: str | None = None
         self.user_id: str | None = None
         self.username: str | None = None
         self.device_id: str | None = None
+        self.custom_device_name = device_name
 
         self.connected = False
         self.authenticated = False
@@ -117,30 +118,38 @@ class ServerConnector:
             self.connected = True
             logger.info("[ServerConnector] WebSocket connected")
             print("[CONN] WebSocket connected to server")
+            
+            # Auto-register device as soon as connected
+            # Since we pass token in URL, server validates it during handshake
+            self._register_device()
 
         @self.sio.event
         def disconnect():
             self.connected = False
+            self.device_id = None
             self._enabled = False
             logger.info("[ServerConnector] WebSocket disconnected")
             print("[CONN] WebSocket disconnected from server")
 
         @self.sio.on("connected")
-        def on_authenticated(data):
-            print(f"[AUTH] WebSocket authenticated: {data.get('message', 'OK')}")
-            # Register device after auth
-            self._register_device()
+        def on_server_confirm(data):
+            """Server-side confirmation message."""
+            logger.info(f"[ServerConnector] Server confirmed connection: {data.get('message')}")
 
         @self.sio.on("device_registered")
         def on_device_registered(data):
             self.device_id = data.get("device_id")
-            self._enabled = True
-            print(f"[DEVICE] Device registered: {data.get('device_name')} (id={self.device_id})")
+            if self.device_id:
+                self._enabled = True
+                print(f"[DEVICE] OK! Device registered: {data.get('device_name')} (ID: {self.device_id})")
+            else:
+                print(f"[FAIL] Server responded with invalid device registration")
 
         @self.sio.on("error")
         def on_error(data):
-            logger.warning(f"[ServerConnector] Socket error: {data}")
-            print(f"[WARN] Server socket error: {data.get('message', data)}")
+            msg = data.get("message", str(data))
+            logger.warning(f"[ServerConnector] Socket error: {msg}")
+            print(f"[WARN] Server error: {msg}")
 
         @self.sio.on("click_executed")
         def on_click_executed(data):
@@ -187,7 +196,7 @@ class ServerConnector:
         """Send device registration event after WebSocket auth succeeds."""
         if self.connected and self.token:
             import socket as _socket
-            device_name = _socket.gethostname()
+            device_name = self.custom_device_name or _socket.gethostname()
             print(f"[DEVICE] Registering device '{device_name}'...")
             self.sio.emit("register_device", {
                 "device_name": device_name,

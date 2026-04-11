@@ -187,6 +187,7 @@ def parse_args():
     parser.add_argument("--server", default=SERVER_URL, help="Server URL")
     parser.add_argument("--username", default=DEFAULT_USERNAME, help="Login username")
     parser.add_argument("--password", default=DEFAULT_PASSWORD, help="Login password")
+    parser.add_argument("--device-name", default=None, help="Custom device name (defaults to hostname)")
     parser.add_argument("--offline", action="store_true", help="Skip server connection")
     return parser.parse_args()
 
@@ -199,7 +200,7 @@ def main():
     args = parse_args()
 
     # -- Server connection ------------------------------------------------------
-    connector = ServerConnector(server_url=args.server)
+    connector = ServerConnector(server_url=args.server, device_name=args.device_name)
 
     if not args.offline:
         print("=" * 60)
@@ -207,7 +208,17 @@ def main():
         logged_in = connector.login(args.username, args.password)
         if logged_in:
             connector.connect()
-            time.sleep(0.5)  # let WebSocket handshake settle
+            
+            # Wait for registration to complete (maximum 10 seconds)
+            print("[WAIT] Waiting for device registration...")
+            wait_start = time.time()
+            while not connector.device_id and (time.time() - wait_start < 10):
+                time.sleep(0.5)
+            
+            if connector.device_id:
+                print(f"[OK] Ready to go! Device ID: {connector.device_id}")
+            else:
+                print("[WARN] Registration timeout. Running with limited server features.")
     else:
         print("[WARN] Offline mode - no server connection.")
 
@@ -229,17 +240,13 @@ def main():
     # Device-ready flag: in online mode gestures only work after registration
     device_ready = args.offline  # True immediately in offline mode
 
-    if not args.offline:
-        # Wait a moment for device registration to complete
-        for _ in range(10):
-            if connector.device_id:
-                device_ready = True
-                break
-            time.sleep(0.3)
-        if device_ready:
-            print("[OK] Device registered - gestures are active")
-        else:
-            print("[WAIT] Device not yet registered - gestures will activate once registered")
+    # Device-ready flag: in online mode gestures only work after registration
+    device_ready = args.offline or (connector.device_id is not None)
+
+    if not device_ready:
+        print("[STATUS] Gestures are currently DISABLED until device registration completion.")
+    else:
+        print("[STATUS] Gestures are ACTIVE.")
 
     # -- Banner -----------------------------------------------------------------
     print("=" * 60)
