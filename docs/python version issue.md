@@ -131,9 +131,10 @@ pip install Flask-SocketIO==5.3.6
 pip install Flask-CORS==4.0.1
 pip install Flask-Login==0.6.3
 pip install python-socketio==5.11.0
-pip install simple-websocket==1.0.0  #替代eventlet
-pip install bcrypt==4.1.3
-pip install pyjwt==2.8.0
+pip install simple-websocket==1.0.0 
+pip install bcrypt==4.1.3 #it is a a password hashing library , It is used to securely store passwords
+pip install pyjwt==2.8.0 #Python JSON Web Token library , Used for authentication & authorization Helps create and verify JWT tokens
+
 pip install python-dotenv==1.0.1
 pip install opencv-python==4.9.0.80
 pip install numpy==1.26.4
