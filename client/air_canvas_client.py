@@ -269,8 +269,9 @@ while True:
             canvas_x = max(0, min(canvas_x, CANVAS_WIDTH - 1))
             canvas_y = max(0, min(canvas_y, CANVAS_HEIGHT - 1))
             
-            # --- Fix: Gesture Confirmation (Debouncing) ---
-            active_gesture = special_gesture
+            # --- FIX: Call the detect_special_gestures function ---
+            active_gesture = detect_special_gestures(hand_landmarks)
+            # ----------------------------------------------------
             
             # Reset other counters
             for g in gesture_counters:
