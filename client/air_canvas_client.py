@@ -66,7 +66,17 @@ def connect():
 def disconnect():
     global connected
     connected = False
-    print("[✗] WebSocket disconnected")
+    print("[✗] WebSocket disconnected - Attempting to reconnect...")
+
+@sio.on("*")
+def catch_all(event, data):
+    """Log all incoming events for debugging"""
+    if event not in ['drawing_ready']: # Filter noisy events
+        pass
+
+@sio.event
+def connect_error(data):
+    print(f"[✗] Connection error: {data}")
 
 @sio.event
 def drawing_ready(data):
@@ -120,6 +130,14 @@ prev_x, prev_y = None, None
 drawing_mode = True  # Start with drawing mode ON
 current_color = "#ff4444"
 current_size = 5
+
+# --- Fix: Gesture Persistence & Throttling ---
+gesture_counters = {"TOGGLE": 0, "CLEAR": 0, "UNDO": 0}
+GESTURE_CONFIRM_FRAMES = 8  # Must see gesture for 8 frames
+last_emit_time = 0
+MIN_MOVE_DISTANCE = 2       # Only send if moved > 2 pixels
+EMIT_THROTTLE = 0.015       # Max ~60 events per second
+# ---------------------------------------------
 
 # Color mapping for different fingers
 FINGER_COLORS = {
@@ -251,32 +269,57 @@ while True:
             canvas_x = max(0, min(canvas_x, CANVAS_WIDTH - 1))
             canvas_y = max(0, min(canvas_y, CANVAS_HEIGHT - 1))
             
-            # Detect special gestures
-            special_gesture = detect_special_gestures(hand_landmarks)
+            # --- Fix: Gesture Confirmation (Debouncing) ---
+            active_gesture = special_gesture
             
-            # Handle special gestures with debouncing
-            if special_gesture == "TOGGLE" and current_time - last_toggle_time > 0.5:
-                drawing_mode = not drawing_mode
-                status = "ON" if drawing_mode else "OFF"
-                print(f"[✌️] Drawing mode: {status}")
-                if connected:
-                    sio.emit('drawing_toggle', {'enabled': drawing_mode})
-                last_toggle_time = current_time
+            # Reset other counters
+            for g in gesture_counters:
+                if g != active_gesture:
+                    gesture_counters[g] = 0
+            
+            # Increment active gesture counter
+            if active_gesture in gesture_counters:
+                gesture_counters[active_gesture] += 1
+            
+            # Process special gestures only after confirmation
+            if active_gesture == "TOGGLE" and gesture_counters["TOGGLE"] >= GESTURE_CONFIRM_FRAMES:
+                if current_time - last_toggle_time > 1.5:  # Increased cooldown
+                    drawing_mode = not drawing_mode
+                    status = "ON" if drawing_mode else "OFF"
+                    print(f"[✌️] Drawing mode: {status}")
+                    if connected:
+                        try:
+                            sio.emit('drawing_toggle', {'enabled': drawing_mode})
+                        except Exception as e:
+                            print(f"[!] Toggle emit error: {e}")
+                    last_toggle_time = current_time
+                    gesture_counters["TOGGLE"] = 0 # Reset after action
                 continue
             
-            elif special_gesture == "CLEAR" and current_time - last_clear_time > 0.5:
-                print("[✊] Clearing canvas...")
-                if connected:
-                    sio.emit('drawing_clear', {})
-                last_clear_time = current_time
+            elif active_gesture == "CLEAR" and gesture_counters["CLEAR"] >= GESTURE_CONFIRM_FRAMES:
+                if current_time - last_clear_time > 1.0:
+                    print("[✊] Clearing canvas...")
+                    if connected:
+                        try:
+                            sio.emit('drawing_clear', {})
+                        except Exception as e:
+                            print(f"[!] Clear emit error: {e}")
+                    last_clear_time = current_time
+                    gesture_counters["CLEAR"] = 0
                 continue
             
-            elif special_gesture == "UNDO" and current_time - last_undo_time > 0.5:
-                print("[✋] Undo last stroke...")
-                if connected:
-                    sio.emit('drawing_undo', {})
-                last_undo_time = current_time
+            elif active_gesture == "UNDO" and gesture_counters["UNDO"] >= GESTURE_CONFIRM_FRAMES:
+                if current_time - last_undo_time > 1.0:
+                    print("[✋] Undo last stroke...")
+                    if connected:
+                        try:
+                            sio.emit('drawing_undo', {})
+                        except Exception as e:
+                            print(f"[!] Undo emit error: {e}")
+                    last_undo_time = current_time
+                    gesture_counters["UNDO"] = 0
                 continue
+            # -----------------------------------------------
             
             # Normal drawing mode
             if drawing_mode:
@@ -291,15 +334,24 @@ while True:
                     # Calculate brush size
                     current_size = calculate_brush_size(hand_landmarks)
                     
-                    # Draw on canvas (send to server)
+                    # Draw on canvas (send to server with throttling)
                     if prev_x is not None and prev_y is not None and connected:
-                        # Send drawing stroke to server
-                        sio.emit('drawing_stroke', {
-                            'x1': prev_x, 'y1': prev_y,
-                            'x2': canvas_x, 'y2': canvas_y,
-                            'color': current_color,
-                            'size': current_size
-                        })
+                        # Calculate distance moved
+                        dist = math.hypot(canvas_x - prev_x, canvas_y - prev_y)
+                        
+                        # Fix: Only emit if significant movement and not too fast
+                        if dist >= MIN_MOVE_DISTANCE and (current_time - last_emit_time) >= EMIT_THROTTLE:
+                            try:
+                                # Send drawing stroke to server
+                                sio.emit('drawing_stroke', {
+                                    'x1': prev_x, 'y1': prev_y,
+                                    'x2': canvas_x, 'y2': canvas_y,
+                                    'color': current_color,
+                                    'size': current_size
+                                })
+                                last_emit_time = current_time
+                            except Exception as e:
+                                print(f"[!] Stroke emit error: {e}")
                     
                     prev_x, prev_y = canvas_x, canvas_y
                     
