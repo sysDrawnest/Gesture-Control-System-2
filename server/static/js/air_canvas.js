@@ -32,53 +32,90 @@ function initWebSocket() {
     });
 
     socket.on('connect', () => {
-        document.getElementById('statusDot').className = 'status-dot connected';
-        document.getElementById('statusText').textContent = 'Connected';
+        const statusDot = document.getElementById('statusDot');
+        if (statusDot) statusDot.className = 'status-dot connected';
+        const statusText = document.getElementById('statusText');
+        if (statusText) statusText.textContent = 'Connected';
         updateGestureHint('Connected', '✋');
 
         // Register as drawing client
         socket.emit('register_drawing_client', {
-            device_name: 'AirCanvas'
+            device_name: 'WebCanvas'
         });
     });
 
     socket.on('disconnect', () => {
-        document.getElementById('statusDot').className = 'status-dot';
-        document.getElementById('statusText').textContent = 'Disconnected';
+        const statusDot = document.getElementById('statusDot');
+        if (statusDot) statusDot.className = 'status-dot';
+        const statusText = document.getElementById('statusText');
+        if (statusText) statusText.textContent = 'Disconnected';
         updateGestureHint('Reconnecting...', '⚠️');
     });
 
-    socket.on('drawing_stroke', (data) => {
-        // Receive drawing strokes from other clients
-        drawStroke(data);
-    });
+    // ============================================
+    // CRITICAL: Receive drawing data from gesture client
+    // ============================================
+    socket.on('drawing_data', (data) => {
+        console.log('Drawing data received:', data);
 
-    socket.on('drawing_clear', () => {
-        // Explicit clear from gesture or remote
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        saveToHistory();
-        updateGestureHint('Canvas Cleared (Remote)', '🗑️');
-    });
+        if (data.type === 'draw') {
+            // Draw the received stroke on canvas
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(data.x1, data.y1);
+            ctx.lineTo(data.x2, data.y2);
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = data.size;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            ctx.restore();
 
-    socket.on('drawing_undo', () => {
-        // Explicit undo from gesture or remote
-        if (currentStep > 0) {
-            currentStep--;
-            const img = new Image();
-            img.src = drawingHistory[currentStep];
-            img.onload = () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0);
-            };
-            updateGestureHint('Undo (Remote)', '↩️');
+            // Add to history for undo
+            saveToHistory();
+
+            // Update UI
+            updateGestureHint(`Drawing from gesture`, '🎨');
+
+        } else if (data.type === 'clear') {
+            // Clear canvas from gesture
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            saveToHistory();
+            updateGestureHint('Canvas cleared by gesture', '🗑️');
+
+        } else if (data.type === 'undo') {
+            // Undo from gesture
+            if (currentStep > 0) {
+                currentStep--;
+                const img = new Image();
+                img.src = drawingHistory[currentStep];
+                img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                };
+                updateGestureHint('Undo from gesture', '↩️');
+            }
         }
+    });
+
+    socket.on('drawing_ready', (data) => {
+        console.log('Drawing client ready:', data);
+        updateGestureHint(`${data.device} ready to draw`, '✋');
+    });
+
+    socket.on('drawing_mode_toggle', (data) => {
+        console.log('Drawing mode toggled:', data.enabled);
+        updateGestureHint(`Drawing Mode: ${data.enabled ? 'ON' : 'OFF'}`, data.enabled ? '✏️' : '⛔');
     });
 
     socket.on('drawing_shared', (data) => {
         shareRoomId = data.room_id;
-        updateGestureHint('Shared Drawing Active', '🖐️');
-        document.getElementById('shareUrl').value = `${window.location.origin}/air_canvas?room=${shareRoomId}`;
+        updateGestureHint('Drawing session shared!', '🔗');
+        const shareUrl = document.getElementById('shareUrl');
+        if (shareUrl) {
+            shareUrl.value = `${window.location.origin}/air_canvas?room=${shareRoomId}`;
+        }
     });
 }
 
@@ -104,6 +141,8 @@ function draw(e) {
             room_id: shareRoomId,
             x1: pos.x,
             y1: pos.y,
+            x2: pos.x,
+            y2: pos.y,
             color: currentColor,
             size: currentBrushSize
         });
@@ -200,7 +239,9 @@ function clearCanvas() {
 
 function updateGestureHint(text, icon) {
     const hint = document.getElementById('gestureHint');
-    hint.innerHTML = `<i class="fas ${getIconClass(icon)}"></i><span>${text}</span>`;
+    if (hint) {
+        hint.innerHTML = `<i class="fas ${getIconClass(icon)}"></i><span>${text}</span>`;
+    }
 }
 
 function getIconClass(icon) {
@@ -213,7 +254,13 @@ function getIconClass(icon) {
         '🎨': 'fa-palette',
         '✏️': 'fa-pen-fancy',
         '↩️': 'fa-undo',
-        '🗑️': 'fa-trash'
+        '🗑️': 'fa-trash',
+        '⚠️': 'fa-exclamation-triangle',
+        '🔗': 'fa-link',
+        '💾': 'fa-save',
+        '📸': 'fa-camera',
+        '📄': 'fa-file-pdf',
+        '🖼️': 'fa-image'
     };
     return icons[icon] || 'fa-hand-peace';
 }
@@ -278,7 +325,8 @@ async function exportAsPDF() {
 function shareCanvas() {
     if (socket) {
         socket.emit('share_drawing', {});
-        document.getElementById('shareModal').style.display = 'block';
+        const shareModal = document.getElementById('shareModal');
+        if (shareModal) shareModal.style.display = 'block';
     }
 }
 
@@ -292,19 +340,27 @@ async function loadGallery() {
 
         if (data.success) {
             const gallery = document.getElementById('galleryList');
-            gallery.innerHTML = data.drawings.map(drawing => `
-                <div class="gallery-item" onclick="loadDrawing(${drawing.id})">
-                    <img src="${drawing.image_data}" alt="${drawing.name}">
-                    <div class="gallery-item-info">
-                        <strong>${drawing.name}</strong><br>
-                        <small>${new Date(drawing.created_at).toLocaleString()}</small>
+            if (gallery) {
+                gallery.innerHTML = data.drawings.map(drawing => `
+                    <div class="gallery-item" onclick="loadDrawing(${drawing.id})">
+                        <img src="${drawing.image_data}" alt="${drawing.name}">
+                        <div class="gallery-item-info">
+                            <strong>${escapeHtml(drawing.name)}</strong><br>
+                            <small>${new Date(drawing.created_at).toLocaleString()}</small>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            }
         }
     } catch (error) {
         console.error('Error loading gallery:', error);
     }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function loadDrawing(drawingId) {
@@ -322,7 +378,8 @@ function loadDrawing(drawingId) {
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     saveToHistory();
                 };
-                document.getElementById('galleryModal').style.display = 'none';
+                const galleryModal = document.getElementById('galleryModal');
+                if (galleryModal) galleryModal.style.display = 'none';
                 updateGestureHint('Loaded from Gallery', '🖼️');
             }
         });
@@ -339,53 +396,79 @@ canvas.addEventListener('touchstart', startDrawing);
 canvas.addEventListener('touchmove', draw);
 canvas.addEventListener('touchend', stopDrawing);
 
-// Tool buttons
-document.getElementById('colorRed').addEventListener('click', () => setColor('#ff4444'));
-document.getElementById('colorBlue').addEventListener('click', () => setColor('#4444ff'));
-document.getElementById('colorGreen').addEventListener('click', () => setColor('#44ff44'));
-document.getElementById('colorYellow').addEventListener('click', () => setColor('#ffaa44'));
-document.getElementById('colorPurple').addEventListener('click', () => setColor('#aa44ff'));
+// Tool buttons - with null checks
+const colorRed = document.getElementById('colorRed');
+if (colorRed) colorRed.addEventListener('click', () => setColor('#ff4444'));
+const colorBlue = document.getElementById('colorBlue');
+if (colorBlue) colorBlue.addEventListener('click', () => setColor('#4444ff'));
+const colorGreen = document.getElementById('colorGreen');
+if (colorGreen) colorGreen.addEventListener('click', () => setColor('#44ff44'));
+const colorYellow = document.getElementById('colorYellow');
+if (colorYellow) colorYellow.addEventListener('click', () => setColor('#ffaa44'));
+const colorPurple = document.getElementById('colorPurple');
+if (colorPurple) colorPurple.addEventListener('click', () => setColor('#aa44ff'));
 
-document.getElementById('brushSmall').addEventListener('click', () => setBrushSize(3));
-document.getElementById('brushMedium').addEventListener('click', () => setBrushSize(8));
-document.getElementById('brushLarge').addEventListener('click', () => setBrushSize(15));
+const brushSmall = document.getElementById('brushSmall');
+if (brushSmall) brushSmall.addEventListener('click', () => setBrushSize(3));
+const brushMedium = document.getElementById('brushMedium');
+if (brushMedium) brushMedium.addEventListener('click', () => setBrushSize(8));
+const brushLarge = document.getElementById('brushLarge');
+if (brushLarge) brushLarge.addEventListener('click', () => setBrushSize(15));
 
-document.getElementById('undoBtn').addEventListener('click', undoLast);
-document.getElementById('clearBtn').addEventListener('click', clearCanvas);
-document.getElementById('saveDrawingBtn').addEventListener('click', saveDrawing);
-document.getElementById('exportImageBtn').addEventListener('click', exportAsImage);
-document.getElementById('exportPdfBtn').addEventListener('click', exportAsPDF);
-document.getElementById('shareCanvasBtn').addEventListener('click', shareCanvas);
-document.getElementById('galleryBtn').addEventListener('click', () => {
+const undoBtn = document.getElementById('undoBtn');
+if (undoBtn) undoBtn.addEventListener('click', undoLast);
+const clearBtn = document.getElementById('clearBtn');
+if (clearBtn) clearBtn.addEventListener('click', clearCanvas);
+const saveDrawingBtn = document.getElementById('saveDrawingBtn');
+if (saveDrawingBtn) saveDrawingBtn.addEventListener('click', saveDrawing);
+const exportImageBtn = document.getElementById('exportImageBtn');
+if (exportImageBtn) exportImageBtn.addEventListener('click', exportAsImage);
+const exportPdfBtn = document.getElementById('exportPdfBtn');
+if (exportPdfBtn) exportPdfBtn.addEventListener('click', exportAsPDF);
+const shareCanvasBtn = document.getElementById('shareCanvasBtn');
+if (shareCanvasBtn) shareCanvasBtn.addEventListener('click', shareCanvas);
+const galleryBtn = document.getElementById('galleryBtn');
+if (galleryBtn) galleryBtn.addEventListener('click', () => {
     loadGallery();
-    document.getElementById('galleryModal').style.display = 'block';
+    const galleryModal = document.getElementById('galleryModal');
+    if (galleryModal) galleryModal.style.display = 'block';
 });
 
 // Modal handling
 document.querySelectorAll('.close').forEach(close => {
     close.addEventListener('click', () => {
-        document.getElementById('galleryModal').style.display = 'none';
-        document.getElementById('shareModal').style.display = 'none';
+        const galleryModal = document.getElementById('galleryModal');
+        if (galleryModal) galleryModal.style.display = 'none';
+        const shareModal = document.getElementById('shareModal');
+        if (shareModal) shareModal.style.display = 'none';
     });
 });
 
-document.getElementById('copyUrlBtn').addEventListener('click', () => {
-    const urlInput = document.getElementById('shareUrl');
-    urlInput.select();
-    document.execCommand('copy');
-    alert('URL copied to clipboard!');
-});
+const copyUrlBtn = document.getElementById('copyUrlBtn');
+if (copyUrlBtn) {
+    copyUrlBtn.addEventListener('click', () => {
+        const urlInput = document.getElementById('shareUrl');
+        if (urlInput) {
+            urlInput.select();
+            document.execCommand('copy');
+            alert('URL copied to clipboard!');
+        }
+    });
+}
 
 // Logout
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-    await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (socket) socket.disconnect();
+        localStorage.removeItem('token');
+        window.location.href = '/login';
     });
-    if (socket) socket.disconnect();
-    localStorage.removeItem('token');
-    window.location.href = '/login';
-});
+}
 
 // Initialize
 initWebSocket();

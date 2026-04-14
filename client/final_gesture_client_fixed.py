@@ -339,7 +339,7 @@ def main():
     last_gesture = None
     gesture_enabled = True
     last_screenshot_time = 0
-    SCREENSHOT_HOLD_TIME = 1.0  # Hold open palm for 1 second to take screenshot
+    SCREENSHOT_HOLD_TIME = 4.0  # Hold open palm for 4 seconds to take screenshot
     ZOOM_COOLDOWN = 0.2  # 200ms between zoom events
 
     show_debug = True
@@ -367,7 +367,7 @@ def main():
     print(f"Device:  {'[registered: ' + str(connector.device_id) + ']' if connector.device_id else '[pending]'}")
     print()
     print("NEW GESTURES:")
-    print("   OPEN PALM (hold 1s) -> Take Screenshot")
+    print("   OPEN PALM (hold 4s) -> Take Screenshot")
     print("   PINCH (2 fingers)   -> Left Click")
     print("   PINCH (3 fingers)   -> Zoom In/Out")
     print("   PEACE               -> Right Click")
@@ -549,7 +549,7 @@ def main():
                     cv2.putText(frame, f"Screenshot: {int(hold_progress*100)}%",
                                 (10, 145), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 0), 1)
                 else:
-                    cv2.putText(frame, "Hold OPEN PALM for Screenshot",
+                   cv2.putText(frame, "Hold OPEN PALM for 4s Screenshot",
                                 (10, 148), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (150, 150, 150), 1)
                 
                 net_label = "Server: online" if connector.is_online else "Server: offline"
