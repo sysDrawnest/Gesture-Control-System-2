@@ -281,6 +281,22 @@ class ServerConnector:
                     "device_id": self.device_id,
                     "confidence": confidence
                 })
+            elif gesture_type == "ZOOM":
+                amount = (extra or {}).get("amount", 0)
+                self.sio.emit("gesture_zoom", {
+                    "amount": amount,
+                    "confidence": confidence,
+                    "device_id": self.device_id,
+                })
+                print(f"[SERVER] Sent zoom: {amount}")
+            elif gesture_type == "SCREENSHOT":
+                path = (extra or {}).get("path", "")
+                self.sio.emit("gesture_screenshot", {
+                    "path": path,
+                    "confidence": confidence,
+                    "device_id": self.device_id,
+                })
+                print(f"[SERVER] Sent screenshot notification")
         except Exception as e:
             logger.debug(f"[ServerConnector] send_gesture_event error: {e}")
 

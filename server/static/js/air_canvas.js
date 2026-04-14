@@ -110,11 +110,43 @@ function initWebSocket() {
     });
 
     socket.on('drawing_shared', (data) => {
-        shareRoomId = data.room_id;
-        updateGestureHint('Drawing session shared!', '🔗');
         const shareUrl = document.getElementById('shareUrl');
         if (shareUrl) {
             shareUrl.value = `${window.location.origin}/air_canvas?room=${shareRoomId}`;
+        }
+    });
+
+    // Handle general gesture activity for visual feedback
+    socket.on('gesture_activity', (data) => {
+        const gesture = data.gesture;
+        if (gesture === 'CURSOR_MOVE') return;
+
+        console.log('[Canvas] Gesture received:', gesture);
+
+        if (gesture === 'ZOOM_IN') {
+            updateGestureHint('Zooming In', '🔍+');
+        } else if (gesture === 'ZOOM_OUT') {
+            updateGestureHint('Zooming Out', '🔍-');
+        } else if (gesture === 'SCREENSHOT') {
+            updateGestureHint('Screenshot Taken!', '📸');
+            // Flash effect for screenshot
+            const overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.backgroundColor = 'white';
+            overlay.style.zIndex = '9999';
+            overlay.style.opacity = '0.8';
+            overlay.style.transition = 'opacity 0.5s ease-out';
+            document.body.appendChild(overlay);
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 500);
+            }, 50);
+        } else if (gesture.includes('CLICK')) {
+            updateGestureHint(gesture.replace('_', ' '), '🤏');
         }
     });
 }

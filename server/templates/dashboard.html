@@ -712,8 +712,18 @@
                                 </div>
                                 <div class="gesture-item">
                                     <span class="gesture-icon">🖐️⬆️⬇️</span>
-                                    <span>Two Fingers Scroll</span>
+                                    <span>Three Fingers Scroll</span>
                                     <span class="gesture-action"><i class="fas fa-arrows-alt-v"></i> Scroll Page</span>
+                                </div>
+                                <div class="gesture-item">
+                                    <span class="gesture-icon">🤏🔍</span>
+                                    <span>3-Finger Pinch</span>
+                                    <span class="gesture-action"><i class="fas fa-search-plus"></i> Zoom In/Out</span>
+                                </div>
+                                <div class="gesture-item">
+                                    <span class="gesture-icon">✋📸</span>
+                                    <span>Open Palm (Hold)</span>
+                                    <span class="gesture-action"><i class="fas fa-camera"></i> Screenshot</span>
                                 </div>
                             </div>
                         </div>
@@ -1058,6 +1068,22 @@
                     // Don't log every move to activity
                     updateGestureDisplay(displayType, displayMessage, confidence, deviceId);
                     return;
+                } else if (gesture.includes('ZOOM')) {
+                    displayType = 'zoom';
+                    displayMessage = gesture.replace('_', ' ');
+                    icon = 'fa-search';
+                    activityIcon = 'fa-search';
+                    playClickSound(1200, 'square');
+                    announce(gesture.toLowerCase().replace('_', ' '));
+                    triggerHaptic(40);
+                } else if (gesture === 'SCREENSHOT') {
+                    displayType = 'screenshot';
+                    displayMessage = 'Screenshot Saved';
+                    icon = 'fa-camera';
+                    activityIcon = 'fa-camera';
+                    playClickSound(1500, 'sine');
+                    announce('screenshot taken');
+                    triggerHaptic(150);
                 } else if (gesture === 'DEVICE_CONNECTED') {
                     addActivity(`<i class="fas fa-plug"></i> <b>${deviceName}</b> connected (${data.username})`);
                     loadDevices();  // refresh device list
@@ -1080,6 +1106,8 @@
                 'move': '\ud83d\udc49',
                 'click': '\ud83d\udc46',
                 'scroll': '\ud83d\udcdc',
+                'zoom': '\ud83d\udd0d',
+                'screenshot': '\ud83d\udcf7',
                 'enable': '\u270b',
                 'disable': '\u270a'
             };

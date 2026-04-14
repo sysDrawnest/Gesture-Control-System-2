@@ -294,6 +294,71 @@ def register_socket_events(socketio):
             'timestamp': time.time(),
         }, socketio, client['user_id'])
 
+    @socketio.on('gesture_zoom')
+    def handle_gesture_zoom(data):
+        """Handle zoom events - log to DB and broadcast."""
+        sid = request.sid
+        if sid not in connected_clients:
+            return
+
+        client = connected_clients[sid]
+        if client.get('is_dashboard'):
+            return
+
+        device_id = client.get('device_id')
+        if not device_id:
+            return
+
+        amount = data.get('amount', 0)
+        confidence = data.get('confidence', 0.95)
+        gesture_name = 'ZOOM_IN' if amount > 0 else 'ZOOM_OUT' if amount < 0 else 'ZOOM'
+
+        print(f"[WS] Zoom: {gesture_name} ({amount}) from {client.get('device_name')}")
+
+        _log_gesture(client['user_id'], device_id, gesture_name.lower(), confidence)
+
+        _broadcast_to_dashboard('gesture_activity', {
+            'gesture': gesture_name,
+            'device_id': device_id,
+            'device_name': client.get('device_name', 'Unknown'),
+            'username': client['username'],
+            'confidence': confidence,
+            'amount': amount,
+            'timestamp': time.time(),
+        }, socketio, client['user_id'])
+
+    @socketio.on('gesture_screenshot')
+    def handle_gesture_screenshot(data):
+        """Handle screenshot events - log to DB and broadcast."""
+        sid = request.sid
+        if sid not in connected_clients:
+            return
+
+        client = connected_clients[sid]
+        if client.get('is_dashboard'):
+            return
+
+        device_id = client.get('device_id')
+        if not device_id:
+            return
+
+        confidence = data.get('confidence', 0.95)
+        path = data.get('path', '')
+
+        print(f"[WS] Screenshot from {client.get('device_name')}")
+
+        _log_gesture(client['user_id'], device_id, 'screenshot', confidence)
+
+        _broadcast_to_dashboard('gesture_activity', {
+            'gesture': 'SCREENSHOT',
+            'device_id': device_id,
+            'device_name': client.get('device_name', 'Unknown'),
+            'username': client['username'],
+            'confidence': confidence,
+            'path': path,
+            'timestamp': time.time(),
+        }, socketio, client['user_id'])
+
     # ------------------------------------------------------------------
     # Air Canvas Drawing Events
     # ------------------------------------------------------------------

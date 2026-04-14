@@ -11,6 +11,7 @@ def token_required(f):
         token = request.headers.get('Authorization')
         
         if not token:
+            
             return jsonify({'error': 'Token is missing'}), 401
         
         # Remove 'Bearer ' prefix if present
