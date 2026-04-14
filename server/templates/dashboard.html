@@ -56,6 +56,119 @@
             gap: 0.5rem;
         }
 
+        /* Feature Grid for Keyboard & Games */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #f9fafb, #ffffff);
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #6366f1;
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card h4 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .feature-card p {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .feature-badge {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #6366f1;
+            font-size: 0.65rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            margin-top: 0.5rem;
+        }
+
+        /* Game Cards */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .game-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: #6366f1;
+        }
+
+        .game-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .game-card h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+            color: #1f2937;
+        }
+
+        .game-card p {
+            font-size: 0.7rem;
+            color: #6b7280;
+        }
+
+        .game-difficulty {
+            display: inline-block;
+            font-size: 0.6rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            margin-top: 0.5rem;
+        }
+
+        .difficulty-easy {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .difficulty-medium {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .difficulty-hard {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
         /* Devices List */
         .devices-list {
             max-height: 300px;
@@ -367,6 +480,10 @@
             .gesture-grid {
                 grid-template-columns: 1fr;
             }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Scrollbar */
@@ -547,6 +664,32 @@
         .user-name {
             color: #374151;
         }
+
+        /* Keyboard Preview */
+        .keyboard-preview {
+            background: #1e1e2e;
+            border-radius: 12px;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+            font-family: monospace;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        .key-row {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .key-demo {
+            background: #2d2d3d;
+            padding: 4px 8px;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 10px;
+        }
     </style>
 </head>
 
@@ -619,6 +762,98 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- NEW: Keyboard Section -->
+                    <div class="card">
+                        <h3><i class="fas fa-keyboard"></i> Virtual Keyboard</h3>
+                        <div class="feature-grid">
+                            <div class="feature-card" id="launchKeyboardBtn">
+                                <div class="feature-icon">⌨️</div>
+                                <h4>Launch Keyboard</h4>
+                                <p>Open on-screen keyboard controlled by gestures</p>
+                                <span class="feature-badge">Peace Sign to Open</span>
+                            </div>
+                            <div class="feature-card" id="keyboardSettingsBtn">
+                                <div class="feature-icon">⚙️</div>
+                                <h4>Keyboard Settings</h4>
+                                <p>Layout, size, and prediction settings</p>
+                                <span class="feature-badge">QWERTY | Numbers | Symbols</span>
+                            </div>
+                        </div>
+                        <div class="keyboard-preview">
+                            <div class="key-row">
+                                <span class="key-demo">Q</span>
+                                <span class="key-demo">W</span>
+                                <span class="key-demo">E</span>
+                                <span class="key-demo">R</span>
+                                <span class="key-demo">T</span>
+                                <span class="key-demo">Y</span>
+                            </div>
+                            <div class="key-row">
+                                <span class="key-demo">A</span>
+                                <span class="key-demo">S</span>
+                                <span class="key-demo">D</span>
+                                <span class="key-demo">F</span>
+                                <span class="key-demo">G</span>
+                                <span class="key-demo">H</span>
+                            </div>
+                            <div class="key-row">
+                                <span class="key-demo">Z</span>
+                                <span class="key-demo">X</span>
+                                <span class="key-demo">C</span>
+                                <span class="key-demo">V</span>
+                                <span class="key-demo">B</span>
+                                <span class="key-demo">N</span>
+                            </div>
+                            <p style="font-size: 10px; margin-top: 8px; color: #6b7280;">
+                                <i class="fas fa-info-circle"></i> Use POINT to hover, PINCH to press
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Games Section -->
+                    <div class="card">
+                        <h3><i class="fas fa-gamepad"></i> Gesture Games</h3>
+                        <div class="games-grid">
+                            <div class="game-card" data-game="dino">
+                                <div class="game-icon">🦖</div>
+                                <h4>Dino Runner</h4>
+                                <p>Jump over obstacles with a flick!</p>
+                                <span class="game-difficulty difficulty-easy">Easy</span>
+                            </div>
+                            <div class="game-card" data-game="flappy">
+                                <div class="game-icon">🐦</div>
+                                <h4>Flappy Gesture</h4>
+                                <p>Flap through pipes with finger taps</p>
+                                <span class="game-difficulty difficulty-medium">Medium</span>
+                            </div>
+                            <div class="game-card" data-game="whack">
+                                <div class="game-icon">🔨</div>
+                                <h4>Whack-A-Mole</h4>
+                                <p>Point and pinch to whack moles</p>
+                                <span class="game-difficulty difficulty-easy">Easy</span>
+                            </div>
+                            <div class="game-card" data-game="memory">
+                                <div class="game-icon">🧠</div>
+                                <h4>Memory Match</h4>
+                                <p>Use gestures to flip cards</p>
+                                <span class="game-difficulty difficulty-medium">Medium</span>
+                            </div>
+                            <div class="game-card" data-game="space">
+                                <div class="game-icon">🚀</div>
+                                <h4>Space Shooter</h4>
+                                <p>Pinch to shoot asteroids</p>
+                                <span class="game-difficulty difficulty-hard">Hard</span>
+                            </div>
+                            <div class="game-card" data-game="piano">
+                                <div class="game-icon">🎹</div>
+                                <h4>Gesture Piano</h4>
+                                <p>Play music with finger movements</p>
+                                <span class="game-difficulty difficulty-easy">Easy</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <h3><i class="fas fa-sliders-h"></i> UX Settings</h3>
                         <div class="ux-toggle">
@@ -698,7 +933,8 @@
                                 <div class="gesture-item">
                                     <span class="gesture-icon">✌️</span>
                                     <span>Peace Sign</span>
-                                    <span class="gesture-action"><i class="fas fa-hand-peace"></i> Right Click</span>
+                                    <span class="gesture-action"><i class="fas fa-hand-peace"></i> Right Click / Open
+                                        Keyboard</span>
                                 </div>
                                 <div class="gesture-item">
                                     <span class="gesture-icon">✋</span>
@@ -742,6 +978,43 @@
         </div>
     </main>
 
+    <!-- Keyboard Modal -->
+    <div id="keyboardModal" class="overlay">
+        <div class="overlay-content" style="max-width: 800px; width: 95%;">
+            <i class="fas fa-keyboard fa-3x" style="color: #6366f1;"></i>
+            <h2>Virtual Keyboard</h2>
+            <div id="keyboardTextDisplay"
+                style="background: #f9fafb; padding: 1rem; border-radius: 12px; margin: 1rem 0; min-height: 60px; font-size: 1.2rem; border: 1px solid #e5e7eb;">
+            </div>
+            <div id="keyboardLayout" style="margin: 1rem 0;"></div>
+            <div class="ux-btn-group">
+                <button id="closeKeyboardBtn" class="btn-ux">Close</button>
+                <button id="keyboardSettingsBtnModal" class="btn-ux btn-primary">Settings</button>
+            </div>
+            <p style="font-size: 0.75rem; margin-top: 1rem; color: #6b7280;">
+                <i class="fas fa-hand-peace"></i> Gesture: Peace to open/close | POINT to hover | PINCH to press
+            </p>
+        </div>
+    </div>
+
+    <!-- Game Modal -->
+    <div id="gameModal" class="overlay">
+        <div class="overlay-content" style="max-width: 600px;">
+            <div id="gameContent">
+                <h2 id="gameTitle">Loading Game...</h2>
+                <div id="gameCanvas"
+                    style="background: #1e1e2e; border-radius: 12px; margin: 1rem 0; min-height: 300px; display: flex; align-items: center; justify-content: center;">
+                    <p style="color: white;">Game will load here...</p>
+                </div>
+                <div id="gameScore" style="font-size: 1.5rem; font-weight: bold; color: #6366f1;">Score: 0</div>
+                <div class="ux-btn-group">
+                    <button id="closeGameBtn" class="btn-ux">Close Game</button>
+                    <button id="restartGameBtn" class="btn-ux btn-primary">Restart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tutorial Overlay -->
     <div id="tutorialOverlay" class="overlay">
         <div class="overlay-content">
@@ -764,7 +1037,8 @@
                 <div class="tutorial-step" data-step="4">
                     <span class="tutorial-image">✌️</span>
                     <h2>Step 4: Peace</h2>
-                    <p>Show a peace sign to perform a <strong>right click</strong>.</p>
+                    <p>Show a peace sign to perform a <strong>right click</strong> or open the <strong>virtual
+                            keyboard</strong>.</p>
                 </div>
                 <div class="tutorial-step" data-step="5">
                     <span class="tutorial-image">✊</span>
@@ -794,15 +1068,6 @@
         </div>
     </div>
 
-    <!-- Add to the main content area -->
-    <div class="card">
-        <h3><i class="fas fa-paintbrush"></i> Air Canvas</h3>
-        <p>Draw in the air with your fingers!</p>
-        <a href="/air_canvas" class="btn btn-primary">
-            <i class="fas fa-paintbrush"></i> Launch Air Canvas
-        </a>
-    </div>
-
     <script>
         let socket = null;
         let token = localStorage.getItem('token');
@@ -814,6 +1079,11 @@
         let gestureHistory = [];
         let sessionInterval = null;
         const DAILY_GOAL = 1000;
+
+        // Game State
+        let currentGame = null;
+        let gameScore = 0;
+        let gameInterval = null;
 
         // Check authentication
         if (!token) {
@@ -862,12 +1132,378 @@
             }
         }
 
+        // Keyboard Functions
+        let keyboardActive = false;
+        let keyboardText = "";
+
+        function renderKeyboard() {
+            const layouts = {
+                qwerty: [
+                    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '⌫'],
+                    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+                    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '↵'],
+                    ['⇧', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '?'],
+                    ['SPACE', '←', '→']
+                ]
+            };
+
+            const layout = layouts.qwerty;
+            let html = '';
+            layout.forEach(row => {
+                html += '<div style="display: flex; justify-content: center; gap: 5px; margin-bottom: 5px;">';
+                row.forEach(key => {
+                    let displayKey = key;
+                    let width = '50px';
+                    if (key === 'SPACE') width = '200px';
+                    if (key === '⌫') displayKey = '⌫';
+                    if (key === '↵') displayKey = '↵';
+                    if (key === '⇧') displayKey = '⇧';
+                    html += `<button class="key-btn" data-key="${key}" style="width: ${width}; padding: 12px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">${displayKey}</button>`;
+                });
+                html += '</div>';
+            });
+            document.getElementById('keyboardLayout').innerHTML = html;
+
+            // Add event listeners to keys
+            document.querySelectorAll('.key-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const key = btn.dataset.key;
+                    handleKeyPress(key);
+                });
+            });
+        }
+
+        function handleKeyPress(key) {
+            if (key === '⌫') {
+                keyboardText = keyboardText.slice(0, -1);
+            } else if (key === '↵') {
+                keyboardText += '\n';
+            } else if (key === '⇧') {
+                // Shift functionality - just visual for now
+                playClickSound(600);
+            } else if (key === 'SPACE') {
+                keyboardText += ' ';
+            } else if (key === '←') {
+                // Left arrow
+            } else if (key === '→') {
+                // Right arrow
+            } else {
+                keyboardText += key;
+            }
+            document.getElementById('keyboardTextDisplay').innerHTML = keyboardText || '<span style="color: #9ca3af;">Type something...</span>';
+            playClickSound(400);
+            triggerHaptic(20);
+        }
+
+        // Game Functions
+        const games = {
+            dino: {
+                name: "Dino Runner",
+                init: function () {
+                    gameScore = 0;
+                    updateGameScore();
+                    startDinoGame();
+                }
+            },
+            flappy: {
+                name: "Flappy Gesture",
+                init: function () {
+                    gameScore = 0;
+                    updateGameScore();
+                    startFlappyGame();
+                }
+            },
+            whack: {
+                name: "Whack-A-Mole",
+                init: function () {
+                    gameScore = 0;
+                    updateGameScore();
+                    startWhackGame();
+                }
+            },
+            memory: {
+                name: "Memory Match",
+                init: function () {
+                    gameScore = 0;
+                    updateGameScore();
+                    startMemoryGame();
+                }
+            },
+            space: {
+                name: "Space Shooter",
+                init: function () {
+                    gameScore = 0;
+                    updateGameScore();
+                    startSpaceGame();
+                }
+            },
+            piano: {
+                name: "Gesture Piano",
+                init: function () {
+                    gameScore = 0;
+                    updateGameScore();
+                    startPianoGame();
+                }
+            }
+        };
+
+        function updateGameScore() {
+            document.getElementById('gameScore').innerHTML = `Score: ${gameScore}`;
+        }
+
+        // Simple game implementations
+        function startDinoGame() {
+            const canvas = document.getElementById('gameCanvas');
+            canvas.innerHTML = `
+                <div style="text-align: center; color: white;">
+                    <div style="font-size: 3rem;">🦖</div>
+                    <div style="margin-top: 20px;">
+                        <button class="game-control" data-action="jump" style="padding: 10px 20px; margin: 5px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">Jump (Pinch)</button>
+                    </div>
+                    <p style="margin-top: 20px;">Use PINCH gesture to jump over obstacles!</p>
+                    <p>Score: <span id="dinoScore">0</span></p>
+                </div>
+            `;
+
+            let dinoScore = 0;
+            const scoreSpan = canvas.querySelector('#dinoScore');
+            const jumpBtn = canvas.querySelector('.game-control');
+
+            if (jumpBtn) {
+                jumpBtn.addEventListener('click', () => {
+                    dinoScore++;
+                    if (scoreSpan) scoreSpan.textContent = dinoScore;
+                    gameScore = dinoScore;
+                    updateGameScore();
+                    playClickSound(500);
+                    triggerHaptic(30);
+                });
+            }
+        }
+
+        function startFlappyGame() {
+            const canvas = document.getElementById('gameCanvas');
+            canvas.innerHTML = `
+                <div style="text-align: center; color: white;">
+                    <div style="font-size: 3rem;">🐦</div>
+                    <div style="margin-top: 20px;">
+                        <button class="game-control" data-action="flap" style="padding: 10px 20px; margin: 5px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">Flap (Pinch)</button>
+                    </div>
+                    <p style="margin-top: 20px;">Use PINCH gesture to flap through pipes!</p>
+                    <p>Score: <span id="flappyScore">0</span></p>
+                </div>
+            `;
+
+            let flappyScore = 0;
+            const scoreSpan = canvas.querySelector('#flappyScore');
+            const flapBtn = canvas.querySelector('.game-control');
+
+            if (flapBtn) {
+                flapBtn.addEventListener('click', () => {
+                    flappyScore++;
+                    if (scoreSpan) scoreSpan.textContent = flappyScore;
+                    gameScore = flappyScore;
+                    updateGameScore();
+                    playClickSound(600);
+                    triggerHaptic(30);
+                });
+            }
+        }
+
+        function startWhackGame() {
+            const canvas = document.getElementById('gameCanvas');
+            canvas.innerHTML = `
+                <div style="text-align: center; color: white;">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 20px;">
+                        ${Array(9).fill().map((_, i) => `<button class="mole-hole" data-hole="${i}" style="padding: 20px; background: #4a5568; border: none; border-radius: 12px; cursor: pointer; font-size: 2rem;">🕳️</button>`).join('')}
+                    </div>
+                    <p>Score: <span id="whackScore">0</span></p>
+                </div>
+            `;
+
+            let whackScore = 0;
+            const scoreSpan = canvas.querySelector('#whackScore');
+            const holes = canvas.querySelectorAll('.mole-hole');
+
+            holes.forEach(hole => {
+                hole.addEventListener('click', () => {
+                    if (hole.textContent === '🐭') {
+                        whackScore++;
+                        if (scoreSpan) scoreSpan.textContent = whackScore;
+                        gameScore = whackScore;
+                        updateGameScore();
+                        hole.textContent = '🕳️';
+                        playClickSound(800);
+                        triggerHaptic(50);
+                    }
+                });
+            });
+
+            // Spawn moles randomly
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(() => {
+                const randomHole = holes[Math.floor(Math.random() * holes.length)];
+                if (randomHole.textContent === '🕳️') {
+                    randomHole.textContent = '🐭';
+                    setTimeout(() => {
+                        if (randomHole.textContent === '🐭') randomHole.textContent = '🕳️';
+                    }, 1000);
+                }
+            }, 1500);
+        }
+
+        function startMemoryGame() {
+            const canvas = document.getElementById('gameCanvas');
+            const cards = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
+            const doubled = [...cards, ...cards];
+            const shuffled = doubled.sort(() => Math.random() - 0.5);
+
+            canvas.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 20px;">
+                    ${shuffled.map((card, i) => `<button class="memory-card" data-card="${card}" data-index="${i}" style="padding: 20px; background: #6366f1; border: none; border-radius: 12px; cursor: pointer; font-size: 2rem;">?</button>`).join('')}
+                </div>
+                <p>Matches: <span id="memoryScore">0</span></p>
+            `;
+
+            let matches = 0;
+            let selected = null;
+            let lockBoard = false;
+            const scoreSpan = canvas.querySelector('#memoryScore');
+            const cardButtons = canvas.querySelectorAll('.memory-card');
+
+            cardButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (lockBoard || btn.textContent !== '?') return;
+
+                    btn.textContent = btn.dataset.card;
+
+                    if (!selected) {
+                        selected = btn;
+                    } else if (selected.dataset.card === btn.dataset.card && selected !== btn) {
+                        matches++;
+                        if (scoreSpan) scoreSpan.textContent = matches;
+                        gameScore = matches;
+                        updateGameScore();
+                        selected = null;
+                        playClickSound(500);
+                        triggerHaptic(30);
+                    } else if (selected !== btn) {
+                        lockBoard = true;
+                        setTimeout(() => {
+                            selected.textContent = '?';
+                            btn.textContent = '?';
+                            selected = null;
+                            lockBoard = false;
+                        }, 1000);
+                    }
+                });
+            });
+        }
+
+        function startSpaceGame() {
+            const canvas = document.getElementById('gameCanvas');
+            canvas.innerHTML = `
+                <div style="text-align: center; color: white;">
+                    <div style="font-size: 3rem;">🚀</div>
+                    <div style="margin-top: 20px;">
+                        <button class="game-control" data-action="shoot" style="padding: 10px 20px; margin: 5px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">Shoot (Pinch)</button>
+                    </div>
+                    <p style="margin-top: 20px;">Use PINCH gesture to shoot asteroids!</p>
+                    <p>Score: <span id="spaceScore">0</span></p>
+                </div>
+            `;
+
+            let spaceScore = 0;
+            const scoreSpan = canvas.querySelector('#spaceScore');
+            const shootBtn = canvas.querySelector('.game-control');
+
+            if (shootBtn) {
+                shootBtn.addEventListener('click', () => {
+                    spaceScore++;
+                    if (scoreSpan) scoreSpan.textContent = spaceScore;
+                    gameScore = spaceScore;
+                    updateGameScore();
+                    playClickSound(900);
+                    triggerHaptic(40);
+                });
+            }
+        }
+
+        function startPianoGame() {
+            const canvas = document.getElementById('gameCanvas');
+            const notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+
+            canvas.innerHTML = `
+                <div style="display: flex; justify-content: center; gap: 10px; padding: 20px;">
+                    ${notes.map(note => `<button class="piano-key" data-note="${note}" style="padding: 40px 20px; background: white; color: #1f2937; border: 2px solid #6366f1; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold;">${note}</button>`).join('')}
+                </div>
+                <p style="text-align: center;">Play music with gestures! Click keys or use POINT+PINCH</p>
+            `;
+
+            const keys = canvas.querySelectorAll('.piano-key');
+            keys.forEach(key => {
+                key.addEventListener('click', () => {
+                    playClickSound(440 * (notes.indexOf(key.dataset.note) + 1) / 4, 'sine');
+                    triggerHaptic(20);
+                    key.style.transform = 'scale(0.95)';
+                    setTimeout(() => key.style.transform = '', 100);
+                });
+            });
+        }
+
         // Initialize dashboard
         async function init() {
+            loadUXSettings();
             await loadUserInfo();
             await loadDevices();
             initWebSocket();
             startSessionTimer();
+            setupEventListeners();
+            renderKeyboard();
+        }
+
+        function setupEventListeners() {
+            // Keyboard launch
+            document.getElementById('launchKeyboardBtn').addEventListener('click', () => {
+                document.getElementById('keyboardModal').style.display = 'flex';
+                keyboardActive = true;
+                announce("Virtual keyboard opened");
+            });
+
+            document.getElementById('closeKeyboardBtn').addEventListener('click', () => {
+                document.getElementById('keyboardModal').style.display = 'none';
+                keyboardActive = false;
+            });
+
+            document.getElementById('keyboardSettingsBtnModal').addEventListener('click', () => {
+                alert("Keyboard Settings:\n- Layout: QWERTY\n- Word prediction: Coming soon\n- Size: Adjustable");
+            });
+
+            // Game cards
+            document.querySelectorAll('.game-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const gameId = card.dataset.game;
+                    if (games[gameId]) {
+                        currentGame = gameId;
+                        document.getElementById('gameTitle').innerHTML = games[gameId].name;
+                        document.getElementById('gameModal').style.display = 'flex';
+                        games[gameId].init();
+                        announce(`Starting ${games[gameId].name}`);
+                    }
+                });
+            });
+
+            document.getElementById('closeGameBtn').addEventListener('click', () => {
+                document.getElementById('gameModal').style.display = 'none';
+                if (gameInterval) clearInterval(gameInterval);
+            });
+
+            document.getElementById('restartGameBtn').addEventListener('click', () => {
+                if (currentGame && games[currentGame]) {
+                    games[currentGame].init();
+                    announce("Game restarted");
+                }
+            });
         }
 
         async function loadUserInfo() {
@@ -935,17 +1571,13 @@
 
         async function deleteDevice(deviceId, event) {
             if (event) event.stopPropagation();
-
             if (!confirm('Are you sure you want to delete this device?')) return;
 
             try {
                 const response = await fetch(`/api/devices/${deviceId}`, {
                     method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-
                 const data = await response.json();
                 if (data.success) {
                     addActivity(`<i class="fas fa-trash"></i> Device deleted successfully`);
@@ -966,7 +1598,7 @@
         window.selectDevice = function (deviceId) {
             currentDeviceId = deviceId;
             updateDeviceInfo();
-            loadDevices(); // Refresh to show active state
+            loadDevices();
             addActivity(`<i class="fas fa-exchange-alt"></i> Switched to device ID: ${deviceId}`);
         };
 
@@ -986,7 +1618,6 @@
             });
 
             socket.on('connect', () => {
-                console.log('[Dashboard] WebSocket connected');
                 const statusDot = document.getElementById('connectionStatus');
                 statusDot.className = 'status-dot connected';
                 document.getElementById('statusText').innerHTML = '<i class="fas fa-link"></i> Connected';
@@ -994,139 +1625,84 @@
             });
 
             socket.on('disconnect', () => {
-                console.log('[Dashboard] WebSocket disconnected');
                 document.getElementById('connectionStatus').className = 'status-dot disconnected';
                 document.getElementById('statusText').innerHTML = '<i class="fas fa-unlink"></i> Disconnected';
                 addActivity('<i class="fas fa-exclamation-triangle"></i> WebSocket disconnected');
             });
 
-            socket.on('connected', (data) => {
-                console.log('[Dashboard] Server confirmed:', data);
-                addActivity('<i class="fas fa-check-circle"></i> Server authenticated dashboard');
-            });
-
-            // ──────────────────────────────────────────────────────────
-            //  UNIFIED gesture_activity listener
-            //  The server broadcasts ALL gesture events under this
-            //  single event name.  The payload always contains:
-            //    gesture   : string  (OPEN_PALM, FIST, LEFT_CLICK, ...)
-            //    device_id : int
-            //    device_name : string
-            //    username  : string
-            //    confidence: float
-            //    timestamp : float
-            // ──────────────────────────────────────────────────────────
             socket.on('gesture_activity', (data) => {
-                console.log('[Dashboard] gesture_activity received:', data);
-
                 const gesture = data.gesture || 'UNKNOWN';
                 const deviceName = data.device_name || 'Unknown device';
-                const deviceId = data.device_id;
                 const confidence = data.confidence || 0.9;
 
-                // Map gesture name to display category
                 let displayType = 'move';
                 let displayMessage = gesture;
                 let icon = 'fa-hand-peace';
-                let activityIcon = 'fa-hand-peace';
 
                 if (gesture.includes('CLICK')) {
                     displayType = 'click';
                     displayMessage = gesture.replace('_', ' ');
-                    icon = 'fa-hand-pointer';
-                    activityIcon = 'fa-hand-pointer';
                     playClickSound(gesture.includes('RIGHT') ? 600 : 800);
                     announce(gesture.replace('_', ' ').toLowerCase());
                     triggerHaptic(60);
                 } else if (gesture.includes('SCROLL')) {
                     displayType = 'scroll';
-                    const dir = data.direction || (gesture.includes('UP') ? 'up' : 'down');
-                    displayMessage = 'Scroll ' + dir.toUpperCase();
-                    icon = 'fa-arrows-alt-v';
-                    activityIcon = 'fa-arrows-alt-v';
+                    displayMessage = 'Scroll';
                     playClickSound(400, 'triangle');
                     triggerHaptic(30);
                 } else if (gesture === 'OPEN_PALM') {
                     displayType = 'enable';
                     displayMessage = 'Control ENABLED';
-                    icon = 'fa-hand-paper';
-                    activityIcon = 'fa-hand-paper';
                     playClickSound(1000);
                     announce('Control enabled');
                     triggerHaptic(100);
                 } else if (gesture === 'FIST') {
                     displayType = 'disable';
                     displayMessage = 'Control DISABLED';
-                    icon = 'fa-hand-rock';
-                    activityIcon = 'fa-hand-rock';
                     playClickSound(300);
                     announce('Control disabled');
                     triggerHaptic(100);
                 } else if (gesture === 'CURSOR_MOVE') {
-                    displayType = 'move';
-                    displayMessage = `Cursor (${Math.round(data.x || 0)}, ${Math.round(data.y || 0)})`;
-                    // Don't log every move to activity
-                    updateGestureDisplay(displayType, displayMessage, confidence, deviceId);
+                    updateGestureDisplay('move', `Cursor moved`, confidence);
                     return;
-                } else if (gesture.includes('ZOOM')) {
-                    displayType = 'zoom';
-                    displayMessage = gesture.replace('_', ' ');
-                    icon = 'fa-search';
-                    activityIcon = 'fa-search';
-                    playClickSound(1200, 'square');
-                    announce(gesture.toLowerCase().replace('_', ' '));
-                    triggerHaptic(40);
-                } else if (gesture === 'SCREENSHOT') {
-                    displayType = 'screenshot';
-                    displayMessage = 'Screenshot Saved';
-                    icon = 'fa-camera';
-                    activityIcon = 'fa-camera';
-                    playClickSound(1500, 'sine');
-                    announce('screenshot taken');
-                    triggerHaptic(150);
-                } else if (gesture === 'DEVICE_CONNECTED') {
-                    addActivity(`<i class="fas fa-plug"></i> <b>${deviceName}</b> connected (${data.username})`);
-                    loadDevices();  // refresh device list
-                    return;
+                } else if (gesture === 'PEACE') {
+                    // Toggle keyboard with peace sign
+                    if (keyboardActive) {
+                        document.getElementById('keyboardModal').style.display = 'none';
+                        keyboardActive = false;
+                        announce("Keyboard closed");
+                    } else {
+                        document.getElementById('keyboardModal').style.display = 'flex';
+                        keyboardActive = true;
+                        announce("Keyboard opened");
+                    }
                 }
 
-                // Update the big gesture display
-                updateGestureDisplay(displayType, displayMessage, confidence, deviceId);
-
-                // Add to Recent Activity log
-                addActivity(`<i class="fas ${activityIcon}"></i> <b>${displayMessage}</b> from ${deviceName}`);
-
-                // Update analytics counters
+                updateGestureDisplay(displayType, displayMessage, confidence);
+                addActivity(`<i class="fas ${icon}"></i> <b>${displayMessage}</b> from ${deviceName}`);
                 registerGesture(confidence);
             });
         }
 
-        function updateGestureDisplay(gesture, message, confidence, deviceId) {
+        function updateGestureDisplay(gesture, message, confidence) {
             const icons = {
-                'move': '\ud83d\udc49',
-                'click': '\ud83d\udc46',
-                'scroll': '\ud83d\udcdc',
-                'zoom': '\ud83d\udd0d',
-                'screenshot': '\ud83d\udcf7',
-                'enable': '\u270b',
-                'disable': '\u270a'
+                'move': '👉',
+                'click': '👆',
+                'scroll': '📜',
+                'zoom': '🔍',
+                'screenshot': '📸',
+                'enable': '✋',
+                'disable': '✊'
             };
 
             const display = document.getElementById('gestureDisplay');
-            display.textContent = icons[gesture] || '\u270b';
+            display.textContent = icons[gesture] || '✋';
             display.style.animation = 'none';
-            display.offsetHeight;  // trigger reflow
+            display.offsetHeight;
             display.style.animation = 'bounce 0.5s ease';
 
-            let label = message;
-            if (deviceId) {
-                label += ` <small style="opacity:0.7">(Device ${deviceId})</small>`;
-            }
+            document.getElementById('gestureName').innerHTML = `<i class="fas fa-hand-sparkles"></i> ${message}`;
 
-            document.getElementById('gestureName').innerHTML =
-                `<i class="fas fa-hand-sparkles"></i> ${label}`;
-
-            // Confidence bar
             const fill = document.getElementById('confidenceFill');
             fill.style.width = `${(confidence || 0.9) * 100}%`;
 
@@ -1173,16 +1749,12 @@
             const progress = Math.min((gestureCount / DAILY_GOAL) * 100, 100);
             document.getElementById('goalProgressFill').style.width = `${progress}%`;
 
-            if (gestureCount === DAILY_GOAL) {
-                celebrateGoal();
-            }
+            if (gestureCount === DAILY_GOAL) celebrateGoal();
         }
 
         function celebrateGoal() {
             addActivity('<i class="fas fa-trophy"></i> 🎉 CONGRATULATIONS! Daily goal reached! 🎉');
-            for (let i = 0; i < 50; i++) {
-                createConfetti();
-            }
+            for (let i = 0; i < 50; i++) createConfetti();
         }
 
         function createConfetti() {
@@ -1197,7 +1769,6 @@
             confetti.style.pointerEvents = 'none';
             confetti.style.zIndex = '9999';
             document.body.appendChild(confetti);
-
             setTimeout(() => {
                 confetti.style.top = '100vh';
                 confetti.style.opacity = '0';
@@ -1211,19 +1782,14 @@
             const entry = document.createElement('div');
             entry.className = 'activity-entry';
             entry.innerHTML = `<span class="time"><i class="far fa-clock"></i> [${timestamp}]</span> ${message}`;
-
             log.insertBefore(entry, log.firstChild);
-
-            while (log.children.length > 20) {
-                log.removeChild(log.lastChild);
-            }
+            while (log.children.length > 20) log.removeChild(log.lastChild);
         }
 
         document.getElementById('addDeviceBtn').addEventListener('click', async () => {
             const deviceName = prompt('Enter device name:', 'My Computer');
             if (deviceName) {
                 const deviceType = confirm('Is this a laptop?') ? 'laptop' : 'desktop';
-
                 try {
                     const response = await fetch('/api/devices', {
                         method: 'POST',
@@ -1231,12 +1797,8 @@
                             'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            device_name: deviceName,
-                            device_type: deviceType
-                        })
+                        body: JSON.stringify({ device_name: deviceName, device_type: deviceType })
                     });
-
                     const data = await response.json();
                     if (data.success) {
                         addActivity(`<i class="fas fa-plus-circle"></i> Device "${deviceName}" registered successfully`);
@@ -1255,18 +1817,10 @@
             try {
                 await fetch('/api/auth/logout', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-            } catch (error) {
-                console.error('Logout error:', error);
-            }
-
-            if (socket) {
-                socket.disconnect();
-            }
-
+            } catch (error) { console.error('Logout error:', error); }
+            if (socket) socket.disconnect();
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';
@@ -1280,7 +1834,6 @@
             document.querySelectorAll('.tutorial-step').forEach(s => s.classList.remove('active'));
             const targetStep = document.querySelector(`.tutorial-step[data-step="${step}"]`);
             if (targetStep) targetStep.classList.add('active');
-
             document.getElementById('prevStepBtn').style.display = step === 1 ? 'none' : 'block';
             document.getElementById('nextStepBtn').textContent = step === totalTutorialSteps ? 'Finish' : 'Next Step';
             currentTutorialStep = step;
@@ -1289,7 +1842,7 @@
         document.getElementById('startTutorialBtn').addEventListener('click', () => {
             document.getElementById('tutorialOverlay').style.display = 'flex';
             showTutorialStep(1);
-            initAudio(); // Ensure audio is ready
+            initAudio();
         });
 
         document.getElementById('nextStepBtn').addEventListener('click', () => {
@@ -1304,9 +1857,7 @@
         });
 
         document.getElementById('prevStepBtn').addEventListener('click', () => {
-            if (currentTutorialStep > 1) {
-                showTutorialStep(currentTutorialStep - 1);
-            }
+            if (currentTutorialStep > 1) showTutorialStep(currentTutorialStep - 1);
         });
 
         document.getElementById('closeTutorialBtn').addEventListener('click', () => {
@@ -1336,17 +1887,13 @@
             calibrationTimerInterval = setInterval(() => {
                 timeLeft--;
                 document.getElementById('calibrationTimer').textContent = timeLeft;
-
                 const progress = ((30 - timeLeft) / 30) * 100;
                 document.getElementById('calibrationProgress').style.width = `${progress}%`;
-
-                // Update instructions every 4 seconds
                 const instrIndex = Math.floor((30 - timeLeft) / 4.3);
                 if (instructions[instrIndex]) {
                     document.getElementById('calibrationInstruction').textContent = instructions[instrIndex];
                     if (timeLeft % 4 === 0) announce(instructions[instrIndex]);
                 }
-
                 if (timeLeft <= 0) {
                     clearInterval(calibrationTimerInterval);
                     document.getElementById('calibrationOverlay').style.display = 'none';
@@ -1381,20 +1928,10 @@
             if (uxSettings.haptic) triggerHaptic(100);
         });
 
-        // Load saved UX settings
         function loadUXSettings() {
             document.getElementById('toggleSound').checked = uxSettings.sound;
             document.getElementById('toggleVoice').checked = uxSettings.voice;
             document.getElementById('toggleHaptic').checked = uxSettings.haptic;
-        }
-
-        // Initialize dashboard
-        async function init() {
-            loadUXSettings();
-            await loadUserInfo();
-            await loadDevices();
-            initWebSocket();
-            startSessionTimer();
         }
 
         init();

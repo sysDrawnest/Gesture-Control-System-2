@@ -4,228 +4,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gesture Control System</title>
+    <title>GestureControl - Next Gen Hand Tracking System</title>
     <link rel="stylesheet" href="/static/css/style.css">
-</head>
-
-<body>
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-brand">
-                <h1>🖐️ GestureControl</h1>
-            </div>
-            <div class="nav-links">
-                <a href="/login" class="btn btn-outline">Login</a>
-                <a href="/register" class="btn btn-primary">Register</a>
-            </div>
-        </div>
-    </nav>
-
-    <main>
-        <section class="hero">
-            <div class="container">
-                <div class="hero-content">
-                    <h1 class="hero-title">Control Your Computer<br>With <span class="highlight">Hand Gestures</span>
-                    </h1>
-                    <p class="hero-description">
-                        Experience the future of human-computer interaction. Move cursor, click, scroll, and control
-                        multiple devices using just your fingers and a webcam.
-                    </p>
-                    <div class="hero-buttons">
-                        <a href="/register" class="btn btn-large btn-primary">Get Started</a>
-                        <a href="#features" class="btn btn-large btn-outline">Learn More</a>
-                    </div>
-                </div>
-                <div class="hero-image">
-                    <div class="gesture-demo">
-                        <div class="hand-icon">✋</div>
-                        <div class="gesture-animation">
-                            <span>👉</span>
-                            <span>🤏</span>
-                            <span>✌️</span>
-                            <span>✊</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="features" class="features">
-            <div class="container">
-                <h2 class="section-title">Features</h2>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">🖱️</div>
-                        <h3>Cursor Control</h3>
-                        <p>Move cursor smoothly with index finger movement 👆</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">👆</div>
-                        <h3>Click Gestures</h3>
-                        <p>Left click 🤏, right click ✌️, and double tap with finger combinations</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📜</div>
-                        <h3>Scroll Support</h3>
-                        <p>Scroll up/down using two fingers 🖐️⬆️⬇️</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">💻</div>
-                        <h3>Multi-Device</h3>
-                        <p>Control multiple computers from one gesture interface</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📊</div>
-                        <h3>Analytics</h3>
-                        <p>Track gesture accuracy and usage statistics</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🔒</div>
-                        <h3>Secure</h3>
-                        <p>JWT authentication and encrypted data transmission</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="how-it-works">
-            <div class="container">
-                <h2 class="section-title">How It Works</h2>
-                <div class="steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <h3>📝 Register Account</h3>
-                        <p>Create your free account</p>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <h3>💻 Install Client</h3>
-                        <p>Run the gesture client on your computer</p>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <h3>📷 Connect Camera</h3>
-                        <p>Allow webcam access for hand tracking</p>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">4</div>
-                        <h3>🎯 Start Controlling</h3>
-                        <p>Use hand gestures to control your cursor</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Gesture Guide Section -->
-        <section class="gesture-guide-section">
-            <div class="container">
-                <h2 class="section-title">Gesture Guide</h2>
-                <div class="gesture-guide-grid">
-                    <div class="gesture-card">
-                        <div class="gesture-emoji">✋</div>
-                        <h3>Open Palm</h3>
-                        <p>Enable gesture control</p>
-                        <span class="gesture-action">Enable Mode</span>
-                    </div>
-                    <div class="gesture-card">
-                        <div class="gesture-emoji">✊</div>
-                        <h3>Fist</h3>
-                        <p>Disable gesture control</p>
-                        <span class="gesture-action">Disable Mode</span>
-                    </div>
-                    <div class="gesture-card">
-                        <div class="gesture-emoji">👉</div>
-                        <h3>Point</h3>
-                        <p>Move cursor</p>
-                        <span class="gesture-action">Cursor Movement</span>
-                    </div>
-                    <div class="gesture-card">
-                        <div class="gesture-emoji">🤏</div>
-                        <h3>Pinch</h3>
-                        <p>Left click / Double click</p>
-                        <span class="gesture-action">Click Action</span>
-                    </div>
-                    <div class="gesture-card">
-                        <div class="gesture-emoji">✌️</div>
-                        <h3>Peace</h3>
-                        <p>Right click</p>
-                        <span class="gesture-action">Context Menu</span>
-                    </div>
-                    <div class="gesture-card">
-                        <div class="gesture-emoji">🖐️⬆️</div>
-                        <h3>Two Fingers</h3>
-                        <p>Scroll up/down</p>
-                        <span class="gesture-action">Scroll Page</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2024 Gesture Control System - Final Year Project | 🖐️ Control the future with gestures</p>
-        </div>
-    </footer>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Additional styles for gesture guide section */
-        .gesture-guide-section {
-            padding: 4rem 0;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            color: #fff;
+            overflow-x: hidden;
         }
 
-        .gesture-guide-section .section-title {
-            color: white;
-        }
-
-        .gesture-guide-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .gesture-card {
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            text-align: center;
-            transition: transform 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .gesture-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.2);
+        .navbar.scrolled {
+            background: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
         }
 
-        .gesture-emoji {
-            font-size: 4rem;
-            margin-bottom: 1rem;
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
         }
 
-        .gesture-card h3 {
-            font-size: 1.25rem;
-            margin-bottom: 0.5rem;
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-brand h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             color: white;
         }
 
-        .gesture-card p {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            margin-bottom: 1rem;
+        .btn-outline:hover {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        .gesture-action {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
+        .btn-large {
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding-top: 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.05)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+            background-size: cover;
+            opacity: 0.3;
+        }
+
+        .hero .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #ffd89b, #c7e9fb);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffd89b;
+        }
+
+        .stat-label {
             font-size: 0.8rem;
-            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        /* Hero Image */
+        .hero-image {
+            position: relative;
+        }
+
+        .gesture-demo {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 3rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .hand-icon {
+            font-size: 8rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            animation: wave 2s infinite;
         }
 
         @keyframes wave {
@@ -235,9 +237,42 @@
                 transform: rotate(0deg);
             }
 
-            50% {
+            25% {
                 transform: rotate(15deg);
             }
+
+            75% {
+                transform: rotate(-15deg);
+            }
+        }
+
+        .gesture-animation {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .gesture-animation span {
+            font-size: 2rem;
+            display: inline-block;
+            animation: bounce 1s infinite;
+        }
+
+        .gesture-animation span:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .gesture-animation span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .gesture-animation span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .gesture-animation span:nth-child(4) {
+            animation-delay: 0.6s;
         }
 
         @keyframes bounce {
@@ -252,32 +287,578 @@
             }
         }
 
-        .hand-icon {
-            animation: wave 2s infinite;
-            display: inline-block;
+        /* Features Section */
+        .features {
+            padding: 5rem 0;
+            background: white;
+            color: #333;
         }
 
-        .gesture-animation span {
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.5;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 5rem 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .how-it-works .section-title {
+            color: white;
+            background: none;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .step {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: white;
+            color: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 auto 1rem;
+        }
+
+        .step h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Gesture Guide Section */
+        .gesture-guide-section {
+            padding: 5rem 0;
+            background: white;
+            color: #333;
+        }
+
+        .gesture-guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .gesture-card {
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+        }
+
+        .gesture-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .gesture-emoji {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .gesture-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .gesture-card p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .gesture-action {
             display: inline-block;
-            animation: bounce 1s infinite;
-            margin: 0 0.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 5rem 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .cta-section h2 {
             font-size: 2rem;
+            margin-bottom: 1rem;
         }
 
-        .gesture-animation span:nth-child(2) {
+        .cta-section p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        /* Footer */
+        footer {
+            background: #1a1a2e;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .hero .container {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero-buttons {
+                justify-content: center;
+            }
+
+            .hero-stats {
+                justify-content: center;
+            }
+
+            .steps {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                gap: 0.5rem;
+            }
+
+            .btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .gesture-guide-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card,
+        .step,
+        .gesture-card {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .feature-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .feature-card:nth-child(2) {
             animation-delay: 0.2s;
         }
 
-        .gesture-animation span:nth-child(3) {
+        .feature-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .feature-card:nth-child(4) {
             animation-delay: 0.4s;
         }
 
-        .gesture-animation span:nth-child(4) {
+        .feature-card:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .feature-card:nth-child(6) {
             animation-delay: 0.6s;
         }
     </style>
+</head>
 
-    <script src="/static/js/main.js"></script>
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-hand-peace" style="font-size: 1.5rem;"></i>
+                <h1>Gesture<span style="color: #ffd89b;">Control</span></h1>
+            </div>
+            <div class="nav-links">
+                <a href="#features" class="nav-link" style="color: white; text-decoration: none;">Features</a>
+                <a href="#guide" class="nav-link" style="color: white; text-decoration: none;">Guide</a>
+                <a href="/login" class="btn btn-outline">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+                <a href="/register" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> Register
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-badge"
+                        style="display: inline-block; background: rgba(255,255,255,0.2); padding: 0.3rem 1rem; border-radius: 50px; font-size: 0.8rem; margin-bottom: 1rem;">
+                        <i class="fas fa-magic"></i> AI-Powered Gesture Recognition
+                    </div>
+                    <h1 class="hero-title">
+                        Control Your Computer<br>With <span class="highlight">Hand Gestures</span>
+                    </h1>
+                    <p class="hero-description">
+                        Experience the future of human-computer interaction. Move cursor, click, scroll, and control
+                        multiple devices using just your fingers and a webcam. No touch required!
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="/register" class="btn btn-large btn-primary">
+                            <i class="fas fa-rocket"></i> Get Started Free
+                        </a>
+                        <a href="#features" class="btn btn-large btn-outline">
+                            <i class="fas fa-play"></i> Watch Demo
+                        </a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <div class="stat-number">99%</div>
+                            <div class="stat-label">Accuracy Rate</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">50ms</div>
+                            <div class="stat-label">Response Time</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">10+</div>
+                            <div class="stat-label">Gestures</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <div class="gesture-demo">
+                        <div class="hand-icon">✋</div>
+                        <div class="gesture-animation">
+                            <span>👉</span>
+                            <span>🤏</span>
+                            <span>✌️</span>
+                            <span>✊</span>
+                        </div>
+                        <p style="margin-top: 1rem; font-size: 0.8rem; opacity: 0.8;">Try these gestures!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="container">
+                <h2 class="section-title">
+                    <i class="fas fa-star"></i> Powerful Features
+                </h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🖱️</div>
+                        <h3>Cursor Control</h3>
+                        <p>Move cursor smoothly with index finger movement. Precise and responsive tracking.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">👆</div>
+                        <h3>Click Gestures</h3>
+                        <p>Left click 🤏, right click ✌️, and double tap with finger combinations.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📜</div>
+                        <h3>Scroll Support</h3>
+                        <p>Scroll up/down using two fingers naturally, just like on a touchpad.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💻</div>
+                        <h3>Multi-Device</h3>
+                        <p>Control multiple computers from one gesture interface. Switch seamlessly.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Analytics</h3>
+                        <p>Track gesture accuracy, usage statistics, and performance metrics in real-time.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <h3>Secure</h3>
+                        <p>JWT authentication, encrypted data transmission, and privacy-first design.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="how-it-works">
+            <div class="container">
+                <h2 class="section-title">
+                    <i class="fas fa-compass"></i> How It Works
+                </h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h3><i class="fas fa-user-plus"></i> Register Account</h3>
+                        <p>Create your free account to get started</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h3><i class="fas fa-download"></i> Install Client</h3>
+                        <p>Download and run the gesture client</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <h3><i class="fas fa-camera"></i> Connect Camera</h3>
+                        <p>Allow webcam access for hand tracking</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <h3><i class="fas fa-hands"></i> Start Controlling</h3>
+                        <p>Use hand gestures to control your cursor</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gesture Guide Section -->
+        <section id="guide" class="gesture-guide-section">
+            <div class="container">
+                <h2 class="section-title">
+                    <i class="fas fa-book-open"></i> Gesture Guide
+                </h2>
+                <div class="gesture-guide-grid">
+                    <div class="gesture-card">
+                        <div class="gesture-emoji">✋</div>
+                        <h3>Open Palm</h3>
+                        <p>Enable gesture control mode</p>
+                        <span class="gesture-action">Enable Mode</span>
+                    </div>
+                    <div class="gesture-card">
+                        <div class="gesture-emoji">✊</div>
+                        <h3>Fist</h3>
+                        <p>Disable gesture control mode</p>
+                        <span class="gesture-action">Disable Mode</span>
+                    </div>
+                    <div class="gesture-card">
+                        <div class="gesture-emoji">👉</div>
+                        <h3>Point (Index)</h3>
+                        <p>Move cursor across screen</p>
+                        <span class="gesture-action">Cursor Movement</span>
+                    </div>
+                    <div class="gesture-card">
+                        <div class="gesture-emoji">🤏</div>
+                        <h3>Pinch (Index+Thumb)</h3>
+                        <p>Left click / Double click</p>
+                        <span class="gesture-action">Click Action</span>
+                    </div>
+                    <div class="gesture-card">
+                        <div class="gesture-emoji">✌️</div>
+                        <h3>Peace Sign</h3>
+                        <p>Right click for context menu</p>
+                        <span class="gesture-action">Context Menu</span>
+                    </div>
+                    <div class="gesture-card">
+                        <div class="gesture-emoji">🖐️⬆️⬇️</div>
+                        <h3>Two/Three Fingers</h3>
+                        <p>Scroll up/down smoothly</p>
+                        <span class="gesture-action">Scroll Page</span>
+                    </div>
+                    <div class="gesture-card">
+                        <div class="gesture-emoji">🤏🔍</div>
+                        <h3>Three-Finger Pinch</h3>
+                        <p>Zoom in/out on supported apps</p>
+                        <span class="gesture-action">Zoom Control</span>
+                    </div>
+                    <div class="gesture-card">
+                        <div class="gesture-emoji">✋📸</div>
+                        <h3>Open Palm (Hold)</h3>
+                        <p>Take screenshot (hold for 4 seconds)</p>
+                        <span class="gesture-action">Screenshot</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="container">
+                <h2>Ready to Experience the Future?</h2>
+                <p>Join thousands of users who have revolutionized how they interact with computers</p>
+                <div class="cta-buttons">
+                    <a href="/register" class="btn btn-large btn-primary">
+                        <i class="fas fa-gem"></i> Start Now - It's Free
+                    </a>
+                    <a href="/login" class="btn btn-large btn-outline">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>
+                <i class="fas fa-hand-peace"></i> Gesture Control System - Final Year Project |
+                <i class="fas fa-code"></i> Built with Flask & MediaPipe |
+                <i class="fas fa-heart"></i> Control the future with gestures
+            </p>
+            <p style="margin-top: 0.5rem; font-size: 0.8rem;">
+                © 2024 All Rights Reserved | <a href="#" style="color: white; text-decoration: none;">Privacy Policy</a>
+                |
+                <a href="#" style="color: white; text-decoration: none;">Terms of Service</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Add hover sound effect (optional)
+        const gestureCards = document.querySelectorAll('.gesture-card');
+        gestureCards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-5px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Animate stats on scroll
+        const observerOptions = {
+            threshold: 0.5,
+            rootMargin: '0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feature-card, .step, .gesture-card').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
 </body>
 
 </html>
