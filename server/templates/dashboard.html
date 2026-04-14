@@ -1,1078 +1,586 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Gesture Control System</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>KINETIC_PULSE | Gesture Control Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#81ecff", "on-primary": "#005762", "primary-container": "#00e3fd", "on-primary-container": "#004d57",
+                        "secondary": "#d277ff", "on-secondary": "#380052", "secondary-container": "#7d01b1", "on-secondary-container": "#f3cfff",
+                        "tertiary": "#b9ffb8", "on-tertiary": "#006723",
+                        "surface": "#0c0e12", "background": "#0c0e12", "surface-dim": "#0c0e12",
+                        "surface-container": "#171a1f", "surface-container-low": "#111318",
+                        "surface-container-high": "#1d2025", "surface-container-highest": "#23262c",
+                        "surface-container-lowest": "#000000", "surface-bright": "#292c33",
+                        "on-surface": "#f6f6fc", "on-surface-variant": "#aaabb0", "on-background": "#f6f6fc",
+                        "outline": "#74757a", "outline-variant": "#46484d",
+                        "error": "#ff716c", "error-container": "#9f0519",
+                        "primary-dim": "#00d4ec", "secondary-dim": "#d277ff", "tertiary-dim": "#54ee70",
+                        "inverse-primary": "#006976", "surface-tint": "#81ecff",
+                        "surface-variant": "#23262c",
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                    fontFamily: { "headline": ["Space Grotesk"], "body": ["Inter"], "label": ["Inter"] }
+                },
+            },
+        }
+    </script>
     <style>
-        /* Dashboard Specific Styles - Light Theme */
-        .dashboard {
-            padding: 100px 2rem 2rem;
-            min-height: 100vh;
-            background: #f5f7fa;
+        body {
+            font-family: 'Inter', sans-serif;
         }
 
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 380px 1fr;
-            gap: 2rem;
-            max-width: 1600px;
-            margin: 0 auto;
+        .font-space {
+            font-family: 'Space Grotesk', sans-serif;
         }
 
-        /* Sidebar Cards */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
 
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            border: 1px solid #e5e7eb;
+        .glass {
+            backdrop-filter: blur(24px);
+            background: rgba(35, 38, 44, 0.4);
         }
 
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        .kinetic-gradient {
+            background: linear-gradient(135deg, #81ecff 0%, #d277ff 100%);
         }
 
-        .card h3 {
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
-            color: #1f2937;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Feature Grid for Keyboard & Games */
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-top: 0.5rem;
-        }
-
-        .feature-card {
-            background: linear-gradient(135deg, #f9fafb, #ffffff);
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 1.25rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            border-color: #6366f1;
-            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.15);
-        }
-
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .feature-card h4 {
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-            color: #1f2937;
-        }
-
-        .feature-card p {
-            font-size: 0.75rem;
-            color: #6b7280;
-        }
-
-        .feature-badge {
-            display: inline-block;
-            background: #e0e7ff;
-            color: #6366f1;
-            font-size: 0.65rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 20px;
-            margin-top: 0.5rem;
-        }
-
-        /* Game Cards */
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .game-card {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .game-card:hover {
-            transform: translateY(-5px);
-            border-color: #6366f1;
-        }
-
-        .game-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .game-card h4 {
-            font-size: 0.9rem;
-            margin-bottom: 0.25rem;
-            color: #1f2937;
-        }
-
-        .game-card p {
-            font-size: 0.7rem;
-            color: #6b7280;
-        }
-
-        .game-difficulty {
-            display: inline-block;
-            font-size: 0.6rem;
-            padding: 0.2rem 0.5rem;
-            border-radius: 10px;
-            margin-top: 0.5rem;
-        }
-
-        .difficulty-easy {
-            background: #d1fae5;
-            color: #059669;
-        }
-
-        .difficulty-medium {
-            background: #fef3c7;
-            color: #d97706;
-        }
-
-        .difficulty-hard {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        /* Devices List */
-        .devices-list {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-bottom: 1rem;
-        }
-
-        .device-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            background: #f9fafb;
-            border-radius: 12px;
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            border: 1px solid #e5e7eb;
-        }
-
-        .device-item:hover {
-            background: #f3f4f6;
-            transform: translateX(5px);
-        }
-
-        .device-item.active {
-            background: linear-gradient(135deg, #e0e7ff, #ede9fe);
-            border-left: 3px solid #6366f1;
-        }
-
-        .device-icon {
-            font-size: 1.5rem;
-        }
-
-        .device-info {
-            flex: 1;
-        }
-
-        .device-info strong {
-            display: block;
-            font-size: 0.9rem;
-            color: #1f2937;
-        }
-
-        .device-info small {
-            font-size: 0.7rem;
-            color: #6b7280;
-        }
-
-        .btn-delete {
-            background: #fee2e2;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            padding: 0.25rem 0.5rem;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-delete:hover {
-            background: #ef4444;
-            color: white;
-            transform: scale(1.05);
-        }
-
-        /* Analytics Grid */
-        .analytics-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-        }
-
-        .stat-item {
-            text-align: center;
-            padding: 0.75rem;
-            background: #f9fafb;
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
-        }
-
-        .stat-item h4 {
-            font-size: 0.75rem;
-            color: #6b7280;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #6366f1;
-        }
-
-        /* Speed Badge */
-        .speed-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
-
-        .speed-slow {
-            background: #fef3c7;
-            color: #d97706;
-        }
-
-        .speed-normal {
-            background: #d1fae5;
-            color: #059669;
-        }
-
-        .speed-fast {
-            background: #fee2e2;
-            color: #dc2626;
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.7;
-            }
-        }
-
-        /* Goal Container */
-        .goal-container {
-            grid-column: span 2;
-            margin-top: 0.5rem;
-        }
-
-        .goal-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            margin-bottom: 0.5rem;
-            color: #4b5563;
-        }
-
-        .progress-bar {
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            transition: width 0.3s ease;
-            border-radius: 4px;
-        }
-
-        /* Main Content */
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        /* Status Indicator */
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            background: #f9fafb;
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
-        }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        .status-dot.connected {
-            background: #10b981;
-            box-shadow: 0 0 5px #10b981;
-        }
-
-        .status-dot.disconnected {
-            background: #ef4444;
-        }
-
-        /* Gesture Preview */
-        .gesture-preview {
-            text-align: center;
-            padding: 2rem;
-            background: linear-gradient(135deg, #e0e7ff, #ede9fe);
-            border-radius: 16px;
-            margin-bottom: 1.5rem;
-            border: 1px solid #c7d2fe;
-        }
-
-        .hand-visualization {
-            position: relative;
-        }
-
-        .gesture-display {
-            font-size: 6rem;
-            animation: bounce 0.5s ease;
-        }
-
-        @keyframes bounce {
-
-            0%,
-            100% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.1);
-            }
-        }
-
-        /* Gesture Guide */
-        .gesture-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-
-        .gesture-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            background: #f9fafb;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            border: 1px solid #e5e7eb;
-        }
-
-        .gesture-item:hover {
-            background: #f3f4f6;
-            transform: translateX(5px);
-        }
-
-        .gesture-icon {
-            font-size: 1.5rem;
-        }
-
-        .gesture-action {
-            margin-left: auto;
-            font-size: 0.75rem;
-            color: #6366f1;
-        }
-
-        /* Activity Log */
-        .activity-log {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .activity-entry {
-            padding: 0.75rem;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 0.85rem;
-            animation: slideIn 0.3s ease;
-            color: #374151;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .activity-entry .time {
-            color: #6366f1;
-            margin-right: 0.5rem;
-        }
-
-        /* Loading Spinner */
-        .loading-spinner {
-            text-align: center;
-            padding: 1rem;
-            color: #6b7280;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .dashboard {
-                padding: 80px 1rem 1rem;
-            }
-
-            .gesture-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .feature-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 6px;
+            width: 4px;
         }
 
         ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
+            background: transparent;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #c7d2fe;
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #818cf8;
-        }
-
-        /* Button Styles */
-        .btn-small {
-            padding: 0.5rem 1rem;
-            font-size: 0.85rem;
-            width: 100%;
-        }
-
-        /* UX Settings */
-        .ux-toggle {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem;
-            background: #f9fafb;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            font-size: 0.85rem;
-            border: 1px solid #e5e7eb;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 40px;
-            height: 20px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 20px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 14px;
-            width: 14px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked+.slider {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        }
-
-        input:checked+.slider:before {
-            transform: translateX(20px);
-        }
-
-        /* Overlays */
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            backdrop-filter: blur(5px);
-        }
-
-        .overlay-content {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 24px;
-            max-width: 500px;
-            width: 90%;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-            animation: modalFadeIn 0.3s ease;
-        }
-
-        @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .calibration-timer {
-            font-size: 4rem;
-            font-weight: 800;
-            color: #6366f1;
-            margin: 1.5rem 0;
-        }
-
-        .tutorial-step {
-            display: none;
-        }
-
-        .tutorial-step.active {
-            display: block;
-        }
-
-        .tutorial-image {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .ux-btn-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        .btn-ux {
-            padding: 0.6rem;
-            font-size: 0.8rem;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            border: 1px solid #e5e7eb;
-            background: white;
-        }
-
-        .btn-ux:hover {
-            background: #f3f4f6;
-            transform: translateY(-2px);
-        }
-
-        .btn-ux.btn-primary {
-            background: #6366f1;
-            color: white;
-            border: none;
-        }
-
-        .user-name {
-            color: #374151;
-        }
-
-        /* Keyboard Preview */
-        .keyboard-preview {
-            background: #1e1e2e;
-            border-radius: 12px;
-            padding: 0.75rem;
-            margin-top: 0.75rem;
-            font-family: monospace;
-            font-size: 0.7rem;
-            text-align: center;
-        }
-
-        .key-row {
-            display: flex;
-            justify-content: center;
-            gap: 4px;
-            margin-bottom: 4px;
-        }
-
-        .key-demo {
-            background: #2d2d3d;
-            padding: 4px 8px;
-            border-radius: 6px;
-            color: #fff;
-            font-size: 10px;
+            background: rgba(129, 236, 255, 0.2);
+            border-radius: 2px;
         }
     </style>
 </head>
 
-<body>
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-brand">
-                <div class="logo-icon">
-                    <i class="fas fa-hand-peace"></i>
+<body class="bg-background text-on-background min-h-screen overflow-x-hidden">
+
+    <!-- TopBar -->
+    <header
+        class="w-full sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/10 shadow-[0_0_30px_rgba(0,229,255,0.1)] flex justify-between items-center px-6 py-4">
+        <div class="flex items-center gap-8">
+            <span class="text-2xl font-bold tracking-tighter text-cyan-400 uppercase font-space">KINETIC_PULSE</span>
+            <nav class="hidden md:flex gap-6">
+                <a class="text-cyan-400 font-space tracking-tight text-sm uppercase transition-all hover:text-cyan-300"
+                    href="/dashboard">Dashboard</a>
+                <a class="text-slate-400 font-space tracking-tight text-sm uppercase transition-all hover:text-cyan-300"
+                    href="/air_canvas">Air Canvas</a>
+                <a class="text-slate-400 font-space tracking-tight text-sm uppercase transition-all hover:text-cyan-300"
+                    href="/air_keyboard">Air Keyboard</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-3 px-3 py-1.5 bg-white/5 rounded-xl border border-white/10">
+                <div
+                    class="w-8 h-8 rounded-full border border-primary/30 bg-primary/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary text-sm">person</span>
                 </div>
-                <h1>Gesture<span>Control</span></h1>
+                <span id="userName" class="font-space font-medium text-sm text-cyan-400">Loading...</span>
             </div>
-            <div class="nav-links">
-                <span id="userName" class="user-name">
-                    <i class="fas fa-user-circle"></i> Loading...
-                </span>
-                <button id="logoutBtn" class="btn btn-outline">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+            <span
+                class="material-symbols-outlined text-cyan-400 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-all">notifications</span>
+            <button id="logoutBtn"
+                class="text-slate-400 hover:text-cyan-300 font-space text-sm uppercase tracking-widest active:scale-95 duration-200">Logout</button>
+        </div>
+    </header>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside
+            class="h-screen w-64 fixed left-0 top-0 border-r border-white/5 flex flex-col pt-20 pb-6 z-40 bg-gradient-to-b from-slate-950 to-black">
+            <div class="px-6 mb-8">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="material-symbols-outlined text-cyan-400 text-3xl">gesture</span>
+                    <div>
+                        <h2 class="font-space text-xs uppercase tracking-[0.2em] text-cyan-400">System Core</h2>
+                        <p class="text-[10px] text-slate-500 font-mono uppercase">v2.4.0-Active</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-1 px-4 space-y-1">
+                <a class="flex items-center gap-4 px-4 py-3 text-cyan-400 bg-cyan-400/10 border-r-2 border-cyan-400 font-space text-sm uppercase tracking-widest transition-colors"
+                    href="/dashboard">
+                    <span class="material-symbols-outlined">devices_other</span> Devices
+                </a>
+                <a class="flex items-center gap-4 px-4 py-3 text-slate-500 hover:text-slate-300 hover:bg-white/5 font-space text-sm uppercase tracking-widest transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">insights</span> Analytics
+                </a>
+                <a class="flex items-center gap-4 px-4 py-3 text-slate-500 hover:text-slate-300 hover:bg-white/5 font-space text-sm uppercase tracking-widest transition-colors"
+                    href="/air_keyboard">
+                    <span class="material-symbols-outlined">keyboard_external_input</span> Air Keyboard
+                </a>
+                <a class="flex items-center gap-4 px-4 py-3 text-slate-500 hover:text-slate-300 hover:bg-white/5 font-space text-sm uppercase tracking-widest transition-colors"
+                    href="/air_canvas">
+                    <span class="material-symbols-outlined">draw</span> Air Canvas
+                </a>
+                <a class="flex items-center gap-4 px-4 py-3 text-slate-500 hover:text-slate-300 hover:bg-white/5 font-space text-sm uppercase tracking-widest transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">sports_esports</span> Games
+                </a>
+                <a class="flex items-center gap-4 px-4 py-3 text-slate-500 hover:text-slate-300 hover:bg-white/5 font-space text-sm uppercase tracking-widest transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">tune</span> UX Settings
+                </a>
+            </nav>
+            <div class="px-4 mt-auto">
+                <button id="startCalibrationBtn"
+                    class="w-full py-3 px-4 border border-cyan-400/30 bg-cyan-400/5 text-cyan-400 font-space text-xs uppercase tracking-widest hover:bg-cyan-400 hover:text-black transition-all mb-8">
+                    Calibrate Sensors
                 </button>
+                <div class="space-y-4 px-4 border-t border-white/5 pt-6">
+                    <div id="startTutorialBtn"
+                        class="flex items-center gap-4 text-slate-500 hover:text-slate-300 cursor-pointer transition-colors">
+                        <span class="material-symbols-outlined text-lg">help_outline</span>
+                        <span class="font-space text-xs tracking-widest uppercase">Tutorial</span>
+                    </div>
+                    <div
+                        class="flex items-center gap-4 text-slate-500 hover:text-slate-300 cursor-pointer transition-colors">
+                        <span class="material-symbols-outlined text-lg">terminal</span>
+                        <span class="font-space text-xs tracking-widest uppercase">Logs</span>
+                    </div>
+                </div>
             </div>
-        </div>
-    </nav>
+        </aside>
 
-    <main class="dashboard">
-        <div class="container">
-            <div class="dashboard-grid">
-                <!-- Sidebar -->
-                <aside class="sidebar">
-                    <div class="card">
-                        <h3><i class="fas fa-microchip"></i> Devices</h3>
-                        <div id="devicesList" class="devices-list">
-                            <div class="loading-spinner">
-                                <i class="fas fa-spinner fa-spin"></i> Loading devices...
+        <!-- Main Canvas -->
+        <main class="ml-64 p-8 w-full min-h-screen">
+            <div class="grid grid-cols-12 gap-6">
+
+                <!-- CENTER: Active Tracking + Gesture Guide -->
+                <div class="col-span-12 lg:col-span-7 space-y-6">
+
+                    <!-- Active Tracking Card -->
+                    <div class="glass rounded-xl p-8 border border-white/5 relative overflow-hidden group">
+                        <div
+                            class="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32">
+                        </div>
+                        <div class="flex justify-between items-start mb-12">
+                            <div>
+                                <h2 class="text-3xl font-space font-bold tracking-tight text-white mb-2 uppercase">
+                                    Active Tracking</h2>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2.5 h-2.5 rounded-full shadow-[0_0_10px_#b9ffb8]"
+                                        id="connectionStatusDot" style="background:#b9ffb8;"></div>
+                                    <span class="text-tertiary font-space text-xs uppercase tracking-widest"
+                                        id="statusText">Disconnected</span>
+                                </div>
+                            </div>
+                            <div class="bg-white/5 border border-white/10 px-4 py-2 rounded-lg">
+                                <span class="text-xs text-slate-400 uppercase tracking-widest block">Device</span>
+                                <p class="text-cyan-400 font-mono text-sm" id="deviceInfo">None</p>
                             </div>
                         </div>
-                        <button id="addDeviceBtn" class="btn btn-primary btn-small">
-                            <i class="fas fa-plus"></i> Add Device
-                        </button>
-                    </div>
 
-                    <div class="card">
-                        <h3><i class="fas fa-chart-line"></i> Analytics Dashboard</h3>
-                        <div class="analytics-grid">
-                            <div class="stat-item">
-                                <h4><i class="fas fa-hand-peace"></i> Gestures</h4>
-                                <div class="stat-value" id="gestureCountVal">0</div>
-                            </div>
-                            <div class="stat-item">
-                                <h4><i class="fas fa-bullseye"></i> Accuracy</h4>
-                                <div class="stat-value" id="accuracyVal">0%</div>
-                            </div>
-                            <div class="stat-item">
-                                <h4><i class="fas fa-clock"></i> Session</h4>
-                                <div class="stat-value" id="sessionTimerVal">00:00</div>
-                            </div>
-                            <div class="stat-item">
-                                <h4><i class="fas fa-tachometer-alt"></i> Speed</h4>
-                                <div class="speed-badge speed-slow" id="speedBadgeVal">
-                                    <i class="fas fa-turtle"></i> Slow
+                        <div class="flex flex-col items-center justify-center py-10 relative">
+                            <div
+                                class="w-72 h-72 border border-cyan-400/20 rounded-full flex items-center justify-center relative">
+                                <div class="absolute inset-0 border border-cyan-400/5 rounded-full scale-110"></div>
+                                <div class="absolute inset-0 border border-cyan-400/5 rounded-full scale-125"></div>
+                                <div id="gestureDisplay" class="text-[100px] select-none transition-all duration-300">✋
                                 </div>
                             </div>
-                            <div class="goal-container">
-                                <div class="goal-header">
-                                    <span><i class="fas fa-trophy"></i> Daily Goal</span>
-                                    <span id="goalTextVal">0 / 1000</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="goalProgressFill" style="width: 0%"></div>
-                                </div>
+                            <div class="mt-12 text-center">
+                                <span class="text-slate-500 text-xs uppercase tracking-[0.3em] mb-2 block">Detected
+                                    Gesture</span>
+                                <h3 id="gestureName"
+                                    class="text-3xl font-space font-bold text-white uppercase tracking-tighter">
+                                    Waiting...</h3>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Air Keyboard Section -->
-                    <div class="card" style="border-top: 3px solid #6366f1;">
-                        <h3><i class="fas fa-keyboard" style="color:#6366f1;"></i> Air Keyboard Notes
-                            <span
-                                style="margin-left:auto; font-size:0.65rem; background:#e0e7ff; color:#6366f1; padding:0.2rem 0.6rem; border-radius:20px; font-weight:600;">NEW</span>
-                        </h3>
-                        <p style="font-size:0.82rem; color:#6b7280; margin-bottom:1rem;">Draw letters in the air with
-                            your index finger. Stroke recognition converts your hand movements into typed text — fully
-                            gesture-powered.</p>
-
-                        <a href="/air_keyboard" id="openAirKeyboardBtn" style="display:block; text-decoration:none;">
-                            <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.3s ease; color:white;"
-                                onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(99,102,241,0.4)';"
-                                onmouseout="this.style.transform=''; this.style.boxShadow='';">
-                                <div style="font-size:2.5rem; margin-bottom:0.5rem;">✍️</div>
-                                <h4 style="margin:0 0 0.25rem; font-size:1rem; color:white;">Open Air Keyboard</h4>
-                                <p style="font-size:0.75rem; color:rgba(255,255,255,0.85); margin:0;">Run <code
-                                        style="background:rgba(255,255,255,0.2); padding:0.1rem 0.4rem; border-radius:4px;">python client/air_keyboard.py</code>
-                                    first</p>
+                        <div class="mt-8 space-y-2">
+                            <div class="flex justify-between text-[10px] uppercase tracking-widest text-slate-500 mb-1">
+                                <span>Confidence Rating</span>
+                                <span class="text-primary" id="confidenceLabel">0%</span>
                             </div>
-                        </a>
-
-                        <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div
-                                style="background:#f3f4f6; border-radius:8px; padding:0.6rem; font-size:0.72rem; color:#374151; display:flex; align-items:center; gap:0.4rem;">
-                                <span style="font-size:1rem;">👍</span>
-                                <div><strong>Enter Mode</strong><br>Hold Thumb Up 2s</div>
-                            </div>
-                            <div
-                                style="background:#f3f4f6; border-radius:8px; padding:0.6rem; font-size:0.72rem; color:#374151; display:flex; align-items:center; gap:0.4rem;">
-                                <span style="font-size:1rem;">✊</span>
-                                <div><strong>Exit Mode</strong><br>Hold Fist 2s</div>
-                            </div>
-                            <div
-                                style="background:#f3f4f6; border-radius:8px; padding:0.6rem; font-size:0.72rem; color:#374151; display:flex; align-items:center; gap:0.4rem;">
-                                <span style="font-size:1rem;">👈</span>
-                                <div><strong>Backspace</strong><br>Swipe Left</div>
-                            </div>
-                            <div
-                                style="background:#f3f4f6; border-radius:8px; padding:0.6rem; font-size:0.72rem; color:#374151; display:flex; align-items:center; gap:0.4rem;">
-                                <span style="font-size:1rem;">👉</span>
-                                <div><strong>Space</strong><br>Swipe Right</div>
-                            </div>
-                            <div
-                                style="background:#f3f4f6; border-radius:8px; padding:0.6rem; font-size:0.72rem; color:#374151; display:flex; align-items:center; gap:0.4rem;">
-                                <span style="font-size:1rem;">👇</span>
-                                <div><strong>New Line</strong><br>Swipe Down</div>
-                            </div>
-                            <div
-                                style="background:#f3f4f6; border-radius:8px; padding:0.6rem; font-size:0.72rem; color:#374151; display:flex; align-items:center; gap:0.4rem;">
-                                <span style="font-size:1rem;">🤙</span>
-                                <div><strong>Save Notes</strong><br>Thumb+Pinky 2s</div>
+                            <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                <div id="confidenceFill"
+                                    class="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-300 shadow-[0_0_10px_rgba(129,236,255,0.5)]"
+                                    style="width:0%"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- NEW: Games Section -->
-                    <div class="card">
-                        <h3><i class="fas fa-gamepad"></i> Gesture Games</h3>
-                        <div class="games-grid">
-                            <div class="game-card" data-game="dino">
-                                <div class="game-icon">🦖</div>
-                                <h4>Dino Runner</h4>
-                                <p>Jump over obstacles with a flick!</p>
-                                <span class="game-difficulty difficulty-easy">Easy</span>
+                    <!-- Gesture Library -->
+                    <div class="glass rounded-xl p-6 border border-white/5">
+                        <h3 class="font-space text-sm uppercase tracking-widest text-slate-400 mb-6">Gesture Library
+                            &amp; Mapping</h3>
+                        <div class="grid grid-cols-4 gap-4">
+                            <div
+                                class="p-4 bg-white/5 border border-white/5 rounded-lg hover:border-primary/30 transition-all cursor-pointer group">
+                                <span
+                                    class="material-symbols-outlined text-primary mb-3 block group-hover:scale-110 transition-transform">pan_tool_alt</span>
+                                <p class="text-[10px] text-white uppercase font-bold">Index Up</p>
+                                <p class="text-[9px] text-slate-500 uppercase">Move Cursor</p>
                             </div>
-                            <div class="game-card" data-game="flappy">
-                                <div class="game-icon">🐦</div>
-                                <h4>Flappy Gesture</h4>
-                                <p>Flap through pipes with finger taps</p>
-                                <span class="game-difficulty difficulty-medium">Medium</span>
+                            <div
+                                class="p-4 bg-white/5 border border-white/5 rounded-lg hover:border-primary/30 transition-all cursor-pointer group">
+                                <span
+                                    class="material-symbols-outlined text-primary mb-3 block group-hover:scale-110 transition-transform">pinch</span>
+                                <p class="text-[10px] text-white uppercase font-bold">Pinch</p>
+                                <p class="text-[9px] text-slate-500 uppercase">Left Click</p>
                             </div>
-                            <div class="game-card" data-game="whack">
-                                <div class="game-icon">🔨</div>
-                                <h4>Whack-A-Mole</h4>
-                                <p>Point and pinch to whack moles</p>
-                                <span class="game-difficulty difficulty-easy">Easy</span>
+                            <div
+                                class="p-4 bg-white/5 border border-white/5 rounded-lg hover:border-primary/30 transition-all cursor-pointer group">
+                                <span
+                                    class="material-symbols-outlined text-primary mb-3 block group-hover:scale-110 transition-transform">mobile_hand</span>
+                                <p class="text-[10px] text-white uppercase font-bold">Peace</p>
+                                <p class="text-[9px] text-slate-500 uppercase">Right Click</p>
                             </div>
-                            <div class="game-card" data-game="memory">
-                                <div class="game-icon">🧠</div>
-                                <h4>Memory Match</h4>
-                                <p>Use gestures to flip cards</p>
-                                <span class="game-difficulty difficulty-medium">Medium</span>
+                            <div
+                                class="p-4 bg-white/5 border border-white/5 rounded-lg hover:border-primary/30 transition-all cursor-pointer group">
+                                <span
+                                    class="material-symbols-outlined text-primary mb-3 block group-hover:scale-110 transition-transform">back_hand</span>
+                                <p class="text-[10px] text-white uppercase font-bold">Fist</p>
+                                <p class="text-[9px] text-slate-500 uppercase">Disable</p>
                             </div>
-                            <div class="game-card" data-game="space">
-                                <div class="game-icon">🚀</div>
-                                <h4>Space Shooter</h4>
-                                <p>Pinch to shoot asteroids</p>
-                                <span class="game-difficulty difficulty-hard">Hard</span>
+                            <div
+                                class="p-4 bg-white/5 border border-white/5 rounded-lg hover:border-primary/30 transition-all cursor-pointer group">
+                                <span
+                                    class="material-symbols-outlined text-primary mb-3 block group-hover:scale-110 transition-transform">front_hand</span>
+                                <p class="text-[10px] text-white uppercase font-bold">Open Palm</p>
+                                <p class="text-[9px] text-slate-500 uppercase">Enable</p>
                             </div>
-                            <div class="game-card" data-game="piano">
-                                <div class="game-icon">🎹</div>
-                                <h4>Gesture Piano</h4>
-                                <p>Play music with finger movements</p>
-                                <span class="game-difficulty difficulty-easy">Easy</span>
+                            <div
+                                class="p-4 bg-white/5 border border-white/5 rounded-lg hover:border-primary/30 transition-all cursor-pointer group">
+                                <span
+                                    class="material-symbols-outlined text-primary mb-3 block group-hover:scale-110 transition-transform">zoom_in</span>
+                                <p class="text-[10px] text-white uppercase font-bold">3-Finger Pinch</p>
+                                <p class="text-[9px] text-slate-500 uppercase">Zoom</p>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3><i class="fas fa-sliders-h"></i> UX Settings</h3>
-                        <div class="ux-toggle">
-                            <span><i class="fas fa-volume-up"></i> Sound Effects</span>
-                            <label class="switch">
-                                <input type="checkbox" id="toggleSound" checked>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div class="ux-toggle">
-                            <span><i class="fas fa-comment-dots"></i> Voice Alerts</span>
-                            <label class="switch">
-                                <input type="checkbox" id="toggleVoice">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div class="ux-toggle">
-                            <span><i class="fas fa-mobile-alt"></i> Haptics</span>
-                            <label class="switch">
-                                <input type="checkbox" id="toggleHaptic">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div class="ux-btn-group">
-                            <button class="btn-ux" id="startTutorialBtn">
-                                <i class="fas fa-graduation-cap"></i> Tutorial
-                            </button>
-                            <button class="btn-ux" id="startCalibrationBtn">
-                                <i class="fas fa-crosshairs"></i> Calibrate
-                            </button>
-                        </div>
-                    </div>
-                </aside>
-
-                <!-- Main Content -->
-                <div class="main-content">
-                    <div class="card">
-                        <h3><i class="fas fa-video"></i> Real-time Gesture Control</h3>
-                        <div class="status-indicator">
-                            <span class="status-dot" id="connectionStatus"></span>
-                            <span id="statusText">Disconnected</span>
-                            <span id="deviceInfo" style="margin-left: auto; font-size: 0.8rem; color: #6b7280;">
-                                <i class="fas fa-microchip"></i> No device selected
-                            </span>
-                        </div>
-
-                        <div class="gesture-preview">
-                            <div class="hand-visualization">
-                                <div id="gestureDisplay" class="gesture-display">✋</div>
-                                <p id="gestureName" style="margin-top: 1rem; color: #6366f1;">
-                                    Waiting for gesture...
-                                </p>
-                                <div id="confidenceBar" style="width: 80%; margin: 1rem auto 0;">
-                                    <div
-                                        style="height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden;">
-                                        <div id="confidenceFill"
-                                            style="width: 0%; height: 100%; background: linear-gradient(135deg, #6366f1, #8b5cf6); transition: width 0.3s ease;">
-                                        </div>
-                                    </div>
-                                </div>
+                            <div
+                                class="p-4 bg-white/5 border border-white/5 rounded-lg hover:border-primary/30 transition-all cursor-pointer group">
+                                <span
+                                    class="material-symbols-outlined text-primary mb-3 block group-hover:scale-110 transition-transform">screenshot</span>
+                                <p class="text-[10px] text-white uppercase font-bold">Hold Palm</p>
+                                <p class="text-[9px] text-slate-500 uppercase">Screenshot</p>
                             </div>
-                        </div>
-
-                        <div class="gesture-guide">
-                            <h3><i class="fas fa-book"></i> Gesture Guide</h3>
-                            <div class="gesture-grid">
-                                <div class="gesture-item">
-                                    <span class="gesture-icon">👆</span>
-                                    <span>Index Finger Up</span>
-                                    <span class="gesture-action"><i class="fas fa-mouse-pointer"></i> Move Cursor</span>
-                                </div>
-                                <div class="gesture-item">
-                                    <span class="gesture-icon">🤏</span>
-                                    <span>Pinch (Index+Thumb)</span>
-                                    <span class="gesture-action"><i class="fas fa-hand-pointer"></i> Left Click</span>
-                                </div>
-                                <div class="gesture-item">
-                                    <span class="gesture-icon">✌️</span>
-                                    <span>Peace Sign</span>
-                                    <span class="gesture-action"><i class="fas fa-hand-peace"></i> Right Click / Open
-                                        Keyboard</span>
-                                </div>
-                                <div class="gesture-item">
-                                    <span class="gesture-icon">✋</span>
-                                    <span>Open Palm</span>
-                                    <span class="gesture-action"><i class="fas fa-play"></i> Enable Control</span>
-                                </div>
-                                <div class="gesture-item">
-                                    <span class="gesture-icon">✊</span>
-                                    <span>Fist</span>
-                                    <span class="gesture-action"><i class="fas fa-stop"></i> Disable Control</span>
-                                </div>
-                                <div class="gesture-item">
-                                    <span class="gesture-icon">🖐️⬆️⬇️</span>
-                                    <span>Three Fingers Scroll</span>
-                                    <span class="gesture-action"><i class="fas fa-arrows-alt-v"></i> Scroll Page</span>
-                                </div>
-                                <div class="gesture-item">
-                                    <span class="gesture-icon">🤏🔍</span>
-                                    <span>3-Finger Pinch</span>
-                                    <span class="gesture-action"><i class="fas fa-search-plus"></i> Zoom In/Out</span>
-                                </div>
-                                <div class="gesture-item">
-                                    <span class="gesture-icon">✋📸</span>
-                                    <span>Open Palm (Hold)</span>
-                                    <span class="gesture-action"><i class="fas fa-camera"></i> Screenshot</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3><i class="fas fa-history"></i> Recent Activity</h3>
-                        <div id="activityLog" class="activity-log">
-                            <div class="activity-entry">
-                                <span class="time">🔄</span> Ready to detect gestures
+                            <div
+                                class="p-4 bg-white/5 border border-white/5 rounded-lg hover:border-primary/30 transition-all cursor-pointer group">
+                                <span
+                                    class="material-symbols-outlined text-primary mb-3 block group-hover:scale-110 transition-transform">reorder</span>
+                                <p class="text-[10px] text-white uppercase font-bold">3-Finger Scroll</p>
+                                <p class="text-[9px] text-slate-500 uppercase">Navigate</p>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </main>
 
-    <!-- Keyboard Modal -->
-    <div id="keyboardModal" class="overlay">
-        <div class="overlay-content" style="max-width: 800px; width: 95%;">
-            <i class="fas fa-keyboard fa-3x" style="color: #6366f1;"></i>
-            <h2>Virtual Keyboard</h2>
-            <div id="keyboardTextDisplay"
-                style="background: #f9fafb; padding: 1rem; border-radius: 12px; margin: 1rem 0; min-height: 60px; font-size: 1.2rem; border: 1px solid #e5e7eb;">
+                <!-- RIGHT Sidebar -->
+                <div class="col-span-12 lg:col-span-5 space-y-6">
+
+                    <!-- Analytics -->
+                    <div class="glass rounded-xl p-6 border border-white/5">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-space text-sm uppercase tracking-widest text-slate-400">System Analytics
+                            </h3>
+                            <span id="speedBadgeVal"
+                                class="text-[10px] bg-tertiary/10 text-tertiary px-2 py-0.5 rounded uppercase font-bold border border-tertiary/20">Normal</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="p-4 bg-surface-container rounded-lg border border-white/5">
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Gestures</p>
+                                <p class="text-2xl font-space font-bold text-white" id="gestureCountVal">0</p>
+                            </div>
+                            <div class="p-4 bg-surface-container rounded-lg border border-white/5">
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Accuracy</p>
+                                <p class="text-2xl font-space font-bold text-primary" id="accuracyVal">0%</p>
+                            </div>
+                            <div class="p-4 bg-surface-container rounded-lg border border-white/5">
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Session</p>
+                                <p class="text-2xl font-mono text-white" id="sessionTimerVal">00:00</p>
+                            </div>
+                            <div class="p-4 bg-surface-container rounded-lg border border-white/5">
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Response</p>
+                                <p class="text-2xl font-space font-bold text-secondary">Ultra</p>
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t border-white/5">
+                            <div class="flex justify-between text-[10px] uppercase tracking-widest text-slate-400 mb-2">
+                                <span>Daily Goal</span>
+                                <span id="goalTextVal">0 / 1000</span>
+                            </div>
+                            <div class="h-1 bg-white/5 rounded-full overflow-hidden">
+                                <div id="goalProgressFill" class="h-full bg-primary transition-all duration-500"
+                                    style="width:0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Devices -->
+                    <div class="glass rounded-xl p-6 border border-white/5">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-space text-sm uppercase tracking-widest text-slate-400">Connected Devices
+                            </h3>
+                            <button id="addDeviceBtn"
+                                class="material-symbols-outlined text-primary text-xl hover:rotate-90 transition-transform duration-300">add_circle</button>
+                        </div>
+                        <div id="devicesList" class="space-y-3">
+                            <div class="flex items-center justify-center py-6 text-slate-600">
+                                <span class="material-symbols-outlined animate-spin">progress_activity</span>
+                                <span class="ml-2 font-space text-xs uppercase tracking-widest">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Air Keyboard + UX Settings row -->
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Air Keyboard -->
+                        <div class="glass rounded-xl p-6 border border-white/5 flex flex-col">
+                            <h3 class="font-space text-[10px] uppercase tracking-widest text-slate-400 mb-4">Air
+                                Keyboard</h3>
+                            <a href="/air_keyboard"
+                                class="w-full py-4 bg-primary-container text-on-primary-container font-space text-[10px] font-bold uppercase tracking-[0.2em] mb-6 hover:bg-primary transition-all active:scale-95 text-center block">Open
+                                Keyboard</a>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div
+                                    class="aspect-square bg-white/5 border border-white/5 rounded flex items-center justify-center hover:border-primary/50 transition-all cursor-pointer">
+                                    <span class="material-symbols-outlined text-sm text-slate-400">thumb_up</span>
+                                </div>
+                                <div
+                                    class="aspect-square bg-white/5 border border-white/5 rounded flex items-center justify-center hover:border-primary/50 transition-all cursor-pointer">
+                                    <span class="material-symbols-outlined text-sm text-slate-400">backspace</span>
+                                </div>
+                                <div
+                                    class="aspect-square bg-white/5 border border-white/5 rounded flex items-center justify-center hover:border-primary/50 transition-all cursor-pointer">
+                                    <span class="material-symbols-outlined text-sm text-slate-400">save</span>
+                                </div>
+                                <div
+                                    class="aspect-square bg-white/5 border border-white/5 rounded flex items-center justify-center hover:border-primary/50 transition-all cursor-pointer">
+                                    <span class="material-symbols-outlined text-sm text-slate-400">space_bar</span>
+                                </div>
+                                <div
+                                    class="aspect-square bg-white/5 border border-white/5 rounded flex items-center justify-center hover:border-primary/50 transition-all cursor-pointer">
+                                    <span
+                                        class="material-symbols-outlined text-sm text-slate-400">keyboard_return</span>
+                                </div>
+                                <div
+                                    class="aspect-square bg-white/5 border border-white/5 rounded flex items-center justify-center hover:border-primary/50 transition-all cursor-pointer">
+                                    <span class="material-symbols-outlined text-sm text-slate-400">gesture</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- UX Settings -->
+                        <div class="glass rounded-xl p-6 border border-white/5">
+                            <h3 class="font-space text-[10px] uppercase tracking-widest text-slate-400 mb-4">UX Settings
+                            </h3>
+                            <div class="space-y-4 mb-6">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] uppercase tracking-widest text-slate-300">Sound</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="toggleSound" checked class="sr-only peer" />
+                                        <div
+                                            class="w-8 h-4 bg-primary/20 rounded-full border border-primary/30 peer-checked:bg-primary/40 transition-all relative">
+                                            <div
+                                                class="absolute right-0.5 top-0.5 w-3 h-3 bg-primary rounded-full transition-all peer-checked:right-0.5">
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] uppercase tracking-widest text-slate-300">Voice</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="toggleVoice" class="sr-only peer" />
+                                        <div
+                                            class="w-8 h-4 bg-white/10 rounded-full border border-white/20 peer-checked:bg-primary/40 transition-all relative">
+                                            <div
+                                                class="absolute left-0.5 top-0.5 w-3 h-3 bg-slate-500 rounded-full transition-all peer-checked:left-auto peer-checked:right-0.5 peer-checked:bg-primary">
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] uppercase tracking-widest text-slate-300">Haptics</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="toggleHaptic" class="sr-only peer" />
+                                        <div
+                                            class="w-8 h-4 bg-white/10 rounded-full border border-white/20 peer-checked:bg-primary/40 transition-all relative">
+                                            <div
+                                                class="absolute left-0.5 top-0.5 w-3 h-3 bg-slate-500 rounded-full transition-all peer-checked:left-auto peer-checked:right-0.5 peer-checked:bg-primary">
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <button id="startTutorialBtnSide"
+                                    class="w-full py-2 bg-white/5 border border-white/10 text-[10px] uppercase font-bold tracking-widest text-slate-300 hover:bg-white/10 transition-all">Tutorial</button>
+                                <button id="startCalibrationBtnSide"
+                                    class="w-full py-2 bg-white/5 border border-white/10 text-[10px] uppercase font-bold tracking-widest text-slate-300 hover:bg-white/10 transition-all">Calibrate</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Games -->
+                    <div class="glass rounded-xl p-6 border border-white/5">
+                        <h3 class="font-space text-sm uppercase tracking-widest text-slate-400 mb-6">Gesture-Integrated
+                            Games</h3>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="bg-surface-container-high border border-white/5 p-3 rounded-lg hover:border-secondary/50 cursor-pointer transition-all game-card"
+                                data-game="dino">
+                                <span class="material-symbols-outlined text-secondary mb-2 block">directions_run</span>
+                                <p class="text-[9px] font-bold text-white uppercase">Dino Run</p>
+                                <p class="text-[7px] text-tertiary uppercase">Easy</p>
+                            </div>
+                            <div class="bg-surface-container-high border border-white/5 p-3 rounded-lg hover:border-secondary/50 cursor-pointer transition-all game-card"
+                                data-game="flappy">
+                                <span
+                                    class="material-symbols-outlined text-secondary mb-2 block">airplanemode_active</span>
+                                <p class="text-[9px] font-bold text-white uppercase">Flappy Pulse</p>
+                                <p class="text-[7px] text-tertiary uppercase">Easy</p>
+                            </div>
+                            <div class="bg-surface-container-high border border-white/5 p-3 rounded-lg hover:border-secondary/50 cursor-pointer transition-all game-card"
+                                data-game="whack">
+                                <span class="material-symbols-outlined text-secondary mb-2 block">sports_tennis</span>
+                                <p class="text-[9px] font-bold text-white uppercase">Whack Mole</p>
+                                <p class="text-[7px] text-primary uppercase">Medium</p>
+                            </div>
+                            <div class="bg-surface-container-high border border-white/5 p-3 rounded-lg hover:border-secondary/50 cursor-pointer transition-all game-card"
+                                data-game="memory">
+                                <span class="material-symbols-outlined text-secondary mb-2 block">extension</span>
+                                <p class="text-[9px] font-bold text-white uppercase">Memory Match</p>
+                                <p class="text-[7px] text-primary uppercase">Medium</p>
+                            </div>
+                            <div class="bg-surface-container-high border border-white/5 p-3 rounded-lg hover:border-secondary/50 cursor-pointer transition-all game-card"
+                                data-game="space">
+                                <span class="material-symbols-outlined text-secondary mb-2 block">rocket_launch</span>
+                                <p class="text-[9px] font-bold text-white uppercase">Space Shooter</p>
+                                <p class="text-[7px] text-error uppercase">Hard</p>
+                            </div>
+                            <div class="bg-surface-container-high border border-white/5 p-3 rounded-lg hover:border-secondary/50 cursor-pointer transition-all game-card"
+                                data-game="piano">
+                                <span class="material-symbols-outlined text-secondary mb-2 block">piano</span>
+                                <p class="text-[9px] font-bold text-white uppercase">Gesture Piano</p>
+                                <p class="text-[7px] text-tertiary uppercase">Easy</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activity Log -->
+                    <div class="glass rounded-xl p-6 border border-white/5">
+                        <h3 class="font-space text-sm uppercase tracking-widest text-slate-400 mb-4">Recent Recognition
+                            Log</h3>
+                        <div id="activityLog" class="space-y-2 font-mono text-[9px] uppercase max-h-48 overflow-y-auto">
+                            <div
+                                class="flex justify-between items-center text-slate-500 py-1.5 border-b border-white/5">
+                                <span class="flex items-center gap-2">
+                                    <span class="w-1 h-1 bg-primary rounded-full"></span>
+                                    System ready
+                                </span>
+                                <span class="text-primary/70">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
-            <div id="keyboardLayout" style="margin: 1rem 0;"></div>
-            <div class="ux-btn-group">
-                <button id="closeKeyboardBtn" class="btn-ux">Close</button>
-                <button id="keyboardSettingsBtnModal" class="btn-ux btn-primary">Settings</button>
-            </div>
-            <p style="font-size: 0.75rem; margin-top: 1rem; color: #6b7280;">
-                <i class="fas fa-hand-peace"></i> Gesture: Peace to open/close | POINT to hover | PINCH to press
-            </p>
-        </div>
+        </main>
     </div>
 
     <!-- Game Modal -->
-    <div id="gameModal" class="overlay">
-        <div class="overlay-content" style="max-width: 600px;">
-            <div id="gameContent">
-                <h2 id="gameTitle">Loading Game...</h2>
-                <div id="gameCanvas"
-                    style="background: #1e1e2e; border-radius: 12px; margin: 1rem 0; min-height: 300px; display: flex; align-items: center; justify-content: center;">
-                    <p style="color: white;">Game will load here...</p>
-                </div>
-                <div id="gameScore" style="font-size: 1.5rem; font-weight: bold; color: #6366f1;">Score: 0</div>
-                <div class="ux-btn-group">
-                    <button id="closeGameBtn" class="btn-ux">Close Game</button>
-                    <button id="restartGameBtn" class="btn-ux btn-primary">Restart</button>
-                </div>
+    <div id="gameModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="glass border border-white/10 rounded-2xl p-8 max-w-lg w-full mx-4">
+            <h2 id="gameTitle" class="text-2xl font-space font-bold text-white uppercase mb-6">Loading...</h2>
+            <div id="gameCanvas"
+                class="bg-surface-container rounded-xl min-h-[280px] flex items-center justify-center mb-4 border border-white/5">
+            </div>
+            <div id="gameScore" class="text-xl font-space font-bold text-primary mb-4">Score: 0</div>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="closeGameBtn"
+                    class="py-3 border border-white/10 text-slate-300 font-space text-xs uppercase tracking-widest hover:bg-white/5 transition-all">Close</button>
+                <button id="restartGameBtn"
+                    class="py-3 bg-primary text-on-primary font-space text-xs uppercase tracking-widest hover:brightness-110 transition-all">Restart</button>
             </div>
         </div>
     </div>
 
-    <!-- Tutorial Overlay -->
-    <div id="tutorialOverlay" class="overlay">
-        <div class="overlay-content">
+    <!-- Tutorial Modal -->
+    <div id="tutorialOverlay"
+        class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="glass border border-white/10 rounded-2xl p-10 max-w-md w-full mx-4 text-center">
             <div id="tutorialSteps">
                 <div class="tutorial-step active" data-step="1">
-                    <span class="tutorial-image">✋</span>
-                    <h2>Step 1: Open Palm</h2>
-                    <p>Hold your hand open to <strong>enable</strong> control mode.</p>
+                    <div class="text-7xl mb-6">✋</div>
+                    <h2 class="text-2xl font-space font-bold text-white uppercase mb-4">Step 1: Open Palm</h2>
+                    <p class="text-on-surface-variant">Hold your hand open to <strong class="text-white">enable</strong>
+                        control mode.</p>
                 </div>
-                <div class="tutorial-step" data-step="2">
-                    <span class="tutorial-image">👆</span>
-                    <h2>Step 2: Point</h2>
-                    <p>Use your index finger to <strong>move</strong> the cursor across the screen.</p>
+                <div class="tutorial-step hidden" data-step="2">
+                    <div class="text-7xl mb-6">👆</div>
+                    <h2 class="text-2xl font-space font-bold text-white uppercase mb-4">Step 2: Point</h2>
+                    <p class="text-on-surface-variant">Use your index finger to <strong class="text-white">move</strong>
+                        the cursor.</p>
                 </div>
-                <div class="tutorial-step" data-step="3">
-                    <span class="tutorial-image">🤏</span>
-                    <h2>Step 3: Pinch</h2>
-                    <p>Touch your thumb and index finger to perform a <strong>left click</strong>.</p>
+                <div class="tutorial-step hidden" data-step="3">
+                    <div class="text-7xl mb-6">🤏</div>
+                    <h2 class="text-2xl font-space font-bold text-white uppercase mb-4">Step 3: Pinch</h2>
+                    <p class="text-on-surface-variant">Touch thumb and index to <strong class="text-white">left
+                            click</strong>.</p>
                 </div>
-                <div class="tutorial-step" data-step="4">
-                    <span class="tutorial-image">✌️</span>
-                    <h2>Step 4: Peace</h2>
-                    <p>Show a peace sign to perform a <strong>right click</strong> or open the <strong>virtual
-                            keyboard</strong>.</p>
+                <div class="tutorial-step hidden" data-step="4">
+                    <div class="text-7xl mb-6">✌️</div>
+                    <h2 class="text-2xl font-space font-bold text-white uppercase mb-4">Step 4: Peace</h2>
+                    <p class="text-on-surface-variant">Show peace sign to <strong class="text-white">right
+                            click</strong>.</p>
                 </div>
-                <div class="tutorial-step" data-step="5">
-                    <span class="tutorial-image">✊</span>
-                    <h2>Step 5: Fist</h2>
-                    <p>Close your hand into a fist to <strong>disable</strong> tracking.</p>
+                <div class="tutorial-step hidden" data-step="5">
+                    <div class="text-7xl mb-6">✊</div>
+                    <h2 class="text-2xl font-space font-bold text-white uppercase mb-4">Step 5: Fist</h2>
+                    <p class="text-on-surface-variant">Close your hand to <strong class="text-white">disable</strong>
+                        tracking.</p>
                 </div>
             </div>
-            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
-                <button id="prevStepBtn" class="btn btn-outline" style="display: none;">Back</button>
-                <button id="nextStepBtn" class="btn btn-primary">Next Step</button>
-                <button id="closeTutorialBtn" class="btn btn-outline">Exit</button>
+            <div class="flex justify-center gap-4 mt-8">
+                <button id="prevStepBtn"
+                    class="hidden px-6 py-2 border border-white/10 text-slate-300 font-space text-xs uppercase tracking-widest hover:bg-white/5">Back</button>
+                <button id="nextStepBtn"
+                    class="px-6 py-2 bg-primary text-on-primary font-space text-xs uppercase tracking-widest hover:brightness-110">Next
+                    Step</button>
+                <button id="closeTutorialBtn"
+                    class="px-6 py-2 border border-white/10 text-slate-300 font-space text-xs uppercase tracking-widest hover:bg-white/5">Exit</button>
             </div>
         </div>
     </div>
 
-    <!-- Calibration Overlay -->
-    <div id="calibrationOverlay" class="overlay">
-        <div class="overlay-content">
-            <i class="fas fa-crosshairs fa-3x" style="color: #6366f1;"></i>
-            <h2>System Calibration</h2>
-            <p id="calibrationInstruction">Please hold your hand steady in the center of the frame.</p>
-            <div class="calibration-timer" id="calibrationTimer">30</div>
-            <div class="progress-bar" style="height: 12px; margin-bottom: 1rem;">
-                <div class="progress-fill" id="calibrationProgress" style="width: 0%"></div>
+    <!-- Calibration Modal -->
+    <div id="calibrationOverlay"
+        class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="glass border border-white/10 rounded-2xl p-10 max-w-md w-full mx-4 text-center">
+            <span class="material-symbols-outlined text-5xl text-primary mb-6 block">my_location</span>
+            <h2 class="text-2xl font-space font-bold text-white uppercase mb-4">System Calibration</h2>
+            <p id="calibrationInstruction" class="text-on-surface-variant mb-6">Please hold your hand steady in the
+                center of the frame.</p>
+            <div id="calibrationTimer" class="text-6xl font-space font-bold text-primary mb-6">30</div>
+            <div class="h-2 bg-white/5 rounded-full overflow-hidden mb-8">
+                <div id="calibrationProgress"
+                    class="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-1000"
+                    style="width:0%"></div>
             </div>
-            <button id="cancelCalibrationBtn" class="btn btn-outline">Cancel</button>
+            <button id="cancelCalibrationBtn"
+                class="px-8 py-3 border border-white/10 text-slate-300 font-space text-xs uppercase tracking-widest hover:bg-white/5">Cancel</button>
         </div>
     </div>
 
@@ -1081,35 +589,26 @@
         let token = localStorage.getItem('token');
         let currentDeviceId = null;
 
-        // Analytics State
         let sessionStartTime = null;
         let gestureCount = 0;
         let gestureHistory = [];
         let sessionInterval = null;
         const DAILY_GOAL = 1000;
 
-        // Game State
         let currentGame = null;
         let gameScore = 0;
         let gameInterval = null;
 
-        // Check authentication
-        if (!token) {
-            window.location.href = '/login';
-        }
+        if (!token) { window.location.href = '/login'; }
 
-        // UX State
         let uxSettings = {
             sound: localStorage.getItem('ux_sound') !== 'false',
             voice: localStorage.getItem('ux_voice') === 'true',
             haptic: localStorage.getItem('ux_haptic') === 'true'
         };
 
-        // Initialize Audio context for procedural sounds
         let audioCtx = null;
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
+        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
 
         function playClickSound(frequency = 800, type = 'sine') {
             if (!uxSettings.sound) return;
@@ -1121,10 +620,8 @@
             osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1);
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
         function announce(text) {
@@ -1135,811 +632,296 @@
         }
 
         function triggerHaptic(duration = 50) {
-            if (uxSettings.haptic && navigator.vibrate) {
-                navigator.vibrate(duration);
-            }
+            if (uxSettings.haptic && navigator.vibrate) navigator.vibrate(duration);
         }
 
-        // Keyboard Functions
-        let keyboardActive = false;
-        let keyboardText = "";
-
-        function renderKeyboard() {
-            const layouts = {
-                qwerty: [
-                    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '⌫'],
-                    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-                    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '↵'],
-                    ['⇧', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '?'],
-                    ['SPACE', '←', '→']
-                ]
-            };
-
-            const layout = layouts.qwerty;
-            let html = '';
-            layout.forEach(row => {
-                html += '<div style="display: flex; justify-content: center; gap: 5px; margin-bottom: 5px;">';
-                row.forEach(key => {
-                    let displayKey = key;
-                    let width = '50px';
-                    if (key === 'SPACE') width = '200px';
-                    if (key === '⌫') displayKey = '⌫';
-                    if (key === '↵') displayKey = '↵';
-                    if (key === '⇧') displayKey = '⇧';
-                    html += `<button class="key-btn" data-key="${key}" style="width: ${width}; padding: 12px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">${displayKey}</button>`;
-                });
-                html += '</div>';
-            });
-            document.getElementById('keyboardLayout').innerHTML = html;
-
-            // Add event listeners to keys
-            document.querySelectorAll('.key-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const key = btn.dataset.key;
-                    handleKeyPress(key);
-                });
-            });
-        }
-
-        function handleKeyPress(key) {
-            if (key === '⌫') {
-                keyboardText = keyboardText.slice(0, -1);
-            } else if (key === '↵') {
-                keyboardText += '\n';
-            } else if (key === '⇧') {
-                // Shift functionality - just visual for now
-                playClickSound(600);
-            } else if (key === 'SPACE') {
-                keyboardText += ' ';
-            } else if (key === '←') {
-                // Left arrow
-            } else if (key === '→') {
-                // Right arrow
-            } else {
-                keyboardText += key;
-            }
-            document.getElementById('keyboardTextDisplay').innerHTML = keyboardText || '<span style="color: #9ca3af;">Type something...</span>';
-            playClickSound(400);
-            triggerHaptic(20);
-        }
-
-        // Game Functions
+        // Game Logic
         const games = {
-            dino: {
-                name: "Dino Runner",
-                init: function () {
-                    gameScore = 0;
-                    updateGameScore();
-                    startDinoGame();
-                }
-            },
-            flappy: {
-                name: "Flappy Gesture",
-                init: function () {
-                    gameScore = 0;
-                    updateGameScore();
-                    startFlappyGame();
-                }
-            },
-            whack: {
-                name: "Whack-A-Mole",
-                init: function () {
-                    gameScore = 0;
-                    updateGameScore();
-                    startWhackGame();
-                }
-            },
-            memory: {
-                name: "Memory Match",
-                init: function () {
-                    gameScore = 0;
-                    updateGameScore();
-                    startMemoryGame();
-                }
-            },
-            space: {
-                name: "Space Shooter",
-                init: function () {
-                    gameScore = 0;
-                    updateGameScore();
-                    startSpaceGame();
-                }
-            },
-            piano: {
-                name: "Gesture Piano",
-                init: function () {
-                    gameScore = 0;
-                    updateGameScore();
-                    startPianoGame();
-                }
-            }
+            dino: { name: "Dino Runner", init: function () { gameScore = 0; updateGameScore(); startDinoGame(); } },
+            flappy: { name: "Flappy Pulse", init: function () { gameScore = 0; updateGameScore(); startFlappyGame(); } },
+            whack: { name: "Whack-A-Mole", init: function () { gameScore = 0; updateGameScore(); startWhackGame(); } },
+            memory: { name: "Memory Match", init: function () { gameScore = 0; updateGameScore(); startMemoryGame(); } },
+            space: { name: "Space Shooter", init: function () { gameScore = 0; updateGameScore(); startSpaceGame(); } },
+            piano: { name: "Gesture Piano", init: function () { gameScore = 0; updateGameScore(); startPianoGame(); } }
         };
 
-        function updateGameScore() {
-            document.getElementById('gameScore').innerHTML = `Score: ${gameScore}`;
-        }
+        function updateGameScore() { document.getElementById('gameScore').textContent = `Score: ${gameScore}`; }
 
-        // Simple game implementations
         function startDinoGame() {
-            const canvas = document.getElementById('gameCanvas');
-            canvas.innerHTML = `
-                <div style="text-align: center; color: white;">
-                    <div style="font-size: 3rem;">🦖</div>
-                    <div style="margin-top: 20px;">
-                        <button class="game-control" data-action="jump" style="padding: 10px 20px; margin: 5px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">Jump (Pinch)</button>
-                    </div>
-                    <p style="margin-top: 20px;">Use PINCH gesture to jump over obstacles!</p>
-                    <p>Score: <span id="dinoScore">0</span></p>
-                </div>
-            `;
-
-            let dinoScore = 0;
-            const scoreSpan = canvas.querySelector('#dinoScore');
-            const jumpBtn = canvas.querySelector('.game-control');
-
-            if (jumpBtn) {
-                jumpBtn.addEventListener('click', () => {
-                    dinoScore++;
-                    if (scoreSpan) scoreSpan.textContent = dinoScore;
-                    gameScore = dinoScore;
-                    updateGameScore();
-                    playClickSound(500);
-                    triggerHaptic(30);
-                });
-            }
+            const c = document.getElementById('gameCanvas');
+            c.innerHTML = `<div class="text-center text-white p-8"><div class="text-6xl mb-4">🦖</div><button class="game-control px-6 py-3 bg-primary text-on-primary font-space text-xs uppercase tracking-widest">Jump (Pinch)</button><p class="text-xs text-slate-400 mt-4">Score: <span id="dinoScore">0</span></p></div>`;
+            let score = 0;
+            c.querySelector('.game-control').addEventListener('click', () => { score++; c.querySelector('#dinoScore').textContent = score; gameScore = score; updateGameScore(); playClickSound(500); });
         }
-
         function startFlappyGame() {
-            const canvas = document.getElementById('gameCanvas');
-            canvas.innerHTML = `
-                <div style="text-align: center; color: white;">
-                    <div style="font-size: 3rem;">🐦</div>
-                    <div style="margin-top: 20px;">
-                        <button class="game-control" data-action="flap" style="padding: 10px 20px; margin: 5px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">Flap (Pinch)</button>
-                    </div>
-                    <p style="margin-top: 20px;">Use PINCH gesture to flap through pipes!</p>
-                    <p>Score: <span id="flappyScore">0</span></p>
-                </div>
-            `;
-
-            let flappyScore = 0;
-            const scoreSpan = canvas.querySelector('#flappyScore');
-            const flapBtn = canvas.querySelector('.game-control');
-
-            if (flapBtn) {
-                flapBtn.addEventListener('click', () => {
-                    flappyScore++;
-                    if (scoreSpan) scoreSpan.textContent = flappyScore;
-                    gameScore = flappyScore;
-                    updateGameScore();
-                    playClickSound(600);
-                    triggerHaptic(30);
-                });
-            }
+            const c = document.getElementById('gameCanvas');
+            c.innerHTML = `<div class="text-center text-white p-8"><div class="text-6xl mb-4">🐦</div><button class="game-control px-6 py-3 bg-primary text-on-primary font-space text-xs uppercase tracking-widest">Flap (Pinch)</button><p class="text-xs text-slate-400 mt-4">Score: <span id="flappyScore">0</span></p></div>`;
+            let score = 0;
+            c.querySelector('.game-control').addEventListener('click', () => { score++; c.querySelector('#flappyScore').textContent = score; gameScore = score; updateGameScore(); playClickSound(600); });
         }
-
         function startWhackGame() {
-            const canvas = document.getElementById('gameCanvas');
-            canvas.innerHTML = `
-                <div style="text-align: center; color: white;">
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 20px;">
-                        ${Array(9).fill().map((_, i) => `<button class="mole-hole" data-hole="${i}" style="padding: 20px; background: #4a5568; border: none; border-radius: 12px; cursor: pointer; font-size: 2rem;">🕳️</button>`).join('')}
-                    </div>
-                    <p>Score: <span id="whackScore">0</span></p>
-                </div>
-            `;
-
-            let whackScore = 0;
-            const scoreSpan = canvas.querySelector('#whackScore');
-            const holes = canvas.querySelectorAll('.mole-hole');
-
-            holes.forEach(hole => {
-                hole.addEventListener('click', () => {
-                    if (hole.textContent === '🐭') {
-                        whackScore++;
-                        if (scoreSpan) scoreSpan.textContent = whackScore;
-                        gameScore = whackScore;
-                        updateGameScore();
-                        hole.textContent = '🕳️';
-                        playClickSound(800);
-                        triggerHaptic(50);
-                    }
-                });
-            });
-
-            // Spawn moles randomly
+            const c = document.getElementById('gameCanvas');
+            c.innerHTML = `<div class="text-white p-4"><div class="grid grid-cols-3 gap-3">${Array(9).fill().map((_, i) => `<button class="mole-hole p-5 bg-white/5 border border-white/10 rounded-lg text-2xl hover:border-primary/30 transition-all" data-hole="${i}">🕳️</button>`).join('')}</div><p class="text-xs text-slate-400 text-center mt-4">Score: <span id="whackScore">0</span></p></div>`;
+            let score = 0;
+            const holes = c.querySelectorAll('.mole-hole');
+            holes.forEach(h => h.addEventListener('click', () => { if (h.textContent === '🐭') { score++; c.querySelector('#whackScore').textContent = score; gameScore = score; updateGameScore(); h.textContent = '🕳️'; playClickSound(800); } }));
             if (gameInterval) clearInterval(gameInterval);
-            gameInterval = setInterval(() => {
-                const randomHole = holes[Math.floor(Math.random() * holes.length)];
-                if (randomHole.textContent === '🕳️') {
-                    randomHole.textContent = '🐭';
-                    setTimeout(() => {
-                        if (randomHole.textContent === '🐭') randomHole.textContent = '🕳️';
-                    }, 1000);
-                }
-            }, 1500);
+            gameInterval = setInterval(() => { const r = holes[Math.floor(Math.random() * holes.length)]; if (r.textContent === '🕳️') { r.textContent = '🐭'; setTimeout(() => { if (r.textContent === '🐭') r.textContent = '🕳️'; }, 1000); } }, 1500);
         }
-
         function startMemoryGame() {
-            const canvas = document.getElementById('gameCanvas');
+            const c = document.getElementById('gameCanvas');
             const cards = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
-            const doubled = [...cards, ...cards];
-            const shuffled = doubled.sort(() => Math.random() - 0.5);
-
-            canvas.innerHTML = `
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 20px;">
-                    ${shuffled.map((card, i) => `<button class="memory-card" data-card="${card}" data-index="${i}" style="padding: 20px; background: #6366f1; border: none; border-radius: 12px; cursor: pointer; font-size: 2rem;">?</button>`).join('')}
-                </div>
-                <p>Matches: <span id="memoryScore">0</span></p>
-            `;
-
-            let matches = 0;
-            let selected = null;
-            let lockBoard = false;
-            const scoreSpan = canvas.querySelector('#memoryScore');
-            const cardButtons = canvas.querySelectorAll('.memory-card');
-
-            cardButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (lockBoard || btn.textContent !== '?') return;
-
-                    btn.textContent = btn.dataset.card;
-
-                    if (!selected) {
-                        selected = btn;
-                    } else if (selected.dataset.card === btn.dataset.card && selected !== btn) {
-                        matches++;
-                        if (scoreSpan) scoreSpan.textContent = matches;
-                        gameScore = matches;
-                        updateGameScore();
-                        selected = null;
-                        playClickSound(500);
-                        triggerHaptic(30);
-                    } else if (selected !== btn) {
-                        lockBoard = true;
-                        setTimeout(() => {
-                            selected.textContent = '?';
-                            btn.textContent = '?';
-                            selected = null;
-                            lockBoard = false;
-                        }, 1000);
-                    }
-                });
-            });
+            const shuffled = [...cards, ...cards].sort(() => Math.random() - 0.5);
+            c.innerHTML = `<div class="p-4"><div class="grid grid-cols-4 gap-2">${shuffled.map((card, i) => `<button class="memory-card p-3 bg-primary/20 border border-primary/30 rounded-lg text-xl" data-card="${card}" data-index="${i}">?</button>`).join('')}</div><p class="text-xs text-slate-400 text-center mt-4">Matches: <span id="memoryScore">0</span></p></div>`;
+            let matches = 0, selected = null, lock = false;
+            c.querySelectorAll('.memory-card').forEach(btn => { btn.addEventListener('click', () => { if (lock || btn.textContent !== '?') return; btn.textContent = btn.dataset.card; if (!selected) { selected = btn; } else if (selected.dataset.card === btn.dataset.card && selected !== btn) { matches++; c.querySelector('#memoryScore').textContent = matches; gameScore = matches; updateGameScore(); selected = null; playClickSound(500); } else if (selected !== btn) { lock = true; setTimeout(() => { selected.textContent = '?'; btn.textContent = '?'; selected = null; lock = false; }, 1000); } }); });
         }
-
         function startSpaceGame() {
-            const canvas = document.getElementById('gameCanvas');
-            canvas.innerHTML = `
-                <div style="text-align: center; color: white;">
-                    <div style="font-size: 3rem;">🚀</div>
-                    <div style="margin-top: 20px;">
-                        <button class="game-control" data-action="shoot" style="padding: 10px 20px; margin: 5px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">Shoot (Pinch)</button>
-                    </div>
-                    <p style="margin-top: 20px;">Use PINCH gesture to shoot asteroids!</p>
-                    <p>Score: <span id="spaceScore">0</span></p>
-                </div>
-            `;
-
-            let spaceScore = 0;
-            const scoreSpan = canvas.querySelector('#spaceScore');
-            const shootBtn = canvas.querySelector('.game-control');
-
-            if (shootBtn) {
-                shootBtn.addEventListener('click', () => {
-                    spaceScore++;
-                    if (scoreSpan) scoreSpan.textContent = spaceScore;
-                    gameScore = spaceScore;
-                    updateGameScore();
-                    playClickSound(900);
-                    triggerHaptic(40);
-                });
-            }
+            const c = document.getElementById('gameCanvas');
+            c.innerHTML = `<div class="text-center text-white p-8"><div class="text-6xl mb-4">🚀</div><button class="game-control px-6 py-3 bg-primary text-on-primary font-space text-xs uppercase tracking-widest">Shoot (Pinch)</button><p class="text-xs text-slate-400 mt-4">Score: <span id="spaceScore">0</span></p></div>`;
+            let score = 0; c.querySelector('.game-control').addEventListener('click', () => { score++; c.querySelector('#spaceScore').textContent = score; gameScore = score; updateGameScore(); playClickSound(900); });
         }
-
         function startPianoGame() {
-            const canvas = document.getElementById('gameCanvas');
+            const c = document.getElementById('gameCanvas');
             const notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-
-            canvas.innerHTML = `
-                <div style="display: flex; justify-content: center; gap: 10px; padding: 20px;">
-                    ${notes.map(note => `<button class="piano-key" data-note="${note}" style="padding: 40px 20px; background: white; color: #1f2937; border: 2px solid #6366f1; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold;">${note}</button>`).join('')}
-                </div>
-                <p style="text-align: center;">Play music with gestures! Click keys or use POINT+PINCH</p>
-            `;
-
-            const keys = canvas.querySelectorAll('.piano-key');
-            keys.forEach(key => {
-                key.addEventListener('click', () => {
-                    playClickSound(440 * (notes.indexOf(key.dataset.note) + 1) / 4, 'sine');
-                    triggerHaptic(20);
-                    key.style.transform = 'scale(0.95)';
-                    setTimeout(() => key.style.transform = '', 100);
-                });
-            });
+            c.innerHTML = `<div class="p-4"><div class="flex justify-center gap-2">${notes.map(n => `<button class="piano-key px-4 py-10 bg-white text-gray-900 border-2 border-primary font-space font-bold text-sm hover:bg-primary hover:text-on-primary transition-all" data-note="${n}">${n}</button>`).join('')}</div><p class="text-xs text-slate-400 text-center mt-4">Play music with gestures!</p></div>`;
+            c.querySelectorAll('.piano-key').forEach(key => { key.addEventListener('click', () => { playClickSound(440 * (notes.indexOf(key.dataset.note) + 1) / 4, 'sine'); key.style.transform = 'scale(0.95)'; setTimeout(() => key.style.transform = '', 100); }); });
         }
 
-        // Initialize dashboard
-        async function init() {
-            loadUXSettings();
-            await loadUserInfo();
-            await loadDevices();
-            initWebSocket();
-            startSessionTimer();
-            setupEventListeners();
-            renderKeyboard();
-        }
-
-        function setupEventListeners() {
-            // Keyboard launch
-            document.getElementById('launchKeyboardBtn').addEventListener('click', () => {
-                document.getElementById('keyboardModal').style.display = 'flex';
-                keyboardActive = true;
-                announce("Virtual keyboard opened");
-            });
-
-            document.getElementById('closeKeyboardBtn').addEventListener('click', () => {
-                document.getElementById('keyboardModal').style.display = 'none';
-                keyboardActive = false;
-            });
-
-            document.getElementById('keyboardSettingsBtnModal').addEventListener('click', () => {
-                alert("Keyboard Settings:\n- Layout: QWERTY\n- Word prediction: Coming soon\n- Size: Adjustable");
-            });
-
-            // Game cards
-            document.querySelectorAll('.game-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const gameId = card.dataset.game;
-                    if (games[gameId]) {
-                        currentGame = gameId;
-                        document.getElementById('gameTitle').innerHTML = games[gameId].name;
-                        document.getElementById('gameModal').style.display = 'flex';
-                        games[gameId].init();
-                        announce(`Starting ${games[gameId].name}`);
-                    }
-                });
-            });
-
-            document.getElementById('closeGameBtn').addEventListener('click', () => {
-                document.getElementById('gameModal').style.display = 'none';
-                if (gameInterval) clearInterval(gameInterval);
-            });
-
-            document.getElementById('restartGameBtn').addEventListener('click', () => {
-                if (currentGame && games[currentGame]) {
-                    games[currentGame].init();
-                    announce("Game restarted");
-                }
-            });
-        }
-
-        async function loadUserInfo() {
-            try {
-                const response = await fetch('/api/auth/profile', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const user = await response.json();
-                document.getElementById('userName').innerHTML = `<i class="fas fa-user-circle"></i> Welcome, ${user.username}`;
-                localStorage.setItem('user', JSON.stringify(user));
-            } catch (error) {
-                console.error('Error loading user:', error);
-            }
-        }
-
-        async function loadDevices() {
-            try {
-                const response = await fetch('/api/devices', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const data = await response.json();
-
-                if (data.success && data.devices && data.devices.length > 0) {
-                    displayDevices(data.devices);
-                    if (!currentDeviceId) {
-                        currentDeviceId = data.devices[0].id;
-                        updateDeviceInfo();
-                    }
-                } else {
-                    document.getElementById('devicesList').innerHTML = '<p style="text-align: center; color: #6b7280;"><i class="fas fa-microchip"></i><br>No devices registered</p>';
-                }
-            } catch (error) {
-                console.error('Error loading devices:', error);
-                document.getElementById('devicesList').innerHTML = '<p style="text-align: center; color: #ef4444;"><i class="fas fa-exclamation-triangle"></i><br>Error loading devices</p>';
-            }
-        }
-
-        function displayDevices(devices) {
-            const container = document.getElementById('devicesList');
-            container.innerHTML = devices.map(device => `
-                <div class="device-item ${device.id === currentDeviceId ? 'active' : ''}" 
-                     onclick="selectDevice(${device.id})">
-                    <span class="device-icon"><i class="fas fa-${device.device_type === 'laptop' ? 'laptop' : 'desktop'}"></i></span>
-                    <div class="device-info">
-                        <strong>${escapeHtml(device.device_name)}</strong>
-                        <small><i class="fas fa-${device.status === 'online' ? 'circle' : 'circle-notch'}"></i> ${device.status || 'offline'}</small>
-                    </div>
-                    <button class="btn-delete" title="Delete Device" 
-                            onclick="deleteDevice(${device.id}, event)">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        async function deleteDevice(deviceId, event) {
-            if (event) event.stopPropagation();
-            if (!confirm('Are you sure you want to delete this device?')) return;
-
-            try {
-                const response = await fetch(`/api/devices/${deviceId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
-                if (data.success) {
-                    addActivity(`<i class="fas fa-trash"></i> Device deleted successfully`);
-                    if (currentDeviceId === deviceId) {
-                        currentDeviceId = null;
-                        updateDeviceInfo();
-                    }
-                    await loadDevices();
-                } else {
-                    alert('Error deleting device: ' + data.error);
-                }
-            } catch (error) {
-                console.error('Error deleting device:', error);
-                alert('An error occurred while deleting the device');
-            }
-        }
-
-        window.selectDevice = function (deviceId) {
-            currentDeviceId = deviceId;
-            updateDeviceInfo();
-            loadDevices();
-            addActivity(`<i class="fas fa-exchange-alt"></i> Switched to device ID: ${deviceId}`);
-        };
-
-        function updateDeviceInfo() {
-            const deviceInfo = document.getElementById('deviceInfo');
-            if (currentDeviceId) {
-                deviceInfo.innerHTML = `<i class="fas fa-microchip"></i> Device: ${currentDeviceId}`;
-            } else {
-                deviceInfo.innerHTML = `<i class="fas fa-exclamation-triangle"></i> No device selected`;
-            }
-        }
-
+        // WebSocket
         function initWebSocket() {
-            socket = io('/', {
-                query: { token: token },
-                transports: ['websocket', 'polling']
-            });
-
+            socket = io('/', { query: { token }, transports: ['websocket', 'polling'] });
             socket.on('connect', () => {
-                const statusDot = document.getElementById('connectionStatus');
-                statusDot.className = 'status-dot connected';
-                document.getElementById('statusText').innerHTML = '<i class="fas fa-link"></i> Connected';
-                addActivity('<i class="fas fa-plug"></i> Dashboard connected to server');
+                document.getElementById('connectionStatusDot').style.background = '#b9ffb8';
+                document.getElementById('connectionStatusDot').style.boxShadow = '0 0 10px #b9ffb8';
+                document.getElementById('statusText').textContent = 'Connected';
+                addActivity('Dashboard connected to server', '✓');
             });
-
             socket.on('disconnect', () => {
-                document.getElementById('connectionStatus').className = 'status-dot disconnected';
-                document.getElementById('statusText').innerHTML = '<i class="fas fa-unlink"></i> Disconnected';
-                addActivity('<i class="fas fa-exclamation-triangle"></i> WebSocket disconnected');
+                document.getElementById('connectionStatusDot').style.background = '#ff716c';
+                document.getElementById('connectionStatusDot').style.boxShadow = 'none';
+                document.getElementById('statusText').textContent = 'Disconnected';
+                addActivity('WebSocket disconnected', '✗');
             });
-
             socket.on('gesture_activity', (data) => {
                 const gesture = data.gesture || 'UNKNOWN';
-                const deviceName = data.device_name || 'Unknown device';
+                const deviceName = data.device_name || 'Unknown';
                 const confidence = data.confidence || 0.9;
-
-                let displayType = 'move';
-                let displayMessage = gesture;
-                let icon = 'fa-hand-peace';
-
-                if (gesture.includes('CLICK')) {
-                    displayType = 'click';
-                    displayMessage = gesture.replace('_', ' ');
-                    playClickSound(gesture.includes('RIGHT') ? 600 : 800);
-                    announce(gesture.replace('_', ' ').toLowerCase());
-                    triggerHaptic(60);
-                } else if (gesture.includes('SCROLL')) {
-                    displayType = 'scroll';
-                    displayMessage = 'Scroll';
-                    playClickSound(400, 'triangle');
-                    triggerHaptic(30);
-                } else if (gesture === 'OPEN_PALM') {
-                    displayType = 'enable';
-                    displayMessage = 'Control ENABLED';
-                    playClickSound(1000);
-                    announce('Control enabled');
-                    triggerHaptic(100);
-                } else if (gesture === 'FIST') {
-                    displayType = 'disable';
-                    displayMessage = 'Control DISABLED';
-                    playClickSound(300);
-                    announce('Control disabled');
-                    triggerHaptic(100);
-                } else if (gesture === 'CURSOR_MOVE') {
-                    updateGestureDisplay('move', `Cursor moved`, confidence);
-                    return;
-                } else if (gesture === 'PEACE') {
-                    // Toggle keyboard with peace sign
-                    if (keyboardActive) {
-                        document.getElementById('keyboardModal').style.display = 'none';
-                        keyboardActive = false;
-                        announce("Keyboard closed");
-                    } else {
-                        document.getElementById('keyboardModal').style.display = 'flex';
-                        keyboardActive = true;
-                        announce("Keyboard opened");
-                    }
-                }
-
+                let displayType = 'move', displayMessage = gesture;
+                if (gesture.includes('CLICK')) { displayType = 'click'; displayMessage = gesture.replace('_', ' '); playClickSound(gesture.includes('RIGHT') ? 600 : 800); announce(displayMessage.toLowerCase()); triggerHaptic(60); }
+                else if (gesture.includes('SCROLL')) { displayType = 'scroll'; displayMessage = 'Scroll'; playClickSound(400, 'triangle'); triggerHaptic(30); }
+                else if (gesture === 'OPEN_PALM') { displayType = 'enable'; displayMessage = 'Control ENABLED'; playClickSound(1000); announce('Control enabled'); triggerHaptic(100); }
+                else if (gesture === 'FIST') { displayType = 'disable'; displayMessage = 'Control DISABLED'; playClickSound(300); announce('Control disabled'); triggerHaptic(100); }
+                else if (gesture === 'CURSOR_MOVE') { updateGestureDisplay('move', 'Move Cursor', confidence); return; }
                 updateGestureDisplay(displayType, displayMessage, confidence);
-                addActivity(`<i class="fas ${icon}"></i> <b>${displayMessage}</b> from ${deviceName}`);
+                addActivity(`${displayMessage} from ${deviceName}`, '◉');
                 registerGesture(confidence);
             });
         }
 
         function updateGestureDisplay(gesture, message, confidence) {
-            const icons = {
-                'move': '👉',
-                'click': '👆',
-                'scroll': '📜',
-                'zoom': '🔍',
-                'screenshot': '📸',
-                'enable': '✋',
-                'disable': '✊'
-            };
-
+            const icons = { move: '👉', click: '👆', scroll: '📜', zoom: '🔍', screenshot: '📸', enable: '✋', disable: '✊' };
             const display = document.getElementById('gestureDisplay');
             display.textContent = icons[gesture] || '✋';
-            display.style.animation = 'none';
-            display.offsetHeight;
-            display.style.animation = 'bounce 0.5s ease';
-
-            document.getElementById('gestureName').innerHTML = `<i class="fas fa-hand-sparkles"></i> ${message}`;
-
-            const fill = document.getElementById('confidenceFill');
-            fill.style.width = `${(confidence || 0.9) * 100}%`;
-
-            clearTimeout(window._confidenceTimer);
-            window._confidenceTimer = setTimeout(() => {
-                fill.style.width = '0%';
-            }, 3000);
+            document.getElementById('gestureName').textContent = message;
+            const pct = Math.round((confidence || 0.9) * 100);
+            document.getElementById('confidenceLabel').textContent = `${pct}%`;
+            document.getElementById('confidenceFill').style.width = `${pct}%`;
+            clearTimeout(window._confTimer);
+            window._confTimer = setTimeout(() => { document.getElementById('confidenceFill').style.width = '0%'; document.getElementById('confidenceLabel').textContent = '0%'; }, 3000);
         }
 
         function startSessionTimer() {
             sessionStartTime = Date.now();
             sessionInterval = setInterval(() => {
-                const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
-                const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-                const seconds = (elapsed % 60).toString().padStart(2, '0');
-                document.getElementById('sessionTimerVal').textContent = `${minutes}:${seconds}`;
+                const e = Math.floor((Date.now() - sessionStartTime) / 1000);
+                const m = Math.floor(e / 60).toString().padStart(2, '0');
+                const s = (e % 60).toString().padStart(2, '0');
+                document.getElementById('sessionTimerVal').textContent = `${m}:${s}`;
             }, 1000);
         }
 
         function registerGesture(confidence) {
             gestureCount++;
             document.getElementById('gestureCountVal').textContent = gestureCount;
-
-            const accVal = Math.round(confidence * 100);
-            document.getElementById('accuracyVal').textContent = `${accVal}%`;
-
+            document.getElementById('accuracyVal').textContent = `${Math.round(confidence * 100)}%`;
             const now = Date.now();
             gestureHistory.push(now);
-            gestureHistory = gestureHistory.filter(time => now - time <= 10000);
-
+            gestureHistory = gestureHistory.filter(t => now - t <= 10000);
             const badge = document.getElementById('speedBadgeVal');
-            if (gestureHistory.length > 5) {
-                badge.innerHTML = '<i class="fas fa-rocket"></i> Fast';
-                badge.className = 'speed-badge speed-fast';
-            } else if (gestureHistory.length > 2) {
-                badge.innerHTML = '<i class="fas fa-car"></i> Normal';
-                badge.className = 'speed-badge speed-normal';
-            } else {
-                badge.innerHTML = '<i class="fas fa-turtle"></i> Slow';
-                badge.className = 'speed-badge speed-slow';
-            }
-
-            document.getElementById('goalTextVal').innerHTML = `${gestureCount} / ${DAILY_GOAL}`;
-            const progress = Math.min((gestureCount / DAILY_GOAL) * 100, 100);
-            document.getElementById('goalProgressFill').style.width = `${progress}%`;
-
-            if (gestureCount === DAILY_GOAL) celebrateGoal();
+            if (gestureHistory.length > 5) { badge.textContent = 'Fast'; badge.className = 'text-[10px] bg-error/10 text-error px-2 py-0.5 rounded uppercase font-bold border border-error/20'; }
+            else if (gestureHistory.length > 2) { badge.textContent = 'Normal'; badge.className = 'text-[10px] bg-tertiary/10 text-tertiary px-2 py-0.5 rounded uppercase font-bold border border-tertiary/20'; }
+            else { badge.textContent = 'Slow'; badge.className = 'text-[10px] bg-white/5 text-slate-400 px-2 py-0.5 rounded uppercase font-bold border border-white/10'; }
+            document.getElementById('goalTextVal').textContent = `${gestureCount} / ${DAILY_GOAL}`;
+            document.getElementById('goalProgressFill').style.width = `${Math.min((gestureCount / DAILY_GOAL) * 100, 100)}%`;
+            if (gestureCount === DAILY_GOAL) addActivity('🎉 Daily goal reached!', '★');
         }
 
-        function celebrateGoal() {
-            addActivity('<i class="fas fa-trophy"></i> 🎉 CONGRATULATIONS! Daily goal reached! 🎉');
-            for (let i = 0; i < 50; i++) createConfetti();
-        }
-
-        function createConfetti() {
-            const confetti = document.createElement('div');
-            confetti.innerHTML = '🎉';
-            confetti.style.position = 'fixed';
-            confetti.style.left = Math.random() * 100 + '%';
-            confetti.style.top = '-20px';
-            confetti.style.fontSize = (Math.random() * 20 + 10) + 'px';
-            confetti.style.opacity = '1';
-            confetti.style.transition = 'all 3s ease';
-            confetti.style.pointerEvents = 'none';
-            confetti.style.zIndex = '9999';
-            document.body.appendChild(confetti);
-            setTimeout(() => {
-                confetti.style.top = '100vh';
-                confetti.style.opacity = '0';
-                setTimeout(() => confetti.remove(), 3000);
-            }, 10);
-        }
-
-        function addActivity(message) {
+        function addActivity(message, icon = '◦') {
             const log = document.getElementById('activityLog');
-            const timestamp = new Date().toLocaleTimeString();
+            const t = new Date().toLocaleTimeString();
             const entry = document.createElement('div');
-            entry.className = 'activity-entry';
-            entry.innerHTML = `<span class="time"><i class="far fa-clock"></i> [${timestamp}]</span> ${message}`;
+            entry.className = 'flex justify-between items-center text-slate-500 py-1.5 border-b border-white/5';
+            entry.innerHTML = `<span class="flex items-center gap-2"><span class="w-1 h-1 bg-primary rounded-full"></span>${t} - ${message}</span><span class="text-primary/70">${icon}</span>`;
             log.insertBefore(entry, log.firstChild);
             while (log.children.length > 20) log.removeChild(log.lastChild);
         }
 
-        document.getElementById('addDeviceBtn').addEventListener('click', async () => {
-            const deviceName = prompt('Enter device name:', 'My Computer');
-            if (deviceName) {
-                const deviceType = confirm('Is this a laptop?') ? 'laptop' : 'desktop';
-                try {
-                    const response = await fetch('/api/devices', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ device_name: deviceName, device_type: deviceType })
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                        addActivity(`<i class="fas fa-plus-circle"></i> Device "${deviceName}" registered successfully`);
-                        await loadDevices();
-                    } else {
-                        alert('Error: ' + data.error);
-                    }
-                } catch (error) {
-                    console.error('Error registering device:', error);
-                    alert('Error registering device');
-                }
-            }
-        });
-
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
+        // User / Device API
+        async function loadUserInfo() {
             try {
-                await fetch('/api/auth/logout', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-            } catch (error) { console.error('Logout error:', error); }
-            if (socket) socket.disconnect();
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-        });
+                const res = await fetch('/api/auth/profile', { headers: { 'Authorization': `Bearer ${token}` } });
+                const user = await res.json();
+                document.getElementById('userName').textContent = `Welcome, ${user.username}`;
+                localStorage.setItem('user', JSON.stringify(user));
+            } catch (e) { console.error(e); }
+        }
 
-        // Tutorial Logic
+        async function loadDevices() {
+            try {
+                const res = await fetch('/api/devices', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                if (data.success && data.devices && data.devices.length > 0) {
+                    displayDevices(data.devices);
+                    if (!currentDeviceId) { currentDeviceId = data.devices[0].id; updateDeviceInfo(); }
+                } else {
+                    document.getElementById('devicesList').innerHTML = '<p class="text-center text-slate-500 text-xs py-4 font-space uppercase tracking-widest">No devices registered</p>';
+                }
+            } catch (e) {
+                document.getElementById('devicesList').innerHTML = '<p class="text-center text-error text-xs py-4 font-space uppercase">Error loading devices</p>';
+            }
+        }
+
+        function displayDevices(devices) {
+            document.getElementById('devicesList').innerHTML = devices.map(d => `
+      <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg group cursor-pointer hover:bg-white/8 transition-all ${d.id === currentDeviceId ? 'border-l-2 border-primary' : ''}" onclick="selectDevice(${d.id})">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-slate-400">${d.device_type === 'laptop' ? 'laptop_mac' : 'desktop_windows'}</span>
+          <div>
+            <p class="text-xs font-bold text-white uppercase font-space">${escapeHtml(d.device_name)}</p>
+            <p class="text-[9px] ${d.status === 'online' ? 'text-tertiary' : 'text-slate-500'} uppercase">${d.status || 'offline'}</p>
+          </div>
+        </div>
+        <button class="material-symbols-outlined text-slate-600 hover:text-error transition-colors opacity-0 group-hover:opacity-100 text-sm" onclick="deleteDevice(${d.id},event)">delete</button>
+      </div>
+    `).join('');
+        }
+
+        function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+
+        async function deleteDevice(deviceId, event) {
+            if (event) event.stopPropagation();
+            if (!confirm('Delete this device?')) return;
+            try {
+                const res = await fetch(`/api/devices/${deviceId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                if (data.success) { addActivity('Device deleted', '✗'); if (currentDeviceId === deviceId) { currentDeviceId = null; updateDeviceInfo(); } await loadDevices(); }
+                else alert('Error: ' + data.error);
+            } catch (e) { alert('Error deleting device'); }
+        }
+
+        window.selectDevice = function (id) { currentDeviceId = id; updateDeviceInfo(); loadDevices(); addActivity(`Switched to device ${id}`, '→'); };
+
+        function updateDeviceInfo() {
+            document.getElementById('deviceInfo').textContent = currentDeviceId ? `ID: ${currentDeviceId}` : 'None selected';
+        }
+
+        // Modals (show/hide helpers)
+        const showModal = id => document.getElementById(id).classList.replace('hidden', 'flex');
+        const hideModal = id => document.getElementById(id).classList.replace('flex', 'hidden');
+
+        // Game Cards
+        document.querySelectorAll('.game-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const id = card.dataset.game;
+                if (games[id]) { currentGame = id; document.getElementById('gameTitle').textContent = games[id].name; showModal('gameModal'); games[id].init(); }
+            });
+        });
+        document.getElementById('closeGameBtn').addEventListener('click', () => { hideModal('gameModal'); if (gameInterval) clearInterval(gameInterval); });
+        document.getElementById('restartGameBtn').addEventListener('click', () => { if (currentGame && games[currentGame]) games[currentGame].init(); });
+
+        // Tutorial
         let currentTutorialStep = 1;
         const totalTutorialSteps = 5;
-
         function showTutorialStep(step) {
-            document.querySelectorAll('.tutorial-step').forEach(s => s.classList.remove('active'));
-            const targetStep = document.querySelector(`.tutorial-step[data-step="${step}"]`);
-            if (targetStep) targetStep.classList.add('active');
-            document.getElementById('prevStepBtn').style.display = step === 1 ? 'none' : 'block';
+            document.querySelectorAll('.tutorial-step').forEach(s => { s.classList.add('hidden'); s.classList.remove('active'); });
+            const t = document.querySelector(`.tutorial-step[data-step="${step}"]`);
+            if (t) { t.classList.remove('hidden'); t.classList.add('active'); }
+            document.getElementById('prevStepBtn').classList.toggle('hidden', step === 1);
             document.getElementById('nextStepBtn').textContent = step === totalTutorialSteps ? 'Finish' : 'Next Step';
             currentTutorialStep = step;
         }
 
-        document.getElementById('startTutorialBtn').addEventListener('click', () => {
-            document.getElementById('tutorialOverlay').style.display = 'flex';
-            showTutorialStep(1);
-            initAudio();
-        });
-
+        function openTutorial() { showModal('tutorialOverlay'); showTutorialStep(1); initAudio(); }
+        document.getElementById('startTutorialBtn').addEventListener('click', openTutorial);
+        document.getElementById('startTutorialBtnSide') && document.getElementById('startTutorialBtnSide').addEventListener('click', openTutorial);
         document.getElementById('nextStepBtn').addEventListener('click', () => {
-            if (currentTutorialStep < totalTutorialSteps) {
-                showTutorialStep(currentTutorialStep + 1);
-                playClickSound(800 + (currentTutorialStep * 100));
-            } else {
-                document.getElementById('tutorialOverlay').style.display = 'none';
-                addActivity('🎓 Tutorial completed!');
-                announce("Tutorial completed. You are ready to go.");
-            }
+            if (currentTutorialStep < totalTutorialSteps) { showTutorialStep(currentTutorialStep + 1); playClickSound(800 + (currentTutorialStep * 100)); }
+            else { hideModal('tutorialOverlay'); addActivity('Tutorial completed!', '★'); announce('Tutorial completed.'); }
         });
+        document.getElementById('prevStepBtn').addEventListener('click', () => { if (currentTutorialStep > 1) showTutorialStep(currentTutorialStep - 1); });
+        document.getElementById('closeTutorialBtn').addEventListener('click', () => hideModal('tutorialOverlay'));
 
-        document.getElementById('prevStepBtn').addEventListener('click', () => {
-            if (currentTutorialStep > 1) showTutorialStep(currentTutorialStep - 1);
-        });
-
-        document.getElementById('closeTutorialBtn').addEventListener('click', () => {
-            document.getElementById('tutorialOverlay').style.display = 'none';
-        });
-
-        // Calibration Logic
-        let calibrationTimerInterval = null;
-
-        document.getElementById('startCalibrationBtn').addEventListener('click', () => {
-            document.getElementById('calibrationOverlay').style.display = 'flex';
+        // Calibration
+        let calibrationInterval = null;
+        function openCalibration() {
+            showModal('calibrationOverlay');
             document.getElementById('calibrationProgress').style.width = '0%';
             let timeLeft = 30;
             document.getElementById('calibrationTimer').textContent = timeLeft;
             initAudio();
-
-            const instructions = [
-                "Hold your hand steady in the center...",
-                "Move hand slowly to the top-left...",
-                "Move hand slowly to the top-right...",
-                "Move hand slowly to the bottom-right...",
-                "Move hand slowly to the bottom-left...",
-                "Perform a pinch gesture...",
-                "Keep holding steady for final capture..."
-            ];
-
-            calibrationTimerInterval = setInterval(() => {
+            const instructions = ["Hold hand steady in center...", "Move to top-left...", "Move to top-right...", "Move to bottom-right...", "Move to bottom-left...", "Perform a pinch...", "Hold steady — final capture..."];
+            calibrationInterval = setInterval(() => {
                 timeLeft--;
                 document.getElementById('calibrationTimer').textContent = timeLeft;
-                const progress = ((30 - timeLeft) / 30) * 100;
-                document.getElementById('calibrationProgress').style.width = `${progress}%`;
-                const instrIndex = Math.floor((30 - timeLeft) / 4.3);
-                if (instructions[instrIndex]) {
-                    document.getElementById('calibrationInstruction').textContent = instructions[instrIndex];
-                    if (timeLeft % 4 === 0) announce(instructions[instrIndex]);
-                }
-                if (timeLeft <= 0) {
-                    clearInterval(calibrationTimerInterval);
-                    document.getElementById('calibrationOverlay').style.display = 'none';
-                    addActivity('🎯 Calibration successful!');
-                    announce("System calibrated. Tracking accuracy improved.");
-                    playClickSound(1200, 'square');
-                }
+                document.getElementById('calibrationProgress').style.width = `${((30 - timeLeft) / 30) * 100}%`;
+                const idx = Math.floor((30 - timeLeft) / 4.3);
+                if (instructions[idx]) { document.getElementById('calibrationInstruction').textContent = instructions[idx]; if (timeLeft % 4 === 0) announce(instructions[idx]); }
+                if (timeLeft <= 0) { clearInterval(calibrationInterval); hideModal('calibrationOverlay'); addActivity('Calibration complete', '✓'); playClickSound(1200, 'square'); }
             }, 1000);
-        });
+        }
+        document.getElementById('startCalibrationBtn').addEventListener('click', openCalibration);
+        document.getElementById('startCalibrationBtnSide') && document.getElementById('startCalibrationBtnSide').addEventListener('click', openCalibration);
+        document.getElementById('cancelCalibrationBtn').addEventListener('click', () => { clearInterval(calibrationInterval); hideModal('calibrationOverlay'); });
 
-        document.getElementById('cancelCalibrationBtn').addEventListener('click', () => {
-            clearInterval(calibrationTimerInterval);
-            document.getElementById('calibrationOverlay').style.display = 'none';
-        });
-
-        // UX Settings Toggles
-        document.getElementById('toggleSound').addEventListener('change', (e) => {
-            uxSettings.sound = e.target.checked;
-            localStorage.setItem('ux_sound', uxSettings.sound);
-            if (uxSettings.sound) { initAudio(); playClickSound(); }
-        });
-
-        document.getElementById('toggleVoice').addEventListener('change', (e) => {
-            uxSettings.voice = e.target.checked;
-            localStorage.setItem('ux_voice', uxSettings.voice);
-            if (uxSettings.voice) announce("Voice alerts enabled");
-        });
-
-        document.getElementById('toggleHaptic').addEventListener('change', (e) => {
-            uxSettings.haptic = e.target.checked;
-            localStorage.setItem('ux_haptic', uxSettings.haptic);
-            if (uxSettings.haptic) triggerHaptic(100);
-        });
+        // UX Toggles
+        document.getElementById('toggleSound').addEventListener('change', e => { uxSettings.sound = e.target.checked; localStorage.setItem('ux_sound', uxSettings.sound); if (uxSettings.sound) { initAudio(); playClickSound(); } });
+        document.getElementById('toggleVoice').addEventListener('change', e => { uxSettings.voice = e.target.checked; localStorage.setItem('ux_voice', uxSettings.voice); if (uxSettings.voice) announce('Voice alerts enabled'); });
+        document.getElementById('toggleHaptic').addEventListener('change', e => { uxSettings.haptic = e.target.checked; localStorage.setItem('ux_haptic', uxSettings.haptic); if (uxSettings.haptic) triggerHaptic(100); });
 
         function loadUXSettings() {
             document.getElementById('toggleSound').checked = uxSettings.sound;
             document.getElementById('toggleVoice').checked = uxSettings.voice;
             document.getElementById('toggleHaptic').checked = uxSettings.haptic;
+        }
+
+        // Add Device
+        document.getElementById('addDeviceBtn').addEventListener('click', async () => {
+            const name = prompt('Enter device name:', 'My Computer');
+            if (name) {
+                const type = confirm('Is this a laptop?') ? 'laptop' : 'desktop';
+                try {
+                    const res = await fetch('/api/devices', { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ device_name: name, device_type: type }) });
+                    const data = await res.json();
+                    if (data.success) { addActivity(`Device "${name}" registered`, '✓'); await loadDevices(); } else alert('Error: ' + data.error);
+                } catch (e) { alert('Error registering device'); }
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try { await fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } }); } catch (e) { }
+            if (socket) socket.disconnect();
+            localStorage.removeItem('token'); localStorage.removeItem('user');
+            window.location.href = '/login';
+        });
+
+        async function init() {
+            loadUXSettings();
+            await loadUserInfo();
+            await loadDevices();
+            initWebSocket();
+            startSessionTimer();
         }
 
         init();
