@@ -763,51 +763,40 @@
                         </div>
                     </div>
 
-                    <!-- NEW: Keyboard Section -->
-                    <div class="card">
-                        <h3><i class="fas fa-keyboard"></i> Virtual Keyboard</h3>
-                        <div class="feature-grid">
-                            <div class="feature-card" id="launchKeyboardBtn">
-                                <div class="feature-icon">⌨️</div>
-                                <h4>Launch Keyboard</h4>
-                                <p>Open on-screen keyboard controlled by gestures</p>
-                                <span class="feature-badge">Peace Sign to Open</span>
+                    <!-- Air Keyboard Section -->
+                    <div class="card" style="border-top: 3px solid #6366f1;">
+                        <h3><i class="fas fa-keyboard" style="color:#6366f1;"></i> Air Keyboard Notes
+                            <span style="margin-left:auto; font-size:0.65rem; background:#e0e7ff; color:#6366f1; padding:0.2rem 0.6rem; border-radius:20px; font-weight:600;">NEW</span>
+                        </h3>
+                        <p style="font-size:0.82rem; color:#6b7280; margin-bottom:1rem;">Draw letters in the air with your index finger. Stroke recognition converts your hand movements into typed text — fully gesture-powered.</p>
+
+                        <a href="/air_keyboard" id="openAirKeyboardBtn" style="display:block; text-decoration:none;">
+                            <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.3s ease; color:white;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(99,102,241,0.4)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                                <div style="font-size:2.5rem; margin-bottom:0.5rem;">✍️</div>
+                                <h4 style="margin:0 0 0.25rem; font-size:1rem; color:white;">Open Air Keyboard</h4>
+                                <p style="font-size:0.75rem; color:rgba(255,255,255,0.85); margin:0;">Run <code style="background:rgba(255,255,255,0.2); padding:0.1rem 0.4rem; border-radius:4px;">python client/air_keyboard.py</code> first</p>
                             </div>
-                            <div class="feature-card" id="keyboardSettingsBtn">
-                                <div class="feature-icon">⚙️</div>
-                                <h4>Keyboard Settings</h4>
-                                <p>Layout, size, and prediction settings</p>
-                                <span class="feature-badge">QWERTY | Numbers | Symbols</span>
+                        </a>
+
+                        <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                            <div style="background:#f3f4f6; border-radius:8px; padding:0.6rem; font-size:0.72rem; color:#374151; display:flex; align-items:center; gap:0.4rem;">
+                                <span style="font-size:1rem;">👍</span> <div><strong>Enter Mode</strong><br>Hold Thumb Up 2s</div>
                             </div>
-                        </div>
-                        <div class="keyboard-preview">
-                            <div class="key-row">
-                                <span class="key-demo">Q</span>
-                                <span class="key-demo">W</span>
-                                <span class="key-demo">E</span>
-                                <span class="key-demo">R</span>
-                                <span class="key-demo">T</span>
-                                <span class="key-demo">Y</span>
+                            <div style="background:#f3f4f6; border-radius:8px; padding:0.6rem; font-size:0.72rem; color:#374151; display:flex; align-items:center; gap:0.4rem;">
+                                <span style="font-size:1rem;">✊</span> <div><strong>Exit Mode</strong><br>Hold Fist 2s</div>
                             </div>
-                            <div class="key-row">
-                                <span class="key-demo">A</span>
-                                <span class="key-demo">S</span>
-                                <span class="key-demo">D</span>
-                                <span class="key-demo">F</span>
-                                <span class="key-demo">G</span>
-                                <span class="key-demo">H</span>
+                            <div style="background:#f3f4f6; border-radius:8px; padding:0.6rem; font-size:0.72rem; color:#374151; display:flex; align-items:center; gap:0.4rem;">
+                                <span style="font-size:1rem;">👈</span> <div><strong>Backspace</strong><br>Swipe Left</div>
                             </div>
-                            <div class="key-row">
-                                <span class="key-demo">Z</span>
-                                <span class="key-demo">X</span>
-                                <span class="key-demo">C</span>
-                                <span class="key-demo">V</span>
-                                <span class="key-demo">B</span>
-                                <span class="key-demo">N</span>
+                            <div style="background:#f3f4f6; border-radius:8px; padding:0.6rem; font-size:0.72rem; color:#374151; display:flex; align-items:center; gap:0.4rem;">
+                                <span style="font-size:1rem;">👉</span> <div><strong>Space</strong><br>Swipe Right</div>
                             </div>
-                            <p style="font-size: 10px; margin-top: 8px; color: #6b7280;">
-                                <i class="fas fa-info-circle"></i> Use POINT to hover, PINCH to press
-                            </p>
+                            <div style="background:#f3f4f6; border-radius:8px; padding:0.6rem; font-size:0.72rem; color:#374151; display:flex; align-items:center; gap:0.4rem;">
+                                <span style="font-size:1rem;">👇</span> <div><strong>New Line</strong><br>Swipe Down</div>
+                            </div>
+                            <div style="background:#f3f4f6; border-radius:8px; padding:0.6rem; font-size:0.72rem; color:#374151; display:flex; align-items:center; gap:0.4rem;">
+                                <span style="font-size:1rem;">🤙</span> <div><strong>Save Notes</strong><br>Thumb+Pinky 2s</div>
+                            </div>
                         </div>
                     </div>
 
