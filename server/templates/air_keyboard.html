@@ -1,256 +1,202 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Air Keyboard Notes - Gesture Control</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Air Keyboard | KINETIC PULSE</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#81ecff",
+                        "secondary": "#d277ff",
+                        "background": "#0c0e12",
+                        "surface": "#171a1f",
+                        "surface-variant": "#23262c",
+                        "on-surface": "#f6f6fc",
+                        "on-surface-variant": "#aaabb0",
+                        "outline": "#46484d",
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                    }
+                },
+            },
+        }
+    </script>
     <style>
         body {
-            background-color: #f5f7fa;
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
+            background-color: theme('colors.background');
+            color: theme('colors.on-surface');
+            font-family: theme('fontFamily.body');
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
+        .glass-card {
+            background: rgba(23, 26, 31, 0.6);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(129, 236, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #e5e7eb;
+        .neo-glow {
+            box-shadow: 0 0 20px rgba(129, 236, 255, 0.15);
         }
 
-        .header h1 {
-            color: #1f2937;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        .status-badge.connected {
+            background: rgba(129, 236, 255, 0.1);
+            color: theme('colors.primary');
+            border: 1px solid rgba(129, 236, 255, 0.2);
         }
 
-        .status-badge {
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .status-disconnected {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .status-connected {
-            background: #d1fae5;
-            color: #059669;
-        }
-
-        .keyboard-interface {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            min-height: 500px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .status-msg-banner {
-            background: #f3f4f6;
-            color: #4b5563;
-            padding: 1rem;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 500;
-            margin-bottom: 1.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .status-msg-banner.active {
-            background: #dbeafe;
-            color: #2563eb;
-        }
-
-        .suggestions-bar {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            min-height: 40px;
-        }
-
-        .suggestion-pill {
-            background: #6366f1;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .status-badge.disconnected {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
         .editor-area {
-            flex: 1;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 1.5rem;
             font-family: 'Inter', monospace;
-            font-size: 1.25rem;
             line-height: 1.6;
-            color: #1e293b;
-            white-space: pre-wrap;
-            overflow-y: auto;
+            min-height: 400px;
         }
 
         .cursor {
             display: inline-block;
             width: 2px;
             height: 1.2em;
-            background: #6366f1;
+            background: theme('colors.primary');
             vertical-align: middle;
             animation: blink 1s step-end infinite;
+            box-shadow: 0 0 8px theme('colors.primary');
         }
 
         @keyframes blink {
-            50% {
-                opacity: 0;
-            }
+            50% { opacity: 0; }
         }
 
-        .instructions {
-            margin-top: 2rem;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+        .suggestion-pill {
+            @apply flex-shrink-0 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-medium hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all cursor-default;
+            animation: fadeIn 0.3s ease;
         }
 
-        .instruction-card {
-            background: white;
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .instruction-icon {
-            font-size: 1.5rem;
-            color: #6366f1;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
         }
-
-        .instruction-text h4 {
-            margin: 0 0 0.25rem 0;
-            font-size: 0.875rem;
-            color: #374151;
+        ::-webkit-scrollbar-track {
+            background: transparent;
         }
-
-        .instruction-text p {
-            margin: 0;
-            font-size: 0.75rem;
-            color: #6b7280;
+        ::-webkit-scrollbar-thumb {
+            background: rgba(129, 236, 255, 0.1);
+            border-radius: 10px;
         }
-
-        .back-btn {
-            text-decoration: none;
-            color: #6366f1;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 500;
-            margin-bottom: 2rem;
-        }
-
-        .back-btn:hover {
-            text-decoration: underline;
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(129, 236, 255, 0.3);
         }
     </style>
 </head>
 
-<body>
-    <div class="container">
-        <a href="/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
-
-        <div class="header">
-            <h1><i class="fas fa-keyboard text-indigo-600"></i> Air Keyboard Notes</h1>
-            <div id="connectionStatus" class="status-badge status-disconnected">
-                <i class="fas fa-circle"></i> Connecting...
+<body class="min-h-screen overflow-x-hidden">
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 glass-card border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="/dashboard" class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-background ml-2">
+                    <span class="material-symbols-outlined font-bold text-sm">keyboard</span>
+                </div>
+                <h1 class="font-headline text-lg font-bold tracking-tighter text-on-surface uppercase">
+                    Air <span class="text-primary">Keyboard</span>
+                </h1>
+            </div>
+            
+            <div id="connectionStatus" class="status-badge disconnected text-[10px] sm:text-xs">
+                <i class="fas fa-circle text-[8px] mr-1.5"></i> DISCONNECTED
             </div>
         </div>
+    </nav>
 
-        <div class="keyboard-interface">
-            <div id="statusBanner" class="status-msg-banner">
-                Waiting for Python Client to connect... Run 'python client/air_keyboard.py'
-            </div>
+    <main class="max-w-5xl mx-auto px-4 py-8">
+        <!-- Status Banner -->
+        <div id="statusBanner" class="glass-card mb-6 py-3 px-6 rounded-xl border-l-4 border-outline text-sm text-on-surface-variant flex items-center gap-3 transition-all">
+            <i class="fas fa-info-circle text-primary"></i>
+            <span>System initialization... Run <code class="bg-white/5 px-2 py-0.5 rounded text-primary">python client/air_keyboard.py</code></span>
+        </div>
 
-            <div id="suggestionsBar" class="suggestions-bar">
+        <!-- Main Editor Interface -->
+        <div class="glass-card rounded-3xl p-6 sm:p-10 neo-glow overflow-hidden">
+            <!-- Suggestions Bar -->
+            <div id="suggestionsBar" class="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar min-h-[44px]">
                 <!-- Suggestions will appear here -->
+                <div class="text-xs text-on-surface-variant/40 italic py-2">Real-time word predictions will appear here...</div>
             </div>
 
-            <div class="editor-area" id="editorArea">
+            <!-- Editor Surface -->
+            <div class="editor-area bg-white/[0.02] border border-white/5 rounded-2xl p-8 text-xl sm:text-2xl text-on-surface outline-none focus:border-primary/20 transition-all custom-scrollbar overflow-y-auto max-h-[500px]" id="editorArea">
                 <span class="cursor"></span>
             </div>
         </div>
 
-        <div class="instructions">
-            <div class="instruction-card">
-                <div class="instruction-icon">👍</div>
-                <div class="instruction-text">
-                    <h4>Start Writing</h4>
-                    <p>Hold Thumb Up for 2s</p>
-                </div>
+        <!-- Gesture Guide Bento -->
+        <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="glass-card p-4 rounded-2xl flex flex-col items-center text-center group hover:bg-white/5 transition-all">
+                <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">👍</span>
+                <div class="text-[12px] font-bold text-primary">START</div>
+                <div class="text-[10px] text-on-surface-variant">Thumb Up 2s</div>
             </div>
-            <div class="instruction-card">
-                <div class="instruction-icon">👆</div>
-                <div class="instruction-text">
-                    <h4>Draw Letters</h4>
-                    <p>Use Index finger to draw</p>
-                </div>
+            <div class="glass-card p-4 rounded-2xl flex flex-col items-center text-center group hover:bg-white/5 transition-all">
+                <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">✍️</span>
+                <div class="text-[12px] font-bold text-primary">DRAW</div>
+                <div class="text-[10px] text-on-surface-variant">Index Stroke</div>
             </div>
-            <div class="instruction-card">
-                <div class="instruction-icon"><i class="fas fa-arrows-alt-h"></i></div>
-                <div class="instruction-text">
-                    <h4>Delete / Space</h4>
-                    <p>Index+Middle Swipe L/R</p>
-                </div>
+            <div class="glass-card p-4 rounded-2xl flex flex-col items-center text-center group hover:bg-white/5 transition-all">
+                <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">🤙</span>
+                <div class="text-[12px] font-bold text-secondary">SAVE</div>
+                <div class="text-[10px] text-on-surface-variant">Shaka Sign 2s</div>
             </div>
-            <div class="instruction-card">
-                <div class="instruction-icon">🤙</div>
-                <div class="instruction-text">
-                    <h4>Save Notes</h4>
-                    <p>Hold Thumb+Pinky for 2s</p>
-                </div>
+            <div class="glass-card p-4 rounded-2xl flex flex-col items-center text-center group hover:bg-white/5 transition-all">
+                <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">✊</span>
+                <div class="text-[12px] font-bold text-outline">EXIT</div>
+                <div class="text-[10px] text-on-surface-variant">Hold Fist 2s</div>
             </div>
         </div>
-    </div>
+
+        <!-- Swipe Commands -->
+        <div class="mt-4 flex flex-wrap justify-center gap-6 py-4 px-6 glass-card rounded-2xl bg-white/[0.01]">
+            <div class="flex items-center gap-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+                <i class="fas fa-arrow-left text-primary"></i> Backspace (Swipe L)
+            </div>
+            <div class="flex items-center gap-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+                <i class="fas fa-arrow-right text-primary"></i> Space (Swipe R)
+            </div>
+            <div class="flex items-center gap-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+                <i class="fas fa-arrow-down text-primary"></i> New Line (Swipe D)
+            </div>
+        </div>
+    </main>
 
     <script>
         const socket = io();
@@ -261,13 +207,15 @@
 
         function updateConnection(connected) {
             if (connected) {
-                statusBadge.className = 'status-badge status-connected';
-                statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
-                statusBanner.textContent = 'Connected. Waiting for gesture input...';
+                statusBadge.className = 'status-badge connected text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full flex items-center transition-all';
+                statusBadge.innerHTML = '<i class="fas fa-circle text-[8px] mr-1.5 animate-pulse"></i> LIVE PULSE';
+                statusBanner.className = 'glass-card mb-6 py-3 px-6 rounded-xl border-l-4 border-primary text-sm text-on-surface-variant flex items-center gap-3 transition-all bg-primary/5';
+                statusBanner.innerHTML = '<i class="fas fa-satellite-dish text-primary"></i><span>Stream active. Ready for spatial input...</span>';
             } else {
-                statusBadge.className = 'status-badge status-disconnected';
-                statusBadge.innerHTML = '<i class="fas fa-times-circle"></i> Disconnected';
-                statusBanner.textContent = 'Connection lost. Retrying...';
+                statusBadge.className = 'status-badge disconnected text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full flex items-center transition-all';
+                statusBadge.innerHTML = '<i class="fas fa-circle text-[8px] mr-1.5"></i> OFFLINE';
+                statusBanner.className = 'glass-card mb-6 py-3 px-6 rounded-xl border-l-4 border-outline text-sm text-on-surface-variant flex items-center gap-3 transition-all';
+                statusBanner.innerHTML = '<i class="fas fa-exclamation-triangle text-on-surface-variant"></i><span>Connection interrupted. Auto-recovering...</span>';
             }
         }
 
@@ -275,13 +223,16 @@
         socket.on('disconnect', () => updateConnection(false));
 
         socket.on('keyboard_data', (data) => {
-            // Update Status Msg
+            // Update Status Msg with better visual feedback
             if (data.status_msg) {
-                statusBanner.textContent = data.status_msg;
-                if (data.status_msg.includes('Active')) {
-                    statusBanner.classList.add('active');
+                const isWriting = data.status_msg.includes('Active');
+                statusBanner.innerHTML = `<i class="fas ${isWriting ? 'fa-pen-nib animate-bounce' : 'fa-info-circle'} text-primary"></i><span>${data.status_msg}</span>`;
+                if (isWriting) {
+                    statusBanner.classList.add('border-primary');
+                    statusBanner.classList.add('bg-primary/5');
                 } else {
-                    statusBanner.classList.remove('active');
+                    statusBanner.classList.remove('border-primary');
+                    statusBanner.classList.remove('bg-primary/5');
                 }
             }
 
@@ -289,23 +240,24 @@
             if (data.text_lines) {
                 let html = '';
                 data.text_lines.forEach((line, index) => {
-                    html += line;
-                    if (index < data.text_lines.length - 1) html += '<br>';
+                    html += `<div>${line || '&nbsp;'}</div>`;
                 });
                 editorArea.innerHTML = html + '<span class="cursor"></span>';
                 // Auto-scroll to bottom
                 editorArea.scrollTop = editorArea.scrollHeight;
             }
 
-            // Update Suggestions
-            suggestionsBar.innerHTML = '';
+            // Update Predictions/Suggestions
             if (data.suggestions && data.suggestions.length > 0) {
+                suggestionsBar.innerHTML = '';
                 data.suggestions.forEach(suggestion => {
                     const pill = document.createElement('div');
                     pill.className = 'suggestion-pill';
                     pill.textContent = suggestion;
                     suggestionsBar.appendChild(pill);
                 });
+            } else if (data.suggestions === null || data.suggestions === undefined) {
+                // Keep last suggestions or clear if explicit
             }
         });
     </script>
