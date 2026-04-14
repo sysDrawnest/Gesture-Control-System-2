@@ -1,0 +1,10 @@
+2026-04-14 16:26:12,610 - __main__ - ERROR - WebSocket connection error: {'message': 'Connection rejected by server'}
+2026-04-14 16:26:13,621 - __main__ - WARNING - Server connection failed: One or more namespaces failed to connect. Running in local mode only.
+2026-04-14 16:26:13,675 - __main__ - INFO - MediaPipe Hands initialized
+2026-04-14 16:26:36,278 - __main__ - INFO - Camera initialized: 1280.0x720.0
+2026-04-14 16:26:36,326 - __main__ - INFO - Stroke recognizer initialized with 36 templates
+2026-04-14 16:26:36,327 - key_predictor - INFO - Predictor initialized with 116 words
+2026-04-14 16:26:36,329 - __main__ - INFO - Air Keyboard Notes initialized successfully
+2026-04-14 16:27:48,852 - __main__ - INFO - Quit signal received
+2026-04-14 16:27:48,853 - __main__ - INFO - Cleaning up resources...
+2026-04-14 16:27:49,244 - __main__ - INFO - Cleanup complete
