@@ -455,6 +455,41 @@ def register_socket_events(socketio):
         })
 
     # ------------------------------------------------------------------
+    # Air Keyboard Events
+    # ------------------------------------------------------------------
+    
+    @socketio.on('register_keyboard_client')
+    def handle_register_keyboard_client(data):
+        """Register a keyboard client and join keyboard room"""
+        sid = request.sid
+        device_name = data.get('device_name', 'Unknown')
+        
+        if sid not in connected_clients:
+            connected_clients[sid] = {'type': 'keyboard_client'}
+            
+        connected_clients[sid]['device_name'] = device_name
+        
+        print(f"[Keyboard] Keyboard client registered: {device_name}")
+        join_room('keyboard_room')
+        emit('keyboard_ready', {'message': 'Ready to type', 'device': device_name})
+
+    @socketio.on('keyboard_text_update')
+    def handle_keyboard_text_update(data):
+        """Broadcast typed UI text to dashboard"""
+        text_lines = data.get('text_lines', [])
+        current_word = data.get('current_word', "")
+        suggestions = data.get('suggestions', [])
+        status_msg = data.get('status_msg', "")
+        
+        emit('keyboard_data', {
+            'text_lines': text_lines,
+            'current_word': current_word,
+            'suggestions': suggestions,
+            'status_msg': status_msg,
+            'timestamp': time.time()
+        }, room='keyboard_room', broadcast=True, include_self=False)
+
+    # ------------------------------------------------------------------
     # Admin / Utility
     # ------------------------------------------------------------------
 

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Keyboard Notes - Gesture Control</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .header h1 {
+            color: #1f2937;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-disconnected { background: #fee2e2; color: #dc2626; }
+        .status-connected { background: #d1fae5; color: #059669; }
+
+        .keyboard-interface {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-msg-banner {
+            background: #f3f4f6;
+            color: #4b5563;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .status-msg-banner.active {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .suggestions-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            min-height: 40px;
+        }
+
+        .suggestion-pill {
+            background: #6366f1;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .editor-area {
+            flex: 1;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            font-family: 'Inter', monospace;
+            font-size: 1.25rem;
+            line-height: 1.6;
+            color: #1e293b;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background: #6366f1;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .instructions {
+            margin-top: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .instruction-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .instruction-icon {
+            font-size: 1.5rem;
+            color: #6366f1;
+        }
+
+        .instruction-text h4 { margin: 0 0 0.25rem 0; font-size: 0.875rem; color: #374151; }
+        .instruction-text p { margin: 0; font-size: 0.75rem; color: #6b7280; }
+
+        .back-btn {
+            text-decoration: none;
+            color: #6366f1;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            margin-bottom: 2rem;
+        }
+        
+        .back-btn:hover { text-decoration: underline; }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        
+        <div class="header">
+            <h1><i class="fas fa-keyboard text-indigo-600"></i> Air Keyboard Notes</h1>
+            <div id="connectionStatus" class="status-badge status-disconnected">
+                <i class="fas fa-circle"></i> Connecting...
+            </div>
+        </div>
+
+        <div class="keyboard-interface">
+            <div id="statusBanner" class="status-msg-banner">
+                Waiting for Python Client to connect... Run 'python client/air_keyboard.py'
+            </div>
+
+            <div id="suggestionsBar" class="suggestions-bar">
+                <!-- Suggestions will appear here -->
+            </div>
+
+            <div class="editor-area" id="editorArea">
+                <span class="cursor"></span>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <div class="instruction-card">
+                <div class="instruction-icon">👍</div>
+                <div class="instruction-text">
+                    <h4>Start Writing</h4>
+                    <p>Hold Thumb Up for 2s</p>
+                </div>
+            </div>
+            <div class="instruction-card">
+                <div class="instruction-icon">👆</div>
+                <div class="instruction-text">
+                    <h4>Draw Letters</h4>
+                    <p>Use Index finger to draw</p>
+                </div>
+            </div>
+            <div class="instruction-card">
+                <div class="instruction-icon"><i class="fas fa-arrows-alt-h"></i></div>
+                <div class="instruction-text">
+                    <h4>Delete / Space</h4>
+                    <p>Index+Middle Swipe L/R</p>
+                </div>
+            </div>
+            <div class="instruction-card">
+                <div class="instruction-icon">🤙</div>
+                <div class="instruction-text">
+                    <h4>Save Notes</h4>
+                    <p>Hold Thumb+Pinky for 2s</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const statusBadge = document.getElementById('connectionStatus');
+        const statusBanner = document.getElementById('statusBanner');
+        const editorArea = document.getElementById('editorArea');
+        const suggestionsBar = document.getElementById('suggestionsBar');
+
+        function updateConnection(connected) {
+            if (connected) {
+                statusBadge.className = 'status-badge status-connected';
+                statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
+                statusBanner.textContent = 'Connected. Waiting for gesture input...';
+            } else {
+                statusBadge.className = 'status-badge status-disconnected';
+                statusBadge.innerHTML = '<i class="fas fa-times-circle"></i> Disconnected';
+                statusBanner.textContent = 'Connection lost. Retrying...';
+            }
+        }
+
+        socket.on('connect', () => updateConnection(true));
+        socket.on('disconnect', () => updateConnection(false));
+
+        socket.on('keyboard_data', (data) => {
+            // Update Status Msg
+            if (data.status_msg) {
+                statusBanner.textContent = data.status_msg;
+                if (data.status_msg.includes('Active')) {
+                    statusBanner.classList.add('active');
+                } else {
+                    statusBanner.classList.remove('active');
+                }
+            }
+
+            // Update Text Editor
+            if (data.text_lines) {
+                let html = '';
+                data.text_lines.forEach((line, index) => {
+                    html += line;
+                    if (index < data.text_lines.length - 1) html += '<br>';
+                });
+                editorArea.innerHTML = html + '<span class="cursor"></span>';
+                // Auto-scroll to bottom
+                editorArea.scrollTop = editorArea.scrollHeight;
+            }
+
+            // Update Suggestions
+            suggestionsBar.innerHTML = '';
+            if (data.suggestions && data.suggestions.length > 0) {
+                data.suggestions.forEach(suggestion => {
+                    const pill = document.createElement('div');
+                    pill.className = 'suggestion-pill';
+                    pill.textContent = suggestion;
+                    suggestionsBar.appendChild(pill);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -104,6 +104,11 @@ def air_canvas():
     """Air Canvas drawing page"""
     return render_template('air_canvas.html')
 
+@app.route('/air_keyboard')
+def air_keyboard():
+    """Air Keyboard notes page"""
+    return render_template('air_keyboard.html')
+
 @app.route('/login')
 def login_page():
     """Login page"""
