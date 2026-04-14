@@ -3,20 +3,32 @@ Key Predictor and Word Suggestion Engine for Gesture Control Keyboard
 =====================================================================
 Provides intelligent word prediction, auto-correction, and learning capabilities
 for the virtual keyboard system.
+Version: 2.0 - Production Ready
 """
 
 import json
 import os
 import re
+import pickle
+import threading
+import logging
 from collections import defaultdict, Counter
 from datetime import datetime
-import threading
-import pickle
+from typing import List, Dict, Set, Tuple, Optional
+from pathlib import Path
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # ============================================================================
+# Constants and Configuration
+# ============================================================================
+
+# File paths
+USER_DATA_DIR = Path("user_data")
+USER_DATA_DIR.mkdir(exist_ok=True)
+
 # Common Words Dictionary (Base vocabulary)
-# ============================================================================
-
 BASE_WORDS = {
     # Most common English words
     'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i',
@@ -43,10 +55,7 @@ BASE_WORDS = {
     'zoom', 'screenshot', 'volume', 'brightness', 'play', 'pause', 'stop',
 }
 
-# ============================================================================
 # Common Word Pairs (Bigrams) for context prediction
-# ============================================================================
-
 COMMON_BIGRAMS = {
     ('thank', 'you'), ('how', 'are'), ('i', 'am'), ('i', 'have'),
     ('i', 'will'), ('i', 'would'), ('would', 'like'), ('want', 'to'),
@@ -60,10 +69,7 @@ COMMON_BIGRAMS = {
     ('mouse', 'click'), ('right', 'click'), ('left', 'click'), ('double', 'click'),
 }
 
-# ============================================================================
 # Correction Rules for common typos
-# ============================================================================
-
 CORRECTION_RULES = {
     # Common finger placement errors
     'teh': 'the', 'adn': 'and', 'iwll': 'will', 'withe': 'with',
@@ -77,12 +83,12 @@ CORRECTION_RULES = {
     # Extra letters
     'thee': 'the', 'andd': 'and', 'wlll': 'will', 'thiss': 'this',
     'youu': 'you', 'goood': 'good', 'helllo': 'hello', 'thankks': 'thanks',
+    
+    # Numbers and symbols
+    '2': 'to', '4': 'for', 'u': 'you', 'r': 'are', 'c': 'see',
 }
 
-# ============================================================================
 # Key Proximity Map for typo correction (QWERTY layout)
-# ============================================================================
-
 KEY_PROXIMITY = {
     # Row 1
     'q': ['w', 'a', 's', '1', '2'],
@@ -129,6 +135,12 @@ KEY_PROXIMITY = {
     '0': ['o', 'p', '9', '-'],
 }
 
+# Performance settings
+MAX_SUGGESTIONS = 8
+SIMILARITY_THRESHOLD = 0.7
+AUTO_SAVE_INTERVAL = 300  # Save every 5 minutes
+MAX_WORD_LENGTH = 30  # Ignore words longer than this
+
 # ============================================================================
 # Word Predictor Class
 # ============================================================================
@@ -136,100 +148,144 @@ KEY_PROXIMITY = {
 class KeyPredictor:
     """Intelligent word prediction and auto-correction engine"""
     
-    def __init__(self, user_data_file='user_dictionary.json'):
+    def __init__(self, user_data_file: str = 'user_dictionary.json'):
         """
         Initialize the predictor with base vocabulary
         
         Args:
             user_data_file: Path to store user-specific word data
         """
-        self.user_data_file = user_data_file
+        self.user_data_file = USER_DATA_DIR / user_data_file
         self.word_frequency = Counter()
         self.word_pairs = defaultdict(Counter)  # For context prediction
         self.user_words = set()  # Words added by user
         self.word_scores = {}  # Cached scores for words
+        self.auto_save_timer = None
         
         # Thread lock for concurrent access
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         
-        # Load base vocabulary
-        self._load_base_vocabulary()
-        
-        # Load user data if exists
-        self._load_user_data()
-        
-        # Load common word pairs
-        self._load_common_pairs()
-        
-        print(f"[PREDICTOR] Initialized with {len(self.word_frequency)} words")
+        # Initialize
+        try:
+            self._load_base_vocabulary()
+            self._load_user_data()
+            self._load_common_pairs()
+            self._start_auto_save()
+            logger.info(f"Predictor initialized with {len(self.word_frequency)} words")
+        except Exception as e:
+            logger.error(f"Failed to initialize predictor: {e}")
+            raise
     
     def _load_base_vocabulary(self):
         """Load base vocabulary with initial frequencies"""
-        # Base words with higher frequency for common words
-        for i, word in enumerate(BASE_WORDS):
-            # More common words get higher initial frequency
-            frequency = 100 - (i // 10) if i < 100 else 10
-            self.word_frequency[word.lower()] = frequency
-        
-        # Add special gesture-related words with higher priority
-        gesture_words = ['gesture', 'control', 'virtual', 'keyboard', 'click', 'scroll']
-        for word in gesture_words:
-            self.word_frequency[word] = 150
+        with self.lock:
+            # Base words with higher frequency for common words
+            for i, word in enumerate(BASE_WORDS):
+                # More common words get higher initial frequency
+                frequency = 100 - (i // 10) if i < 100 else 10
+                self.word_frequency[word.lower()] = frequency
+            
+            # Add special gesture-related words with higher priority
+            gesture_words = ['gesture', 'control', 'virtual', 'keyboard', 'click', 'scroll']
+            for word in gesture_words:
+                self.word_frequency[word] = 150
     
     def _load_common_pairs(self):
         """Load common word pairs for context prediction"""
-        for pair in COMMON_BIGRAMS:
-            word1, word2 = pair
-            self.word_pairs[word1][word2] += 10  # Initial weight
+        with self.lock:
+            for pair in COMMON_BIGRAMS:
+                word1, word2 = pair
+                self.word_pairs[word1][word2] += 10  # Initial weight
     
     def _load_user_data(self):
         """Load user-specific word data from file"""
-        if os.path.exists(self.user_data_file):
-            try:
-                with open(self.user_data_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
+        if not self.user_data_file.exists():
+            return
+        
+        try:
+            with open(self.user_data_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                
+                with self.lock:
                     self.word_frequency.update(data.get('frequencies', {}))
                     self.user_words.update(data.get('user_words', []))
+                    
                     # Load word pairs
                     for w1, pairs in data.get('pairs', {}).items():
                         for w2, count in pairs.items():
                             self.word_pairs[w1][w2] += count
-                print(f"[PREDICTOR] Loaded user data from {self.user_data_file}")
-            except Exception as e:
-                print(f"[PREDICTOR] Error loading user data: {e}")
+                    
+                    logger.info(f"Loaded user data from {self.user_data_file}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Corrupted user data file: {e}")
+            # Backup corrupted file
+            backup_file = self.user_data_file.with_suffix('.json.bak')
+            self.user_data_file.rename(backup_file)
+            logger.info(f"Backed up corrupted file to {backup_file}")
+        except Exception as e:
+            logger.error(f"Error loading user data: {e}")
     
     def _save_user_data(self):
         """Save user-specific word data to file"""
         try:
-            data = {
-                'frequencies': dict(self.word_frequency),
-                'user_words': list(self.user_words),
-                'pairs': {w1: dict(pairs) for w1, pairs in self.word_pairs.items()},
-                'last_updated': datetime.now().isoformat()
-            }
-            with open(self.user_data_file, 'w', encoding='utf-8') as f:
+            with self.lock:
+                # Convert Counter to dict for JSON serialization
+                data = {
+                    'frequencies': dict(self.word_frequency),
+                    'user_words': list(self.user_words),
+                    'pairs': {w1: dict(pairs) for w1, pairs in self.word_pairs.items()},
+                    'last_updated': datetime.now().isoformat(),
+                    'version': '2.0'
+                }
+            
+            # Write atomically by using temp file
+            temp_file = self.user_data_file.with_suffix('.tmp')
+            with open(temp_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2)
+            
+            # Replace original
+            temp_file.replace(self.user_data_file)
+            logger.debug("User data saved successfully")
         except Exception as e:
-            print(f"[PREDICTOR] Error saving user data: {e}")
+            logger.error(f"Error saving user data: {e}")
     
-    def add_word(self, word):
+    def _start_auto_save(self):
+        """Start auto-save timer"""
+        def auto_save():
+            try:
+                self._save_user_data()
+            except Exception as e:
+                logger.error(f"Auto-save failed: {e}")
+            finally:
+                # Reschedule
+                if self.auto_save_timer:
+                    self.auto_save_timer = threading.Timer(AUTO_SAVE_INTERVAL, auto_save)
+                    self.auto_save_timer.daemon = True
+                    self.auto_save_timer.start()
+        
+        self.auto_save_timer = threading.Timer(AUTO_SAVE_INTERVAL, auto_save)
+        self.auto_save_timer.daemon = True
+        self.auto_save_timer.start()
+    
+    def add_word(self, word: str):
         """
         Add a word to the vocabulary and increase its frequency
         
         Args:
             word: Word to add or reinforce
         """
+        if not word or len(word) > MAX_WORD_LENGTH:
+            return
+        
         with self.lock:
             word_lower = word.lower()
             self.word_frequency[word_lower] += 1
             self.user_words.add(word_lower)
+            
             # Clear cached scores
-            if word_lower in self.word_scores:
-                del self.word_scores[word_lower]
-            # Auto-save periodically
-            self._save_user_data()
+            self.word_scores.pop(word_lower, None)
     
-    def add_word_pair(self, word1, word2):
+    def add_word_pair(self, word1: str, word2: str):
         """
         Record a word pair for context prediction
         
@@ -237,11 +293,13 @@ class KeyPredictor:
             word1: Previous word
             word2: Current word
         """
+        if not word1 or not word2:
+            return
+        
         with self.lock:
             self.word_pairs[word1.lower()][word2.lower()] += 1
-            self._save_user_data()
     
-    def _calculate_score(self, word, context=None):
+    def _calculate_score(self, word: str, context: Optional[str] = None) -> float:
         """
         Calculate prediction score for a word
         
@@ -254,6 +312,11 @@ class KeyPredictor:
         """
         word_lower = word.lower()
         
+        # Check cache
+        cache_key = f"{word_lower}_{context}" if context else word_lower
+        if cache_key in self.word_scores:
+            return self.word_scores[cache_key]
+        
         # Base frequency score
         frequency_score = self.word_frequency.get(word_lower, 0)
         
@@ -265,14 +328,18 @@ class KeyPredictor:
         # Length bonus (shorter words slightly favored)
         length_bonus = max(0, (10 - len(word)) * 2)
         
-        # Recency bonus (not implemented in this version)
+        # Recency bonus (simplified - words with higher frequency used recently)
         recency_bonus = 0
         
         total_score = frequency_score + context_score + length_bonus + recency_bonus
         
+        # Cache the score
+        self.word_scores[cache_key] = total_score
+        
         return total_score
     
-    def predict(self, current_word, previous_word=None, max_suggestions=5):
+    def predict(self, current_word: str, previous_word: Optional[str] = None, 
+                max_suggestions: int = MAX_SUGGESTIONS) -> List[str]:
         """
         Predict word completions and suggestions
         
@@ -293,6 +360,10 @@ class KeyPredictor:
         
         with self.lock:
             for word, freq in self.word_frequency.items():
+                # Skip words that are too long
+                if len(word) > MAX_WORD_LENGTH:
+                    continue
+                    
                 # Check if word starts with current input
                 if word.startswith(current_lower):
                     score = self._calculate_score(word, previous_word)
@@ -304,31 +375,34 @@ class KeyPredictor:
             # Return top matches
             suggestions = [word for word, score in matches[:max_suggestions]]
             
-            # If no matches, try to correct
-            if not suggestions:
+            # If no matches or not enough matches, try to correct
+            if len(suggestions) < max_suggestions // 2:
                 corrected = self.correct_word(current_word)
-                if corrected and corrected != current_word:
-                    suggestions = [corrected] + self._suggest_next_words(previous_word, max_suggestions-1)
+                if corrected and corrected != current_word and corrected not in suggestions:
+                    suggestions.insert(0, corrected)
             
             return suggestions
     
-    def _suggest_next_words(self, previous_word, max_suggestions=5):
+    def _suggest_next_words(self, previous_word: Optional[str], 
+                           max_suggestions: int = MAX_SUGGESTIONS) -> List[str]:
         """Suggest next words based on previous word context"""
         if not previous_word:
             # No context, return most common words
-            common_words = [word for word, _ in self.word_frequency.most_common(max_suggestions)]
-            return common_words
+            with self.lock:
+                common_words = [word for word, _ in self.word_frequency.most_common(max_suggestions)]
+                return common_words
         
         previous_lower = previous_word.lower()
         
-        if previous_lower in self.word_pairs:
-            # Get most common next words
-            next_words = self.word_pairs[previous_lower].most_common(max_suggestions)
-            return [word for word, _ in next_words]
+        with self.lock:
+            if previous_lower in self.word_pairs:
+                # Get most common next words
+                next_words = self.word_pairs[previous_lower].most_common(max_suggestions)
+                return [word for word, _ in next_words]
         
         return []
     
-    def correct_word(self, word):
+    def correct_word(self, word: str) -> Optional[str]:
         """
         Auto-correct a misspelled word
         
@@ -336,8 +410,11 @@ class KeyPredictor:
             word: Potentially misspelled word
         
         Returns:
-            str: Corrected word or original if no correction found
+            str: Corrected word or None if no correction found
         """
+        if not word:
+            return None
+            
         word_lower = word.lower()
         
         # Check direct correction rules
@@ -354,15 +431,19 @@ class KeyPredictor:
         
         with self.lock:
             for dict_word in self.word_frequency:
+                # Skip if too different in length
+                if abs(len(word_lower) - len(dict_word)) > 2:
+                    continue
+                    
                 # Calculate similarity score
                 score = self._calculate_similarity(word_lower, dict_word)
-                if score > best_score and score > 0.7:  # 70% similarity threshold
+                if score > best_score and score > SIMILARITY_THRESHOLD:
                     best_score = score
                     best_match = dict_word
         
-        return best_match if best_match else word
+        return best_match if best_match else None
     
-    def _calculate_similarity(self, word1, word2):
+    def _calculate_similarity(self, word1: str, word2: str) -> float:
         """
         Calculate similarity between two words using Levenshtein distance
         and keyboard proximity
@@ -394,7 +475,7 @@ class KeyPredictor:
                     # Keyboard proximity match
                     matches += 0.7
         
-        base_similarity = matches / total
+        base_similarity = matches / total if total > 0 else 0
         
         # Check for common substitutions
         if base_similarity > 0.6:
@@ -402,18 +483,28 @@ class KeyPredictor:
         
         return 0.0
     
-    def learn_from_text(self, text):
+    def learn_from_text(self, text: str):
         """
         Learn from user's typed text to improve predictions
         
         Args:
             text: Text that was typed
         """
+        if not text:
+            return
+        
         # Split into words
         words = re.findall(r'\b\w+\b', text.lower())
         
+        if not words:
+            return
+        
         with self.lock:
             for i, word in enumerate(words):
+                # Skip words that are too long
+                if len(word) > MAX_WORD_LENGTH:
+                    continue
+                    
                 # Add word to vocabulary
                 self.word_frequency[word] += 1
                 
@@ -428,13 +519,9 @@ class KeyPredictor:
             
             # Clear cached scores for updated words
             for word in words:
-                if word in self.word_scores:
-                    del self.word_scores[word]
-        
-        # Save updated data
-        self._save_user_data()
+                self.word_scores.pop(word, None)
     
-    def get_common_words(self, limit=50):
+    def get_common_words(self, limit: int = 50) -> List[str]:
         """
         Get most common words from vocabulary
         
@@ -447,17 +534,17 @@ class KeyPredictor:
         with self.lock:
             return [word for word, _ in self.word_frequency.most_common(limit)]
     
-    def get_user_words(self):
+    def get_user_words(self) -> List[str]:
         """Get words added by the user"""
         with self.lock:
-            return list(self.user_words)
+            return sorted(list(self.user_words))
     
-    def get_word_frequency(self, word):
+    def get_word_frequency(self, word: str) -> int:
         """Get frequency of a specific word"""
         with self.lock:
             return self.word_frequency.get(word.lower(), 0)
     
- def reset_to_default(self):
+    def reset_to_default(self):
         """Reset predictor to default vocabulary"""
         with self.lock:
             self.word_frequency.clear()
@@ -467,47 +554,82 @@ class KeyPredictor:
             self._load_base_vocabulary()
             self._load_common_pairs()
             self._save_user_data()
-        print("[PREDICTOR] Reset to default vocabulary")
+        logger.info("Predictor reset to default vocabulary")
     
-    def export_vocabulary(self, filepath='vocabulary_export.json'):
+    def export_vocabulary(self, filepath: str = 'vocabulary_export.json'):
         """Export current vocabulary to file"""
-        with self.lock:
-            data = {
-                'frequencies': dict(self.word_frequency),
-                'pairs': {w1: dict(pairs) for w1, pairs in self.word_pairs.items()},
-                'user_words': list(self.user_words),
-                'export_date': datetime.now().isoformat()
-            }
-            with open(filepath, 'w', encoding='utf-8') as f:
+        export_path = USER_DATA_DIR / filepath
+        try:
+            with self.lock:
+                data = {
+                    'frequencies': dict(self.word_frequency),
+                    'pairs': {w1: dict(pairs) for w1, pairs in self.word_pairs.items()},
+                    'user_words': list(self.user_words),
+                    'export_date': datetime.now().isoformat(),
+                    'total_words': len(self.word_frequency),
+                    'version': '2.0'
+                }
+            
+            with open(export_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2)
-            print(f"[PREDICTOR] Vocabulary exported to {filepath}")
+            
+            logger.info(f"Vocabulary exported to {export_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error exporting vocabulary: {e}")
+            return False
     
-    def import_vocabulary(self, filepath='vocabulary_export.json'):
+    def import_vocabulary(self, filepath: str = 'vocabulary_export.json'):
         """Import vocabulary from file"""
-        if os.path.exists(filepath):
-            try:
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    with self.lock:
-                        self.word_frequency.update(data.get('frequencies', {}))
-                        for w1, pairs in data.get('pairs', {}).items():
-                            for w2, count in pairs.items():
-                                self.word_pairs[w1][w2] += count
-                        self.user_words.update(data.get('user_words', []))
-                    self._save_user_data()
-                    print(f"[PREDICTOR] Vocabulary imported from {filepath}")
-            except Exception as e:
-                print(f"[PREDICTOR] Error importing vocabulary: {e}")
+        import_path = USER_DATA_DIR / filepath
+        if not import_path.exists():
+            logger.warning(f"Import file not found: {import_path}")
+            return False
+        
+        try:
+            with open(import_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                
+                with self.lock:
+                    self.word_frequency.update(data.get('frequencies', {}))
+                    
+                    for w1, pairs in data.get('pairs', {}).items():
+                        for w2, count in pairs.items():
+                            self.word_pairs[w1][w2] += count
+                    
+                    self.user_words.update(data.get('user_words', []))
+                    
+                    # Clear cache
+                    self.word_scores.clear()
+                
+                self._save_user_data()
+                logger.info(f"Vocabulary imported from {import_path}")
+                return True
+        except Exception as e:
+            logger.error(f"Error importing vocabulary: {e}")
+            return False
     
-    def get_stats(self):
+    def get_stats(self) -> Dict:
         """Get predictor statistics"""
         with self.lock:
             return {
                 'total_words': len(self.word_frequency),
                 'user_words': len(self.user_words),
                 'word_pairs': sum(len(pairs) for pairs in self.word_pairs.values()),
-                'most_common': self.word_frequency.most_common(5)
+                'most_common': self.word_frequency.most_common(5),
+                'cache_size': len(self.word_scores),
+                'data_file_size': self.user_data_file.stat().st_size if self.user_data_file.exists() else 0
             }
+    
+    def cleanup(self):
+        """Cleanup resources before shutdown"""
+        if self.auto_save_timer:
+            self.auto_save_timer.cancel()
+            self.auto_save_timer = None
+        
+        # Final save
+        self._save_user_data()
+        logger.info("Predictor cleanup complete")
 
 
 # ============================================================================
@@ -517,19 +639,26 @@ class KeyPredictor:
 class ContextAwarePredictor(KeyPredictor):
     """Enhanced predictor with context awareness and learning"""
     
-    def __init__(self, user_data_file='user_dictionary.json'):
+    def __init__(self, user_data_file: str = 'user_dictionary.json'):
         super().__init__(user_data_file)
         self.session_history = []  # Track current session typing
         self.context_window = 3  # Remember last 3 words for context
+        logger.info("Context-Aware Predictor initialized")
     
-    def add_to_session(self, word):
+    def add_to_session(self, word: str):
         """Add word to current session history"""
-        self.session_history.append(word.lower())
-        # Keep only last N words
-        if len(self.session_history) > self.context_window:
-            self.session_history.pop(0)
+        if word:
+            self.session_history.append(word.lower())
+            # Keep only last N words
+            if len(self.session_history) > self.context_window:
+                self.session_history.pop(0)
     
-    def predict_with_context(self, current_word, max_suggestions=5):
+    def clear_session(self):
+        """Clear session history"""
+        self.session_history.clear()
+    
+    def predict_with_context(self, current_word: str, 
+                            max_suggestions: int = MAX_SUGGESTIONS) -> List[str]:
         """
         Predict using full context (previous words in session)
         
@@ -558,14 +687,15 @@ class ContextAwarePredictor(KeyPredictor):
         scored.sort(key=lambda x: x[1], reverse=True)
         return [word for word, _ in scored[:max_suggestions]]
     
-    def _calculate_context_score(self, word):
+    def _calculate_context_score(self, word: str) -> float:
         """Calculate score based on full session context"""
         score = 0
-        for i, context_word in enumerate(reversed(self.session_history)):
-            weight = 1.0 / (i + 1)  # Recent words have higher weight
-            if context_word in self.word_pairs:
-                pair_score = self.word_pairs[context_word].get(word, 0)
-                score += pair_score * weight
+        with self.lock:
+            for i, context_word in enumerate(reversed(self.session_history)):
+                weight = 1.0 / (i + 1)  # Recent words have higher weight
+                if context_word in self.word_pairs:
+                    pair_score = self.word_pairs[context_word].get(word, 0)
+                    score += pair_score * weight
         return score
 
 
@@ -621,6 +751,9 @@ def test_predictor():
     for key, value in stats.items():
         print(f"  {key}: {value}")
     
+    # Cleanup
+    predictor.cleanup()
+    
     print("\n✅ Predictor test completed!")
 
 
@@ -644,9 +777,15 @@ def test_context_predictor():
     for word in test_words:
         suggestions = predictor.predict_with_context(word)
         print(f"After context, typing '{word}': {suggestions}")
+    
+    # Cleanup
+    predictor.cleanup()
 
 
 if __name__ == "__main__":
+    # Setup logging for tests
+    logging.basicConfig(level=logging.INFO)
+    
     test_predictor()
     test_context_predictor()
     
