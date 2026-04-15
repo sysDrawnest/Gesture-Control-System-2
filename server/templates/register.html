@@ -1,368 +1,148 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>GestureFlow | Join the motion revolution</title>
-    <!-- Premium Font & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>KINETIC_OS // ENROLLMENT</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline-variant": "#46484d",
+                        "inverse-primary": "#006976",
+                        "surface": "#0c0e12",
+                        "on-secondary-fixed-variant": "#800ab4",
+                        "tertiary-fixed": "#64fd7d",
+                        "on-tertiary": "#006723",
+                        "inverse-surface": "#f9f9ff",
+                        "primary": "#81ecff",
+                        "surface-container-highest": "#23262c",
+                        "error-container": "#9f0519",
+                        "secondary-fixed-dim": "#e7afff",
+                        "primary-fixed-dim": "#00d4ec",
+                        "on-secondary": "#380052",
+                        "secondary-fixed": "#eec2ff",
+                        "inverse-on-surface": "#53555a",
+                        "surface-container": "#171a1f",
+                        "surface-tint": "#81ecff",
+                        "on-error": "#490006",
+                        "primary-fixed": "#00e3fd",
+                        "secondary-container": "#7d01b1",
+                        "error-dim": "#d7383b",
+                        "on-tertiary-container": "#005d1f",
+                        "background": "#0c0e12",
+                        "tertiary-fixed-dim": "#54ee70",
+                        "on-secondary-container": "#f3cfff",
+                        "primary-dim": "#00d4ec",
+                        "tertiary": "#b9ffb8",
+                        "primary-container": "#00e3fd",
+                        "on-error-container": "#ffa8a3",
+                        "on-surface": "#f6f6fc",
+                        "tertiary-container": "#64fd7d",
+                        "surface-container-high": "#1d2025",
+                        "surface-variant": "#23262c",
+                        "on-tertiary-fixed": "#004816",
+                        "on-primary-fixed-variant": "#005762",
+                        "surface-container-low": "#111318",
+                        "on-background": "#f6f6fc",
+                        "error": "#ff716c",
+                        "surface-bright": "#292c33",
+                        "secondary": "#d277ff",
+                        "on-primary-fixed": "#003840",
+                        "surface-container-lowest": "#000000",
+                        "on-primary": "#005762",
+                        "secondary-dim": "#d277ff",
+                        "on-tertiary-fixed-variant": "#006823",
+                        "tertiary-dim": "#54ee70",
+                        "on-secondary-fixed": "#56007c",
+                        "surface-dim": "#0c0e12",
+                        "outline": "#74757a",
+                        "on-surface-variant": "#aaabb0",
+                        "on-primary-container": "#004d57"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
+                    },
+                    fontFamily: {
+                        headline: ["Space Grotesk"],
+                        body: ["Inter"],
+                        label: ["Inter"],
+                        mono: ["JetBrains Mono"]
+                    }
+                },
+            },
         }
-
+    </script>
+    <style>
         body {
-            font-family: 'Space Grotesk', sans-serif;
-            background: #0B0C15;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            background-color: #050505;
             overflow-x: hidden;
         }
 
-        /* dynamic particle/gradient background with gesture-inspired waves */
-        .bg-aura {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            overflow: hidden;
+        .kinetic-grid {
+            background-image:
+                linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
         }
 
-        .gradient-sphere {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.5;
-            animation: drift 18s infinite alternate;
-        }
-
-        .sphere-1 {
-            width: 70vw;
-            height: 70vw;
-            background: radial-gradient(circle, #6C2BD9, #2B6ED9);
-            top: -30vh;
-            left: -20vw;
-            animation-duration: 22s;
-        }
-
-        .sphere-2 {
-            width: 60vw;
-            height: 60vw;
-            background: radial-gradient(circle, #D92B8C, #6B2BD9);
-            bottom: -20vh;
-            right: -15vw;
-            animation-duration: 26s;
-            animation-delay: -5s;
-        }
-
-        .sphere-3 {
-            width: 40vw;
-            height: 40vw;
-            background: radial-gradient(circle, #FFB347, #FF6B4A);
-            top: 40%;
-            left: 55%;
-            opacity: 0.3;
-            filter: blur(120px);
-            animation-duration: 19s;
-        }
-
-        @keyframes drift {
-            0% {
-                transform: translate(0, 0) scale(1);
-            }
-
-            100% {
-                transform: translate(8%, -5%) scale(1.2);
-            }
-        }
-
-        /* main container */
-        .register-container {
-            width: 100%;
-            max-width: 500px;
-            margin: 2rem;
-            position: relative;
-            z-index: 10;
-        }
-
-        .glass-card {
-            background: rgba(12, 18, 32, 0.7);
-            backdrop-filter: blur(16px);
-            border-radius: 2.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
-            padding: 2rem 2rem 2.2rem;
-            transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-        }
-
-        .glass-card:hover {
-            border-color: rgba(110, 90, 255, 0.4);
-            box-shadow: 0 35px 55px rgba(0, 0, 0, 0.5);
-            transform: translateY(-3px);
-        }
-
-        .auth-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .auth-header h2 {
-            font-size: 2.2rem;
-            font-weight: 700;
-            background: linear-gradient(125deg, #FFFFFF, #B9B0FF, #A57CFF);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.6rem;
-        }
-
-        .badge-gesture {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(165, 124, 255, 0.15);
-            padding: 0.3rem 1rem;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            color: #C9B6FF;
-            margin-top: 0.25rem;
-            backdrop-filter: blur(4px);
-        }
-
-        .auth-header p {
-            color: #99B2DD;
-            font-weight: 400;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
-        }
-
-        /* form style */
-        .register-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.45rem;
-        }
-
-        .input-group label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-            color: #B8CDFF;
-            margin-left: 0.3rem;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .input-wrapper i {
-            position: absolute;
-            left: 1rem;
-            color: #7C93C9;
-            font-size: 1.1rem;
-            transition: all 0.2s;
+        .kinetic-orb {
+            filter: blur(80px);
+            opacity: 0.15;
             pointer-events: none;
         }
 
-        .register-form input {
-            width: 100%;
-            padding: 0.9rem 1rem 0.9rem 2.8rem;
-            background: rgba(5, 12, 24, 0.7);
-            border: 1px solid rgba(100, 120, 200, 0.5);
-            border-radius: 1.3rem;
-            font-family: 'Space Grotesk', monospace;
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: #F0F3FF;
-            transition: all 0.2s ease;
-            outline: none;
+        .glass-card {
+            background: rgba(12, 14, 18, 0.6);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(129, 236, 255, 0.1);
+            position: relative;
         }
 
-        .register-form input:focus {
-            border-color: #A07CFE;
-            box-shadow: 0 0 0 3px rgba(160, 124, 254, 0.3);
-            background: rgba(8, 16, 30, 0.9);
+        .glass-card::before {
+            content: "";
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: linear-gradient(135deg, rgba(129, 236, 255, 0.2) 0%, transparent 40%, transparent 60%, rgba(210, 119, 255, 0.2) 100%);
+            z-index: -1;
+            pointer-events: none;
         }
 
-        .register-form input::placeholder {
-            color: #4F6085;
-            font-weight: 400;
-            font-size: 0.85rem;
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
         }
 
-        /* password strength indicator */
-        .strength-meter {
-            margin-top: 0.25rem;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            overflow: hidden;
-            transition: all 0.2s;
-        }
+        @keyframes shakeCard {
 
-        .strength-fill {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #FF4D6D, #FFB347, #3BE07F);
-            border-radius: 10px;
-            transition: width 0.3s ease;
-        }
-
-        .strength-text {
-            font-size: 0.65rem;
-            margin-top: 0.25rem;
-            text-align: right;
-            color: #9AAFD9;
-        }
-
-        /* messages */
-        .message-card {
-            border-radius: 1rem;
-            padding: 0.8rem 1rem;
-            font-size: 0.85rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            backdrop-filter: blur(8px);
-            animation: slideUp 0.25s ease;
-        }
-
-        .error-message {
-            background: rgba(255, 70, 90, 0.2);
-            border-left: 3px solid #FF4D6D;
-            color: #FFB8C5;
-        }
-
-        .success-message {
-            background: rgba(80, 230, 140, 0.15);
-            border-left: 3px solid #5EFF9E;
-            color: #BFFFD9;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(8px);
+            0%,
+            100% {
+                transform: translateX(0);
             }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            25% {
+                transform: translateX(-5px);
             }
-        }
 
-        /* button */
-        .btn-register {
-            background: linear-gradient(95deg, #5E2BFF, #B25CFF);
-            border: none;
-            padding: 1rem 1.5rem;
-            border-radius: 2rem;
-            font-weight: 700;
-            font-size: 1rem;
-            font-family: 'Space Grotesk', sans-serif;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.6rem;
-            transition: all 0.25s ease;
-            margin-top: 0.6rem;
-            box-shadow: 0 6px 18px rgba(94, 43, 255, 0.3);
-        }
-
-        .btn-register:hover {
-            transform: scale(1.02);
-            background: linear-gradient(95deg, #6F3EFF, #C46CFF);
-            box-shadow: 0 10px 25px rgba(94, 43, 255, 0.5);
-        }
-
-        .btn-register:active {
-            transform: scale(0.98);
-        }
-
-        .btn-register:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* footer */
-        .auth-footer {
-            text-align: center;
-            margin-top: 1.8rem;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .auth-footer p {
-            color: #9AB0DD;
-            font-size: 0.85rem;
-        }
-
-        .auth-footer a {
-            color: #C5ADFF;
-            text-decoration: none;
-            font-weight: 600;
-            transition: 0.2s;
-            border-bottom: 1px dashed rgba(197, 173, 255, 0.4);
-        }
-
-        .auth-footer a:hover {
-            color: white;
-            border-bottom-color: white;
-        }
-
-        /* gesture floating decoration */
-        .gesture-deco {
-            display: flex;
-            justify-content: center;
-            gap: 0.8rem;
-            margin-top: 1rem;
-            font-size: 0.7rem;
-            color: #6D85B0;
-        }
-
-        .gesture-deco i {
-            font-size: 0.9rem;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 0.3rem;
-            border-radius: 50%;
-        }
-
-        /* spinner */
-        .spinner-sm {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.6s linear infinite;
+            75% {
+                transform: translateX(5px);
+            }
         }
 
         @keyframes spin {
@@ -371,333 +151,452 @@
             }
         }
 
-        @media (max-width: 550px) {
-            .glass-card {
-                padding: 1.5rem;
-            }
+        .shake-animation {
+            animation: shakeCard 0.3s ease;
+        }
 
-            .auth-header h2 {
-                font-size: 1.8rem;
-            }
+        .spinner-sm {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+
+        input:-webkit-autofill,
+        input:-webkit-autofill:focus {
+            transition: background-color 600000s 0s, color 600000s 0s;
+        }
+
+        .strength-fill {
+            transition: width 0.3s ease;
         }
     </style>
 </head>
 
-<body>
+<body class="font-body text-on-surface min-h-screen flex items-center justify-center relative">
 
-    <div class="bg-aura">
-        <div class="gradient-sphere sphere-1"></div>
-        <div class="gradient-sphere sphere-2"></div>
-        <div class="gradient-sphere sphere-3"></div>
+    <!-- Background Elements -->
+    <div class="fixed inset-0 kinetic-grid z-0"></div>
+    <div class="fixed top-1/4 -left-20 w-96 h-96 rounded-full bg-primary kinetic-orb z-0"></div>
+    <div class="fixed bottom-1/4 -right-20 w-[500px] h-[500px] rounded-full bg-secondary kinetic-orb z-0"></div>
+    <div
+        class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-surface-tint kinetic-orb opacity-[0.05] z-0">
     </div>
 
-    <div class="register-container">
-        <div class="glass-card">
-            <div class="auth-header">
-                <h2>✧ join gesture space ✧</h2>
-                <div class="badge-gesture">
-                    <i class="fas fa-hand-peace"></i> <span>hands-free future</span> <i class="fas fa-hand-spock"></i>
+    <!-- Main Content Shell -->
+    <main class="relative z-10 w-full max-w-md px-6">
+        <!-- Authentication Card -->
+        <div class="glass-card p-10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <!-- Header Section -->
+            <header class="mb-8 text-center">
+                <h1 class="font-headline text-3xl font-bold tracking-tighter text-primary uppercase mb-2">
+                    KINETIC_OS
+                </h1>
+                <div class="flex items-center justify-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-[10px] text-primary">how_to_reg</span>
+                    <p class="font-mono text-[10px] tracking-widest text-on-surface-variant uppercase">
+                        ENROLLMENT_PROTOCOL
+                    </p>
                 </div>
-                <p>Create your identity & control devices with intuitive gestures</p>
-            </div>
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                    <span class="material-symbols-outlined text-primary text-sm">gesture</span>
+                    <span class="font-mono text-[9px] text-primary uppercase tracking-wider">hands-free future</span>
+                </div>
+            </header>
 
-            <form id="registerForm" class="register-form">
-                <div class="input-group">
-                    <label><i class="fas fa-user-astronaut"></i> Username</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-fingerprint"></i>
-                        <input type="text" id="username" name="username" required placeholder="e.g., gesture_master"
-                            autocomplete="username">
+            <!-- Form Fields -->
+            <form id="registerForm" class="space-y-6">
+                <!-- Username -->
+                <div class="relative group">
+                    <label
+                        class="block font-mono text-[10px] tracking-widest text-on-surface-variant uppercase mb-2 ml-1">
+                        <i class="fas fa-user-astronaut mr-1"></i> USERNAME
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
+                            <i class="fas fa-fingerprint text-sm"></i>
+                        </span>
+                        <input id="username" name="username"
+                            class="w-full bg-surface-container-lowest/40 border-b border-outline-variant focus:border-primary focus:ring-0 text-on-surface placeholder:text-outline-variant font-mono text-sm py-4 pl-10 pr-4 transition-all duration-300"
+                            placeholder="GESTURE_MASTER" type="text" autocomplete="username" />
+                        <div
+                            class="absolute bottom-0 left-0 w-0 h-[1px] bg-primary transition-all duration-500 group-focus-within:w-full shadow-[0_0_10px_rgba(129,236,255,0.5)]">
+                        </div>
                     </div>
                 </div>
 
-                <div class="input-group">
-                    <label><i class="fas fa-envelope"></i> Email</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-at"></i>
-                        <input type="email" id="email" name="email" required placeholder="hello@gesture.space"
-                            autocomplete="email">
+                <!-- Email -->
+                <div class="relative group">
+                    <label
+                        class="block font-mono text-[10px] tracking-widest text-on-surface-variant uppercase mb-2 ml-1">
+                        <i class="fas fa-envelope mr-1"></i> EMAIL
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
+                            <i class="fas fa-at text-sm"></i>
+                        </span>
+                        <input id="email" name="email"
+                            class="w-full bg-surface-container-lowest/40 border-b border-outline-variant focus:border-primary focus:ring-0 text-on-surface placeholder:text-outline-variant font-mono text-sm py-4 pl-10 pr-4 transition-all duration-300"
+                            placeholder="OPERATOR@KINETIC.SYS" type="email" autocomplete="email" />
+                        <div
+                            class="absolute bottom-0 left-0 w-0 h-[1px] bg-primary transition-all duration-500 group-focus-within:w-full shadow-[0_0_10px_rgba(129,236,255,0.5)]">
+                        </div>
                     </div>
                 </div>
 
-                <div class="input-group">
-                    <label><i class="fas fa-key"></i> Password</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-hand-back-fist"></i>
-                        <input type="password" id="password" name="password" required
-                            placeholder="•••••••• (min 6 chars)">
+                <!-- Password -->
+                <div class="relative group">
+                    <label
+                        class="block font-mono text-[10px] tracking-widest text-on-surface-variant uppercase mb-2 ml-1">
+                        <i class="fas fa-key mr-1"></i> PASSWORD
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
+                            <i class="fas fa-hand-back-fist text-sm"></i>
+                        </span>
+                        <input id="password" name="password"
+                            class="w-full bg-surface-container-lowest/40 border-b border-outline-variant focus:border-primary focus:ring-0 text-on-surface placeholder:text-outline-variant font-mono text-sm py-4 pl-10 pr-4 transition-all duration-300"
+                            placeholder="••••••••" type="password" />
+                        <div
+                            class="absolute bottom-0 left-0 w-0 h-[1px] bg-primary transition-all duration-500 group-focus-within:w-full shadow-[0_0_10px_rgba(129,236,255,0.5)]">
+                        </div>
                     </div>
-                    <div class="strength-meter">
-                        <div class="strength-fill" id="strengthFill"></div>
+                    <!-- Strength Meter -->
+                    <div class="mt-2">
+                        <div class="h-1 bg-surface-container-high rounded-full overflow-hidden">
+                            <div class="strength-fill h-full bg-gradient-to-r from-error via-primary to-tertiary rounded-full"
+                                style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="font-mono text-[9px] text-on-surface-variant"
+                                id="strengthLabel">PASSWORD_STRENGTH</span>
+                            <span class="font-mono text-[9px] text-on-surface-variant" id="strengthText">—</span>
+                        </div>
                     </div>
-                    <div class="strength-text" id="strengthLabel">⚡ password strength</div>
                 </div>
 
-                <div class="input-group">
-                    <label><i class="fas fa-check-circle"></i> Confirm password</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-hand-peace"></i>
-                        <input type="password" id="confirmPassword" required placeholder="match your password">
+                <!-- Confirm Password -->
+                <div class="relative group">
+                    <label
+                        class="block font-mono text-[10px] tracking-widest text-on-surface-variant uppercase mb-2 ml-1">
+                        <i class="fas fa-check-circle mr-1"></i> CONFIRM_PHRASE
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
+                            <i class="fas fa-hand-peace text-sm"></i>
+                        </span>
+                        <input id="confirmPassword" name="confirmPassword"
+                            class="w-full bg-surface-container-lowest/40 border-b border-outline-variant focus:border-primary focus:ring-0 text-on-surface placeholder:text-outline-variant font-mono text-sm py-4 pl-10 pr-4 transition-all duration-300"
+                            placeholder="••••••••" type="password" />
+                        <div
+                            class="absolute bottom-0 left-0 w-0 h-[1px] bg-primary transition-all duration-500 group-focus-within:w-full shadow-[0_0_10px_rgba(129,236,255,0.5)]">
+                        </div>
                     </div>
                 </div>
 
-                <div id="errorMessage" class="message-card error-message" style="display: none;">
-                    <i class="fas fa-exclamation-triangle"></i> <span id="errorText"></span>
-                </div>
-                <div id="successMessage" class="message-card success-message" style="display: none;">
-                    <i class="fas fa-hand-peace"></i> <span id="successText"></span>
+                <!-- Error Message -->
+                <div id="errorMessage"
+                    class="hidden bg-error/10 border-l-4 border-error rounded-lg p-3 text-xs text-error-light font-mono">
+                    <i class="fas fa-exclamation-triangle mr-2"></i> <span id="errorText"></span>
                 </div>
 
-                <button type="submit" id="registerBtn" class="btn-register">
-                    <span id="btnLabel">Start gesturing →</span>
-                    <i class="fas fa-arrow-right-to-bracket"></i>
-                </button>
+                <!-- Success Message -->
+                <div id="successMessage"
+                    class="hidden bg-tertiary/10 border-l-4 border-tertiary rounded-lg p-3 text-xs text-tertiary font-mono">
+                    <i class="fas fa-hand-peace mr-2"></i> <span id="successText"></span>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-2">
+                    <button type="submit" id="registerBtn"
+                        class="w-full py-5 px-6 font-headline font-bold text-on-primary bg-primary-container/20 border border-primary/40 hover:bg-primary hover:text-on-primary transition-all duration-300 active:scale-95 shadow-[0_0_15px_rgba(0,227,253,0.1)] hover:shadow-[0_0_30px_rgba(0,227,253,0.3)] tracking-widest">
+                        <span id="btnLabel">INITIALIZE_ENROLLMENT →</span>
+                    </button>
+                </div>
             </form>
 
-            <div class="gesture-deco">
-                <i class="fas fa-hand-peace"></i> <span>✋ swipe left/right</span> <i
-                    class="fas fa-hand-peace fa-flip-horizontal"></i>
-                <i class="fas fa-hand-spock"></i> <span>🖐️ open palm → select</span>
+            <!-- Gesture Decorations -->
+            <div class="flex justify-center gap-4 mt-6 pt-4 border-t border-white/10">
+                <div class="flex items-center gap-2 text-on-surface-variant text-[10px]">
+                    <i class="fas fa-hand-peace"></i>
+                    <span>SWIPE_NAV</span>
+                </div>
+                <div class="flex items-center gap-2 text-on-surface-variant text-[10px]">
+                    <i class="fas fa-hand-spock"></i>
+                    <span>OPEN_PALM</span>
+                </div>
+                <div class="flex items-center gap-2 text-on-surface-variant text-[10px]">
+                    <i class="fas fa-hand-peace fa-flip-horizontal"></i>
+                    <span>SELECT</span>
+                </div>
             </div>
 
-            <div class="auth-footer">
-                <p>⚡ already part of the motion? <a href="/login">sign in →</a></p>
+            <!-- Footer Links -->
+            <footer class="mt-6 text-center">
+                <p class="font-mono text-[10px] text-on-surface-variant">
+                    EXISTING_PILOT? <a href="/login"
+                        class="text-primary hover:text-primary-dim transition-colors border-b border-primary/30">SIGN_IN
+                        →</a>
+                </p>
+            </footer>
+        </div>
+
+        <!-- System Metadata Decorations -->
+        <div class="mt-8 flex justify-between items-center px-2 opacity-40">
+            <div class="flex items-center gap-2 font-mono text-[8px] tracking-[0.2em]">
+                <span class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
+                CORE_STABLE_V4.2
+            </div>
+            <div class="font-mono text-[8px] tracking-[0.2em]">
+                ENCRYPTION: AES_256_GCM
             </div>
         </div>
-    </div>
+    </main>
+
+    <!-- Footer Content -->
+    <footer
+        class="fixed bottom-0 w-full flex justify-between items-center px-8 py-4 opacity-50 z-20 pointer-events-none">
+        <div class="font-mono text-[10px] uppercase tracking-widest text-cyan-900">
+            © 2024 KINETIC PULSE SYSTEMS
+        </div>
+        <div class="flex gap-6 pointer-events-auto">
+            <a class="font-mono text-[10px] uppercase tracking-widest text-slate-700 hover:text-cyan-500 transition-colors"
+                href="#">Status</a>
+            <a class="font-mono text-[10px] uppercase tracking-widest text-slate-700 hover:text-cyan-500 transition-colors"
+                href="#">Privacy</a>
+            <a class="font-mono text-[10px] uppercase tracking-widest text-slate-700 hover:text-cyan-500 transition-colors"
+                href="#">Terminal</a>
+        </div>
+    </footer>
+
+    <!-- Decorative Corner Accents -->
+    <div class="fixed top-8 left-8 w-12 h-12 border-t border-l border-primary/20 pointer-events-none"></div>
+    <div class="fixed top-8 right-8 w-12 h-12 border-t border-r border-primary/20 pointer-events-none"></div>
+    <div class="fixed bottom-8 left-8 w-12 h-12 border-b border-l border-primary/20 pointer-events-none"></div>
+    <div class="fixed bottom-8 right-8 w-12 h-12 border-b border-r border-primary/20 pointer-events-none"></div>
 
     <script>
-        (function () {
-            // DOM elements
-            const form = document.getElementById('registerForm');
-            const usernameInput = document.getElementById('username');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            const confirmInput = document.getElementById('confirmPassword');
-            const errorDiv = document.getElementById('errorMessage');
-            const errorSpan = document.getElementById('errorText');
-            const successDiv = document.getElementById('successMessage');
-            const successSpan = document.getElementById('successText');
-            const registerBtn = document.getElementById('registerBtn');
-            const btnLabel = document.getElementById('btnLabel');
+            (function () {
+                // DOM elements
+                const form = document.getElementById('registerForm');
+                const usernameInput = document.getElementById('username');
+                const emailInput = document.getElementById('email');
+                const passwordInput = document.getElementById('password');
+                const confirmInput = document.getElementById('confirmPassword');
+                const errorDiv = document.getElementById('errorMessage');
+                const errorSpan = document.getElementById('errorText');
+                const successDiv = document.getElementById('successMessage');
+                const successSpan = document.getElementById('successText');
+                const registerBtn = document.getElementById('registerBtn');
+                const btnLabel = document.getElementById('btnLabel');
+                const strengthFill = document.querySelector('.strength-fill');
+                const strengthLabel = document.getElementById('strengthLabel');
+                const strengthText = document.getElementById('strengthText');
+                const cardEl = document.querySelector('.glass-card');
 
-            // strength elements
-            const strengthFill = document.getElementById('strengthFill');
-            const strengthLabel = document.getElementById('strengthLabel');
-
-            // Helper: show error
-            function showError(msg) {
-                errorSpan.innerText = msg;
-                errorDiv.style.display = 'flex';
-                successDiv.style.display = 'none';
-                // auto hide after 4.5s but keep for feedback
-                setTimeout(() => {
-                    if (errorDiv.style.display === 'flex') errorDiv.style.display = 'none';
-                }, 4800);
-            }
-
-            function showSuccess(msg) {
-                successSpan.innerText = msg;
-                successDiv.style.display = 'flex';
-                errorDiv.style.display = 'none';
-            }
-
-            function clearMessages() {
-                errorDiv.style.display = 'none';
-                successDiv.style.display = 'none';
-            }
-
-            // Password strength evaluator
-            function evaluatePasswordStrength(pwd) {
-                if (!pwd) return { score: 0, label: 'very weak', width: '10%' };
-                let score = 0;
-                if (pwd.length >= 6) score += 1;
-                if (pwd.length >= 10) score += 1;
-                if (/[A-Z]/.test(pwd)) score += 1;
-                if (/[0-9]/.test(pwd)) score += 1;
-                if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
-                // max score 5
-                const percent = Math.min(100, (score / 5) * 100);
-                let label = '';
-                if (score <= 1) label = '⚠️ very weak';
-                else if (score === 2) label = '🌱 weak';
-                else if (score === 3) label = '🌀 moderate';
-                else if (score === 4) label = '✨ strong';
-                else label = '💪 very strong';
-                return { width: `${percent}%`, label, score };
-            }
-
-            function updateStrengthMeter() {
-                const pwd = passwordInput.value;
-                const { width, label } = evaluatePasswordStrength(pwd);
-                strengthFill.style.width = width;
-                strengthLabel.innerHTML = `<i class="fas fa-shield-alt"></i> ${label}`;
-                if (pwd === '') {
-                    strengthFill.style.width = '0%';
-                    strengthLabel.innerHTML = '⚡ password strength';
+                // Password strength evaluator
+                function evaluatePasswordStrength(pwd) {
+                    if (!pwd) return { score: 0, label: 'WEAK', text: '—', width: '0%' };
+                    let score = 0;
+                    if (pwd.length >= 6) score += 1;
+                    if (pwd.length >= 10) score += 1;
+                    if (/[A-Z]/.test(pwd)) score += 1;
+                    if (/[0-9]/.test(pwd)) score += 1;
+                    if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
+                    const percent = Math.min(100, (score / 5) * 100);
+                    let label = '', text = '';
+                    if (score <= 1) { label = 'WEAK'; text = 'INSECURE'; }
+                    else if (score === 2) { label = 'FAIR'; text = 'LOW_SECURITY'; }
+                    else if (score === 3) { label = 'MODERATE'; text = 'ACCEPTABLE'; }
+                    else if (score === 4) { label = 'STRONG'; text = 'HIGH_SECURITY'; }
+                    else { label = 'MAXIMUM'; text = 'OPTIMAL'; }
+                    return { width: `${percent}%`, label, text, score };
                 }
-            }
 
-            passwordInput.addEventListener('input', updateStrengthMeter);
-
-            // loading state
-            function setLoading(loading) {
-                if (loading) {
-                    registerBtn.disabled = true;
-                    btnLabel.innerHTML = '<span class="spinner-sm"></span> registering...';
-                } else {
-                    registerBtn.disabled = false;
-                    btnLabel.innerHTML = 'Start gesturing →';
-                }
-            }
-
-            // validation (frontend)
-            function validateForm() {
-                const username = usernameInput.value.trim();
-                const email = emailInput.value.trim();
-                const password = passwordInput.value;
-                const confirm = confirmInput.value;
-
-                if (!username || !email || !password || !confirm) {
-                    showError('All fields are required to join the gesture realm.');
-                    return false;
-                }
-                if (username.length < 3 || username.length > 20) {
-                    showError('Username must be between 3 and 20 characters.');
-                    return false;
-                }
-                const usernameRegex = /^[a-zA-Z0-9_]+$/;
-                if (!usernameRegex.test(username)) {
-                    showError('Username can only contain letters, numbers, and underscores.');
-                    return false;
-                }
-                const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    showError('Please enter a valid email address.');
-                    return false;
-                }
-                if (password.length < 6) {
-                    showError('Password must be at least 6 characters long.');
-                    return false;
-                }
-                if (password !== confirm) {
-                    showError('Passwords do not match — please confirm correctly.');
-                    return false;
-                }
-                return true;
-            }
-
-            // actual fetch registration
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                clearMessages();
-
-                if (!validateForm()) return;
-
-                const username = usernameInput.value.trim();
-                const email = emailInput.value.trim();
-                const password = passwordInput.value;
-
-                setLoading(true);
-
-                try {
-                    const response = await fetch('/api/auth/register', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            username,
-                            email,
-                            password
-                        })
-                    });
-
-                    let data;
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        data = await response.json();
+                function updateStrengthMeter() {
+                    const pwd = passwordInput.value;
+                    const { width, label, text } = evaluatePasswordStrength(pwd);
+                    strengthFill.style.width = width;
+                    strengthLabel.textContent = 'PASSWORD_STRENGTH:';
+                    strengthText.textContent = label;
+                    if (pwd === '') {
+                        strengthFill.style.width = '0%';
+                        strengthLabel.textContent = 'PASSWORD_STRENGTH';
+                        strengthText.textContent = '—';
+                    }
+                    // Color based on strength
+                    if (label === 'MAXIMUM' || label === 'STRONG') {
+                        strengthFill.style.background = 'linear-gradient(90deg, #81ecff, #b9ffb8)';
+                    } else if (label === 'MODERATE') {
+                        strengthFill.style.background = 'linear-gradient(90deg, #d277ff, #81ecff)';
                     } else {
-                        throw new Error('Invalid server response format');
+                        strengthFill.style.background = 'linear-gradient(90deg, #ff716c, #d277ff)';
                     }
+                }
 
-                    if (response.ok && data.success) {
-                        showSuccess('✨ Registration successful! Redirecting to login page...');
-                        // subtle haptic feedback effect
-                        const card = document.querySelector('.glass-card');
-                        card.style.transform = 'scale(1.01)';
-                        setTimeout(() => { card.style.transform = ''; }, 200);
+                passwordInput.addEventListener('input', updateStrengthMeter);
 
-                        setTimeout(() => {
-                            window.location.href = '/login';
-                        }, 1800);
-                    } else {
-                        const errMsg = data.error || data.message || 'Registration failed. Username or email might exist.';
-                        showError(errMsg);
-                        setLoading(false);
-                        // shake animation on card
-                        const glassCard = document.querySelector('.glass-card');
-                        glassCard.style.animation = 'shakeCard 0.3s ease';
-                        setTimeout(() => { glassCard.style.animation = ''; }, 400);
-                    }
-                } catch (error) {
-                    console.error('Registration network error:', error);
-                    let friendlyMsg = 'Network error. Could not connect to GestureFlow server.';
-                    if (error.message === 'Failed to fetch') {
-                        friendlyMsg = '⚠️ Cannot reach backend. Is the server running?';
-                    }
-                    showError(friendlyMsg);
-                    setLoading(false);
-                    // gentle animation
-                    const glassCard = document.querySelector('.glass-card');
-                    glassCard.style.animation = 'shakeCard 0.3s ease';
-                    setTimeout(() => { glassCard.style.animation = ''; }, 400);
-                } finally {
-                    // if not redirected after 2.5 sec and loading still active, reset (safety)
+                // Helper: show error
+                function showError(msg) {
+                    errorSpan.innerHTML = msg;
+                    errorDiv.classList.remove('hidden');
+                    successDiv.classList.add('hidden');
+                    cardEl.classList.add('shake-animation');
                     setTimeout(() => {
-                        if (registerBtn.disabled === true && window.location.pathname !== '/login') {
+                        cardEl.classList.remove('shake-animation');
+                    }, 400);
+                    setTimeout(() => {
+                        if (!errorDiv.classList.contains('hidden')) {
+                            // keep visible
+                        }
+                    }, 5000);
+                }
+
+                function showSuccess(msg) {
+                    successSpan.innerHTML = msg;
+                    successDiv.classList.remove('hidden');
+                    errorDiv.classList.add('hidden');
+                }
+
+                function clearMessages() {
+                    errorDiv.classList.add('hidden');
+                    successDiv.classList.add('hidden');
+                }
+
+                // Loading state
+                function setLoading(loading) {
+                    if (loading) {
+                        registerBtn.disabled = true;
+                        btnLabel.innerHTML = '<span class="spinner-sm"></span>PROCESSING_ENROLLMENT...';
+                        registerBtn.style.opacity = '0.8';
+                    } else {
+                        registerBtn.disabled = false;
+                        btnLabel.innerHTML = 'INITIALIZE_ENROLLMENT →';
+                        registerBtn.style.opacity = '1';
+                    }
+                }
+
+                // Frontend validation
+                function validateForm() {
+                    const username = usernameInput.value.trim();
+                    const email = emailInput.value.trim();
+                    const password = passwordInput.value;
+                    const confirm = confirmInput.value;
+
+                    if (!username || !email || !password || !confirm) {
+                        showError('ALL_FIELDS_REQUIRED // Complete enrollment data');
+                        return false;
+                    }
+                    if (username.length < 3 || username.length > 20) {
+                        showError('USERNAME_LENGTH_ERROR // Must be 3-20 characters');
+                        return false;
+                    }
+                    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+                    if (!usernameRegex.test(username)) {
+                        showError('USERNAME_FORMAT_ERROR // Only letters, numbers, underscores');
+                        return false;
+                    }
+                    const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                        showError('EMAIL_FORMAT_ERROR // Invalid email structure');
+                        return false;
+                    }
+                    if (password.length < 6) {
+                        showError('PASSWORD_LENGTH_ERROR // Minimum 6 characters required');
+                        return false;
+                    }
+                    if (password !== confirm) {
+                        showError('PASSWORD_MISMATCH // Security phrases do not match');
+                        return false;
+                    }
+                    return true;
+                }
+
+                // Visual password match
+                function checkPasswordMatchVisual() {
+                    const pwd = passwordInput.value;
+                    const confirm = confirmInput.value;
+                    if (confirm !== '' && pwd !== confirm) {
+                        confirmInput.style.borderBottomColor = '#ff716c';
+                    } else if (confirm !== '' && pwd === confirm) {
+                        confirmInput.style.borderBottomColor = '#b9ffb8';
+                    } else {
+                        confirmInput.style.borderBottomColor = '';
+                    }
+                }
+
+                passwordInput.addEventListener('input', checkPasswordMatchVisual);
+                confirmInput.addEventListener('input', checkPasswordMatchVisual);
+                usernameInput.addEventListener('input', () => clearMessages());
+                emailInput.addEventListener('input', () => clearMessages());
+
+                // Form submission
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    clearMessages();
+
+                    if (!validateForm()) return;
+
+                    const username = usernameInput.value.trim();
+                    const email = emailInput.value.trim();
+                    const password = passwordInput.value;
+
+                    setLoading(true);
+
+                    try {
+                        const response = await fetch('/api/auth/register', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ username, email, password })
+                        });
+
+                        let data;
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            data = await response.json();
+                        } else {
+                            throw new Error('Invalid server response format');
+                        }
+
+                        if (response.ok && data.success) {
+                            showSuccess('ENROLLMENT_SUCCESSFUL // Redirecting to authentication...');
+                            cardEl.style.transform = 'scale(1.01)';
+                            setTimeout(() => { cardEl.style.transform = ''; }, 200);
+                            setTimeout(() => {
+                                window.location.href = '/login';
+                            }, 1800);
+                        } else {
+                            const errMsg = data.error || data.message || 'REGISTRATION_FAILED // Credentials may exist';
+                            showError(errMsg);
                             setLoading(false);
                         }
-                    }, 3000);
-                }
-            });
+                    } catch (error) {
+                        console.error('Registration network error:', error);
+                        let friendlyMsg = 'NETWORK_ERROR // Cannot reach KINETIC server';
+                        if (error.message === 'Failed to fetch') {
+                            friendlyMsg = 'CONNECTION_REFUSED // Ensure backend is operational';
+                        }
+                        showError(friendlyMsg);
+                        setLoading(false);
+                    } finally {
+                        setTimeout(() => {
+                            if (registerBtn.disabled === true && window.location.pathname !== '/login') {
+                                setLoading(false);
+                            }
+                        }, 3000);
+                    }
+                });
 
-            // real-time confirm highlight & extra match validation on confirm field
-            function checkPasswordMatchVisual() {
-                const pwd = passwordInput.value;
-                const confirm = confirmInput.value;
-                if (confirm !== '' && pwd !== confirm) {
-                    confirmInput.style.borderColor = '#FF6B7C';
-                    confirmInput.style.boxShadow = '0 0 0 2px rgba(255, 70, 90, 0.2)';
-                } else if (confirm !== '' && pwd === confirm) {
-                    confirmInput.style.borderColor = '#5EFF9E';
-                    confirmInput.style.boxShadow = '0 0 0 2px rgba(94, 255, 158, 0.2)';
-                } else {
-                    confirmInput.style.borderColor = '';
-                    confirmInput.style.boxShadow = '';
-                }
-            }
-
-            passwordInput.addEventListener('input', checkPasswordMatchVisual);
-            confirmInput.addEventListener('input', checkPasswordMatchVisual);
-            usernameInput.addEventListener('input', () => clearMessages());
-            emailInput.addEventListener('input', () => clearMessages());
-
-            // extra style: add keyframe shake to the card
-            const styleSheet = document.createElement("style");
-            styleSheet.textContent = `
-            @keyframes shakeCard {
-                0% { transform: translateX(0); }
-                25% { transform: translateX(-5px); }
-                75% { transform: translateX(5px); }
-                100% { transform: translateX(0); }
-            }
-        `;
-            document.head.appendChild(styleSheet);
-
-            // initial strength
-            updateStrengthMeter();
-        })();
+                // Initial strength meter
+                updateStrengthMeter();
+            })();
     </script>
 </body>
 
