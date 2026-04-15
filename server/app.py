@@ -238,7 +238,7 @@ if __name__ == '__main__':
     print(f"Environment: {env}")
     print(f"Python Version: {sys.version.split()[0]}")
     print(f"Debug Mode: {current_config.DEBUG}")
-    print(f"Database: SQLite")
+    print(f"Database: Mongodb")
     print(f"WebSocket: Enabled (async_mode='gevent')")
     print("-" * 60)
     print("Access the server at:")

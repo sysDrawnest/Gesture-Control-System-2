@@ -8,3 +8,24 @@
 2026-04-14 16:27:48,852 - __main__ - INFO - Quit signal received
 2026-04-14 16:27:48,853 - __main__ - INFO - Cleaning up resources...
 2026-04-14 16:27:49,244 - __main__ - INFO - Cleanup complete
+2026-04-15 12:14:16,080 - __main__ - ERROR - WebSocket connection error: {'message': 'Connection rejected by server'}
+2026-04-15 12:14:17,087 - __main__ - WARNING - Server connection failed: One or more namespaces failed to connect. Running in local mode only.
+2026-04-15 12:14:17,163 - __main__ - INFO - MediaPipe Hands initialized
+2026-04-15 12:14:39,677 - __main__ - INFO - Camera initialized: 1280.0x720.0
+2026-04-15 12:14:39,736 - __main__ - INFO - Stroke recognizer initialized with 36 templates
+2026-04-15 12:14:39,738 - key_predictor - INFO - Predictor initialized with 116 words
+2026-04-15 12:14:39,739 - __main__ - INFO - Air Keyboard Notes initialized successfully
+2026-04-15 12:15:01,054 - __main__ - INFO - Notes mode activated
+2026-04-15 12:16:29,579 - __main__ - INFO - Quit signal received
+2026-04-15 12:16:29,579 - __main__ - INFO - Cleaning up resources...
+2026-04-15 12:16:30,053 - __main__ - INFO - Cleanup complete
+2026-04-15 12:56:57,711 - __main__ - INFO - MediaPipe Hands initialized
+2026-04-15 12:57:19,096 - __main__ - INFO - Camera initialized: 1280.0x720.0
+2026-04-15 12:57:19,105 - __main__ - INFO - Stroke recognizer initialized with 36 templates
+2026-04-15 12:57:19,107 - key_predictor - INFO - Predictor initialized with 116 words
+2026-04-15 12:57:19,108 - __main__ - INFO - Air Keyboard Notes initialized successfully
+2026-04-15 12:57:31,685 - __main__ - INFO - Notes mode activated
+2026-04-15 13:00:01,304 - __main__ - INFO - Notes mode deactivated
+2026-04-15 13:00:08,045 - __main__ - INFO - Quit signal received
+2026-04-15 13:00:08,046 - __main__ - INFO - Cleaning up resources...
+2026-04-15 13:00:08,435 - __main__ - INFO - Cleanup complete

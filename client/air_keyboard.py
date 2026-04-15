@@ -18,7 +18,6 @@ from datetime import datetime
 from pathlib import Path
 from collections import deque
 import threading
-import queue
 
 # Try to import optional dependencies
 try:
@@ -37,6 +36,13 @@ except ImportError:
 
 # Configuration
 CONFIG = {
+    "server": {
+        "url": "http://localhost:5000",
+        "enable": False,  # Set to True to enable server connection
+        "namespace": "/keyboard",
+        "reconnect_attempts": 3,
+        "reconnect_delay": 2
+    },
     "camera": {
         "width": 1280,
         "height": 720,
@@ -186,16 +192,19 @@ class AirKeyboardNotes:
     def __init__(self):
         self.config = self._load_config()
         self.running = True
+        self.server_enabled = CONFIG["server"]["enable"]
         
         # Setup signal handlers for graceful shutdown
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
         
-        # SocketIO setup
+        # SocketIO setup (only if enabled)
         self.sio = None
         self.connected = False
-        if SOCKETIO_AVAILABLE:
+        if SOCKETIO_AVAILABLE and self.server_enabled:
             self._setup_socketio()
+        elif self.server_enabled:
+            logger.info("Server features disabled (socketio not installed)")
         
         # MediaPipe Initialization
         self._init_mediapipe()
@@ -240,6 +249,13 @@ class AirKeyboardNotes:
         # Load existing notes
         self._load_notes()
         
+        # Show connection status
+        if self.server_enabled:
+            if self.connected:
+                logger.info("Server connection established")
+            else:
+                logger.info("Running in local mode (server disabled or unavailable)")
+        
         logger.info("Air Keyboard Notes initialized successfully")
     
     def _load_config(self):
@@ -276,19 +292,29 @@ class AirKeyboardNotes:
         self.running = False
     
     def _setup_socketio(self):
-        """Setup SocketIO client for server communication."""
+        """Setup SocketIO client for server communication with better error handling."""
         try:
-            self.sio = socketio.Client(logger=False, engineio_logger=False)
+            self.sio = socketio.Client(
+                logger=False, 
+                engineio_logger=False,
+                reconnection=True,
+                reconnection_attempts=CONFIG["server"]["reconnect_attempts"],
+                reconnection_delay=CONFIG["server"]["reconnect_delay"]
+            )
             
             @self.sio.event
             def connect():
                 self.connected = True
                 logger.info("WebSocket connected to server")
-                if hasattr(self, 'sio'):
+                # Register with server
+                try:
                     self.sio.emit('register_keyboard_client', {
                         'device_name': 'AirKeyboard',
+                        'type': 'virtual_keyboard',
                         'timestamp': datetime.now().isoformat()
                     })
+                except Exception as e:
+                    logger.debug(f"Registration emit failed: {e}")
             
             @self.sio.event
             def disconnect():
@@ -297,13 +323,30 @@ class AirKeyboardNotes:
             
             @self.sio.event
             def connect_error(error):
-                logger.error(f"WebSocket connection error: {error}")
+                logger.warning(f"WebSocket connection error: {error}")
                 self.connected = False
             
-            self.sio.connect(CONFIG.get("server_url", "http://localhost:5000"), 
-                           transports=['websocket', 'polling'])
+            # Try to connect (non-blocking)
+            def connect_thread():
+                try:
+                    self.sio.connect(
+                        CONFIG["server"]["url"],
+                        transports=['websocket', 'polling'],
+                        namespaces=['/']
+                    )
+                except Exception as e:
+                    logger.warning(f"Server connection failed: {e}. Running in local mode only.")
+                    self.connected = False
+            
+            # Start connection in background thread
+            thread = threading.Thread(target=connect_thread, daemon=True)
+            thread.start()
+            
+            # Wait a bit for connection
+            time.sleep(0.5)
+            
         except Exception as e:
-            logger.warning(f"Server connection failed: {e}. Running in local mode only.")
+            logger.warning(f"Failed to initialize SocketIO: {e}. Running in local mode only.")
             self.connected = False
     
     def _init_mediapipe(self):
@@ -358,11 +401,20 @@ class AirKeyboardNotes:
     def _save_notes(self):
         """Save notes to file."""
         try:
+            # Save to main notes file
             with open(CONFIG["files"]["notes_file"], 'a') as f:
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 f.write(f"\n[{timestamp}]\n")
                 f.write("\n".join(self.text_lines))
                 f.write("\n" + "-"*50 + "\n")
+            
+            # Also save to dated backup
+            dated_file = f"notes_{datetime.now().strftime('%Y%m%d')}.txt"
+            with open(dated_file, 'a') as f:
+                f.write(f"\n[{timestamp}]\n")
+                f.write("\n".join(self.text_lines))
+                f.write("\n" + "-"*50 + "\n")
+            
             logger.info(f"Notes saved to {CONFIG['files']['notes_file']}")
             return True
         except Exception as e:
@@ -412,10 +464,16 @@ class AirKeyboardNotes:
         thumb_tip_x = hand_landmarks.landmark[tips[0]].x
         thumb_ip_x = hand_landmarks.landmark[pips[0]].x
         
-        if thumb_tip_x > thumb_ip_x:  # Assuming right hand
-            fingers.append(True)
+        # Detect if hand is right or left based on wrist position
+        wrist_x = hand_landmarks.landmark[0].x
+        is_right_hand = wrist_x < 0.5  # Assuming camera is mirrored
+        
+        if is_right_hand:
+            thumb_extended = thumb_tip_x < thumb_ip_x
         else:
-            fingers.append(False)
+            thumb_extended = thumb_tip_x > thumb_ip_x
+        
+        fingers.append(thumb_extended)
         
         # Other 4 fingers (vertical)
         for i in range(1, 5):
@@ -428,18 +486,23 @@ class AirKeyboardNotes:
     
     def detect_gesture(self, fingers):
         """Detect gesture from finger states."""
-        if fingers == [True, False, False, False, False]:
+        # Count extended fingers
+        extended_count = sum(fingers)
+        
+        if fingers[0] and not any(fingers[1:5]):  # Only thumb
             return "THUMB_UP"
-        if fingers == [False, False, False, False, False]:
+        if not any(fingers):  # All closed
             return "FIST"
-        if fingers == [True, False, False, False, True]:
+        if fingers[0] and fingers[4] and not any(fingers[1:4]):  # Thumb + Pinky only
             return "SHAKA"
-        if fingers == [False, True, False, False, False] or fingers == [True, True, False, False, False]:
+        if fingers[1] and not any([fingers[2], fingers[3], fingers[4]]):  # Only index
             return "INDEX_ONLY"
-        if fingers == [False, True, True, False, False] or fingers == [True, True, True, False, False]:
+        if fingers[1] and fingers[2] and not any([fingers[3], fingers[4]]):  # Index + Middle
             return "INDEX_MIDDLE"
-        if fingers == [False, True, True, True, False]:
+        if fingers[1] and fingers[2] and fingers[3] and not fingers[4]:  # Three fingers
             return "THREE_FINGERS"
+        if all(fingers):  # All open
+            return "OPEN_PALM"
         return "UNKNOWN"
     
     def finalize_stroke(self):
@@ -566,6 +629,7 @@ class AirKeyboardNotes:
         print("     → Right → Space")
         print("     ↓ Down  → New Line")
         print("="*60)
+        print(f"Server Mode: {'Enabled' if self.server_enabled and self.connected else 'Local Only'}")
         print("Press 'q' to quit | 's' to save | 'c' to clear")
         print("="*60 + "\n")
         
@@ -713,24 +777,34 @@ class AirKeyboardNotes:
                 cv2.putText(frame, sug_str, (10, 90), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 200, 255), 2)
         
+        # Server status indicator
+        if self.server_enabled:
+            status_color = (0, 255, 0) if self.connected else (0, 0, 255)
+            status_text = "● SERVER" if self.connected else "○ SERVER"
+            cv2.putText(frame, status_text, (self.cam_width - 120, 30), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, status_color, 1)
+        
         # FPS Counter
         fps_text = f"FPS: {self.fps}"
-        cv2.putText(frame, fps_text, (self.cam_width - 100, 30), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+        cv2.putText(frame, fps_text, (self.cam_width - 100, 60), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
         
         # Mode indicator
         if self.notes_mode_active:
-            cv2.rectangle(frame, (self.cam_width - 150, 50), 
-                         (self.cam_width - 10, 90), (0, 255, 0), -1)
-            cv2.putText(frame, "ACTIVE", (self.cam_width - 130, 80), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+            cv2.rectangle(frame, (self.cam_width - 150, 70), 
+                         (self.cam_width - 10, 105), (0, 255, 0), -1)
+            cv2.putText(frame, "ACTIVE", (self.cam_width - 130, 95), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
         
         # Written text area
         y_offset = panel_height + 40
         max_lines = CONFIG["ui"]["max_display_lines"]
         for i, line in enumerate(reversed(self.text_lines[-max_lines:])):
+            # Truncate long lines
+            if len(line) > 60:
+                line = line[:57] + "..."
             cv2.putText(frame, line, (20, y_offset + i * 40), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 1)
         
         # Performance metrics
         if self.recognition_times:
@@ -764,7 +838,10 @@ class AirKeyboardNotes:
             self.hands.close()
         
         if hasattr(self, 'sio') and self.connected:
-            self.sio.disconnect()
+            try:
+                self.sio.disconnect()
+            except:
+                pass
         
         cv2.destroyAllWindows()
         logger.info("Cleanup complete")
