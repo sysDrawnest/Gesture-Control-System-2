@@ -4,6 +4,7 @@ from models.user_model import UserModel
 from models.device_model import DeviceModel
 import time
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ def register_socket_events(socketio):
 
         # Detect browser (dashboard) vs Python client
         user_agent = request.headers.get('User-Agent', '')
-        is_browser = any(k in user_agent for k in ('Mozilla', 'Chrome', 'Safari'))
+        is_browser = any(k in user_agent for k in ('Mozilla', 'Chrome', 'Safari', 'Edg'))
 
         if is_browser:
             # --- Dashboard connection -----------------------------------------
@@ -51,7 +52,7 @@ def register_socket_events(socketio):
             username = 'admin'
 
             if token:
-                payload, _ = UserModel.verify_token(token)
+                payload = UserModel.verify_token(token)
                 if payload:
                     user_id = payload['user_id']
                     username = payload['username']
@@ -62,16 +63,17 @@ def register_socket_events(socketio):
                 'device_id': None,
                 'device_name': 'Web Dashboard',
                 'is_dashboard': True,
+                'type': 'dashboard'
             }
             join_room('dashboard_room')
             join_room(f'user_{user_id}')
-            emit('connected', {'message': 'Dashboard connected'})
+            emit('connected', {'message': 'Dashboard connected', 'type': 'dashboard'})
             print(f"[WS] Dashboard connected (sid={sid}, user={username})")
             return  # accept
 
         # --- Gesture client connection ------------------------------------
         if token:
-            payload, message = UserModel.verify_token(token)
+            payload = UserModel.verify_token(token)
             if payload:
                 connected_clients[sid] = {
                     'user_id': payload['user_id'],
@@ -79,9 +81,10 @@ def register_socket_events(socketio):
                     'device_id': None,
                     'device_name': None,
                     'is_dashboard': False,
+                    'type': 'gesture_client'
                 }
                 join_room(f"user_{payload['user_id']}")
-                emit('connected', {'message': 'Authenticated successfully'})
+                emit('connected', {'message': 'Authenticated successfully', 'type': 'gesture_client'})
                 print(f"[WS] Client authenticated: {payload['username']} (sid={sid})")
                 return  # accept
 
@@ -176,6 +179,7 @@ def register_socket_events(socketio):
         y = data.get('y')
 
         if x is not None and y is not None:
+            # Send both formats for compatibility
             _broadcast_to_dashboard('gesture_activity', {
                 'gesture': 'CURSOR_MOVE',
                 'device_id': device_id,
@@ -185,6 +189,19 @@ def register_socket_events(socketio):
                 'x': x,
                 'y': y,
                 'timestamp': time.time(),
+            }, socketio, client['user_id'])
+            
+            # Also send as gesture_update for UX feedback
+            _broadcast_to_dashboard('gesture_update', {
+                'gesture': 'CURSOR_MOVE',
+                'device_id': device_id,
+                'device_name': client.get('device_name', 'Unknown'),
+                'username': client['username'],
+                'confidence': 0.95,
+                'type': 'move',
+                'x': x,
+                'y': y,
+                'timestamp': datetime.now().isoformat(),
             }, socketio, client['user_id'])
 
     @socketio.on('gesture_click')
@@ -220,6 +237,18 @@ def register_socket_events(socketio):
             'username': client['username'],
             'confidence': confidence,
             'timestamp': time.time(),
+        }, socketio, client['user_id'])
+        
+        # Send gesture_update for UX feedback (sound, haptics)
+        _broadcast_to_dashboard('gesture_update', {
+            'gesture': 'PINCH',
+            'device_id': device_id,
+            'device_name': client.get('device_name', 'Unknown'),
+            'username': client['username'],
+            'confidence': confidence,
+            'type': 'click',
+            'click_type': click_type,
+            'timestamp': datetime.now().isoformat(),
         }, socketio, client['user_id'])
 
         # Confirm back to sending client
@@ -259,6 +288,19 @@ def register_socket_events(socketio):
             'amount': amount,
             'timestamp': time.time(),
         }, socketio, client['user_id'])
+        
+        # Send gesture_update for UX feedback
+        _broadcast_to_dashboard('gesture_update', {
+            'gesture': 'SCROLL',
+            'device_id': device_id,
+            'device_name': client.get('device_name', 'Unknown'),
+            'username': client['username'],
+            'confidence': confidence,
+            'type': 'scroll',
+            'direction': direction,
+            'amount': amount,
+            'timestamp': datetime.now().isoformat(),
+        }, socketio, client['user_id'])
 
     @socketio.on('gesture_toggle')
     def handle_gesture_toggle(data):
@@ -293,6 +335,18 @@ def register_socket_events(socketio):
             'enabled': enabled,
             'timestamp': time.time(),
         }, socketio, client['user_id'])
+        
+        # Send gesture_update for UX feedback
+        _broadcast_to_dashboard('gesture_update', {
+            'gesture': gesture_name,
+            'device_id': device_id,
+            'device_name': client.get('device_name', 'Unknown'),
+            'username': client['username'],
+            'confidence': confidence,
+            'type': 'toggle',
+            'enabled': enabled,
+            'timestamp': datetime.now().isoformat(),
+        }, socketio, client['user_id'])
 
     @socketio.on('gesture_zoom')
     def handle_gesture_zoom(data):
@@ -326,6 +380,18 @@ def register_socket_events(socketio):
             'amount': amount,
             'timestamp': time.time(),
         }, socketio, client['user_id'])
+        
+        # Send gesture_update for UX feedback
+        _broadcast_to_dashboard('gesture_update', {
+            'gesture': 'ZOOM',
+            'device_id': device_id,
+            'device_name': client.get('device_name', 'Unknown'),
+            'username': client['username'],
+            'confidence': confidence,
+            'type': 'zoom',
+            'amount': amount,
+            'timestamp': datetime.now().isoformat(),
+        }, socketio, client['user_id'])
 
     @socketio.on('gesture_screenshot')
     def handle_gesture_screenshot(data):
@@ -358,6 +424,73 @@ def register_socket_events(socketio):
             'path': path,
             'timestamp': time.time(),
         }, socketio, client['user_id'])
+        
+        # Send gesture_update for UX feedback
+        _broadcast_to_dashboard('gesture_update', {
+            'gesture': 'SCREENSHOT',
+            'device_id': device_id,
+            'device_name': client.get('device_name', 'Unknown'),
+            'username': client['username'],
+            'confidence': confidence,
+            'type': 'screenshot',
+            'timestamp': datetime.now().isoformat(),
+        }, socketio, client['user_id'])
+
+    @socketio.on('gesture_update')
+    def handle_gesture_update(data):
+        """
+        Handle generic gesture updates from client and broadcast to dashboard.
+        This is the main event for UX feedback (sound, voice, haptics).
+        """
+        sid = request.sid
+        
+        # Get client info if available
+        gesture = data.get('gesture', 'UNKNOWN')
+        confidence = data.get('confidence', 0.9)
+        gesture_type = data.get('type', 'unknown')
+        
+        # Get device info from connected client if available
+        device_name = 'Unknown'
+        username = 'User'
+        if sid in connected_clients:
+            client = connected_clients[sid]
+            device_name = client.get('device_name', 'Unknown')
+            username = client.get('username', 'User')
+            user_id = client.get('user_id', 1)
+        else:
+            user_id = 1
+        
+        print(f"[WS] Gesture update: {gesture} (conf={confidence}, type={gesture_type})")
+        
+        # Broadcast to all dashboards for UX feedback
+        broadcast_data = {
+            'gesture': gesture,
+            'confidence': confidence,
+            'type': gesture_type,
+            'device_name': device_name,
+            'username': username,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Add extra fields if present
+        if 'x' in data:
+            broadcast_data['x'] = data['x']
+        if 'y' in data:
+            broadcast_data['y'] = data['y']
+        if 'amount' in data:
+            broadcast_data['amount'] = data['amount']
+        if 'direction' in data:
+            broadcast_data['direction'] = data['direction']
+        if 'enabled' in data:
+            broadcast_data['enabled'] = data['enabled']
+        
+        # Broadcast to dashboard room
+        try:
+            socketio.emit('gesture_update', broadcast_data, room='dashboard_room')
+            socketio.emit('gesture_activity', broadcast_data, room='dashboard_room')
+            logger.debug(f"Gesture update broadcast: {gesture}")
+        except Exception as e:
+            logger.error(f"Gesture update broadcast error: {e}")
 
     # ------------------------------------------------------------------
     # Air Canvas Drawing Events
@@ -384,8 +517,6 @@ def register_socket_events(socketio):
     @socketio.on('drawing_stroke')
     def handle_drawing_stroke(data):
         """Handle drawing stroke from gesture client and broadcast to all connected canvases"""
-        sid = request.sid
-        
         # Get drawing data
         x1 = data.get('x1')
         y1 = data.get('y1')
