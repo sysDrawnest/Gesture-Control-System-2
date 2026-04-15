@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>KINETIC_OS // ABOUT // THE FUTURE IS NOW</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline-variant": "#46484d",
+                        "inverse-primary": "#006976",
+                        "surface": "#0c0e12",
+                        "on-secondary-fixed-variant": "#800ab4",
+                        "tertiary-fixed": "#64fd7d",
+                        "on-tertiary": "#006723",
+                        "inverse-surface": "#f9f9ff",
+                        "primary": "#81ecff",
+                        "surface-container-highest": "#23262c",
+                        "error-container": "#9f0519",
+                        "secondary-fixed-dim": "#e7afff",
+                        "primary-fixed-dim": "#00d4ec",
+                        "on-secondary": "#380052",
+                        "secondary-fixed": "#eec2ff",
+                        "inverse-on-surface": "#53555a",
+                        "surface-container": "#171a1f",
+                        "surface-tint": "#81ecff",
+                        "on-error": "#490006",
+                        "primary-fixed": "#00e3fd",
+                        "secondary-container": "#7d01b1",
+                        "error-dim": "#d7383b",
+                        "on-tertiary-container": "#005d1f",
+                        "background": "#0c0e12",
+                        "tertiary-fixed-dim": "#54ee70",
+                        "on-secondary-container": "#f3cfff",
+                        "primary-dim": "#00d4ec",
+                        "tertiary": "#b9ffb8",
+                        "primary-container": "#00e3fd",
+                        "on-error-container": "#ffa8a3",
+                        "on-surface": "#f6f6fc",
+                        "tertiary-container": "#64fd7d",
+                        "surface-container-high": "#1d2025",
+                        "surface-variant": "#23262c",
+                        "on-tertiary-fixed": "#004816",
+                        "on-primary-fixed-variant": "#005762",
+                        "surface-container-low": "#111318",
+                        "on-background": "#f6f6fc",
+                        "error": "#ff716c",
+                        "surface-bright": "#292c33",
+                        "secondary": "#d277ff",
+                        "on-primary-fixed": "#003840",
+                        "surface-container-lowest": "#000000",
+                        "on-primary": "#005762",
+                        "secondary-dim": "#d277ff",
+                        "on-tertiary-fixed-variant": "#006823",
+                        "tertiary-dim": "#54ee70",
+                        "on-secondary-fixed": "#56007c",
+                        "surface-dim": "#0c0e12",
+                        "outline": "#74757a",
+                        "on-surface-variant": "#aaabb0",
+                        "on-primary-container": "#004d57"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
+                    },
+                    fontFamily: {
+                        headline: ["Space Grotesk"],
+                        body: ["Inter"],
+                        label: ["Inter"],
+                        mono: ["JetBrains Mono"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050505;
+            overflow-x: hidden;
+        }
+
+        .kinetic-grid {
+            background-image:
+                linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .kinetic-orb {
+            filter: blur(80px);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .glass-card {
+            background: rgba(12, 14, 18, 0.6);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(129, 236, 255, 0.1);
+            position: relative;
+        }
+
+        .glass-card::before {
+            content: "";
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: linear-gradient(135deg, rgba(129, 236, 255, 0.2) 0%, transparent 40%, transparent 60%, rgba(210, 119, 255, 0.2) 100%);
+            z-index: -1;
+            pointer-events: none;
+            border-radius: inherit;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .hologram-text {
+            background: linear-gradient(135deg, #81ecff 0%, #d277ff 50%, #b9ffb8 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .hover-glow:hover {
+            box-shadow: 0 0 30px rgba(129, 236, 255, 0.3);
+            transform: translateY(-5px);
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .float-animation {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(1.3);
+                opacity: 0;
+            }
+        }
+
+        .pulse-ring {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(129, 236, 255, 0.3);
+            animation: pulse-ring 2s ease-out infinite;
+        }
+    </style>
+</head>
+
+<body class="font-body text-on-surface min-h-screen relative">
+
+    <!-- Background Elements -->
+    <div class="fixed inset-0 kinetic-grid z-0"></div>
+    <div class="fixed top-1/4 -left-20 w-96 h-96 rounded-full bg-primary kinetic-orb z-0"></div>
+    <div class="fixed bottom-1/4 -right-20 w-[500px] h-[500px] rounded-full bg-secondary kinetic-orb z-0"></div>
+    <div
+        class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-surface-tint kinetic-orb opacity-[0.05] z-0">
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="fixed top-0 w-full z-50 bg-neutral-950/40 backdrop-blur-xl border-b border-white/5">
+        <div class="flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto">
+            <a href="/"
+                class="text-2xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 font-headline">
+                KINETIC PULSE
+            </a>
+            <div class="hidden md:flex items-center gap-8 font-mono uppercase tracking-widest text-xs">
+                <a href="/" class="text-slate-400 hover:text-cyan-300 transition-colors">Home</a>
+                <a href="/about" class="text-cyan-400 border-b-2 border-cyan-400 pb-1">About</a>
+                <a href="/dashboard" class="text-slate-400 hover:text-cyan-300 transition-colors">Dashboard</a>
+                <a href="/air-canvas" class="text-slate-400 hover:text-cyan-300 transition-colors">Air Canvas</a>
+                <a href="/air-keyboard" class="text-slate-400 hover:text-cyan-300 transition-colors">Air Keyboard</a>
+                <a href="/games" class="text-slate-400 hover:text-cyan-300 transition-colors">Games</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="/login"
+                    class="px-6 py-2 text-slate-400 hover:text-cyan-300 transition-colors font-mono uppercase tracking-widest text-sm">Login</a>
+                <a href="/register"
+                    class="px-6 py-2 bg-primary/20 border border-primary text-primary hover:bg-primary hover:text-on-primary transition-all duration-300 rounded font-mono uppercase tracking-widest text-sm">Register</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-12 px-8 max-w-screen-2xl mx-auto relative z-10">
+
+        <!-- Hero Section -->
+        <section class="text-center mb-20">
+            <div
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-mono tracking-widest uppercase mb-6">
+                <span class="relative flex h-2 w-2">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </span>
+                NEXT_GENERATION_HUMAN_INTERFACE
+            </div>
+            <h1 class="text-5xl md:text-7xl font-headline font-bold tracking-tighter mb-6">
+                Welcome to the <br />
+                <span class="hologram-text">Holographic Era</span>
+            </h1>
+            <p class="text-on-surface-variant text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
+                What Tony Stark dreamed in his lab — we built for the world. <br />
+                Touchless interaction, holographic visualization, and gesture-based control that feels like magic.
+            </p>
+        </section>
+
+        <!-- Vision Statement -->
+        <section class="glass-card rounded-3xl p-12 mb-20">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="text-primary font-mono text-xs tracking-widest mb-4">OUR_MISSION</div>
+                    <h2 class="text-3xl md:text-4xl font-headline font-bold mb-6">
+                        Breaking the Barrier <br />
+                        Between Human & Machine
+                    </h2>
+                    <p class="text-on-surface-variant leading-relaxed mb-4">
+                        KINETIC PULSE was born from a simple question: Why should we be limited by physical interfaces?
+                        Why touch when you can gesture? Why click when you can command with a wave?
+                    </p>
+                    <p class="text-on-surface-variant leading-relaxed">
+                        We're a team of engineers, designers, and futurists building the operating system for the
+                        next generation of human-computer interaction. Our technology powers everything from creative
+                        tools to immersive gaming — all controlled by your natural hand movements.
+                    </p>
+                </div>
+                <div class="relative flex justify-center">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="pulse-ring w-64 h-64"></div>
+                    </div>
+                    <div class="relative glass-card rounded-full p-8 float-animation">
+                        <span class="material-symbols-outlined text-[120px] text-primary">gesture</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Core Features (The Tony Stark Experience) -->
+        <section class="mb-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-headline font-bold mb-4">The Holographic Experience</h2>
+                <p class="text-on-surface-variant">Like Tony Stark in Avengers — but accessible to everyone</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="glass-card p-8 rounded-2xl hover-glow transition-all duration-300">
+                    <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-3xl text-primary">hand_gesture</span>
+                    </div>
+                    <h3 class="text-xl font-headline font-bold mb-3">Hand Tracking</h3>
+                    <p class="text-on-surface-variant text-sm leading-relaxed">
+                        Our proprietary computer vision algorithm tracks 21 hand landmarks in real-time with
+                        sub-millimeter precision. No gloves, no markers — just your hands.
+                    </p>
+                </div>
+                <div class="glass-card p-8 rounded-2xl hover-glow transition-all duration-300">
+                    <div class="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-3xl text-secondary">stadia_controller</span>
+                    </div>
+                    <h3 class="text-xl font-headline font-bold mb-3">Gesture Gaming</h3>
+                    <p class="text-on-surface-variant text-sm leading-relaxed">
+                        Play games using your body as the controller. Wave to jump, swipe to attack, and pinch to cast
+                        spells. The future of gaming is touchless.
+                    </p>
+                </div>
+                <div class="glass-card p-8 rounded-2xl hover-glow transition-all duration-300">
+                    <div class="w-16 h-16 rounded-full bg-tertiary/10 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-3xl text-tertiary">draw</span>
+                    </div>
+                    <h3 class="text-xl font-headline font-bold mb-3">Air Canvas</h3>
+                    <p class="text-on-surface-variant text-sm leading-relaxed">
+                        Draw in thin air. Our Air Canvas feature lets you paint, sketch, and create digital art using
+                        finger gestures — like having a magic wand.
+                    </p>
+                </div>
+                <div class="glass-card p-8 rounded-2xl hover-glow transition-all duration-300">
+                    <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-3xl text-primary">keyboard</span>
+                    </div>
+                    <h3 class="text-xl font-headline font-bold mb-3">Air Keyboard</h3>
+                    <p class="text-on-surface-variant text-sm leading-relaxed">
+                        Type without touching anything. Draw letters in the air and watch them appear on screen — the
+                        ultimate futuristic input method.
+                    </p>
+                </div>
+                <div class="glass-card p-8 rounded-2xl hover-glow transition-all duration-300">
+                    <div class="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-3xl text-secondary">devices</span>
+                    </div>
+                    <h3 class="text-xl font-headline font-bold mb-3">Multi-Device Sync</h3>
+                    <p class="text-on-surface-variant text-sm leading-relaxed">
+                        Control your laptop, tablet, phone, and smart home devices with the same gestures. Seamless
+                        integration across your entire digital ecosystem.
+                    </p>
+                </div>
+                <div class="glass-card p-8 rounded-2xl hover-glow transition-all duration-300">
+                    <div class="w-16 h-16 rounded-full bg-tertiary/10 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-3xl text-tertiary">hologram</span>
+                    </div>
+                    <h3 class="text-xl font-headline font-bold mb-3">Holographic UI</h3>
+                    <p class="text-on-surface-variant text-sm leading-relaxed">
+                        Experience our futuristic holographic interface — inspired by Tony Stark's Jarvis. Floating
+                        menus, translucent panels, and neon aesthetics.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Games Section -->
+        <section class="mb-20">
+            <div class="flex justify-between items-end mb-8 flex-wrap gap-4">
+                <div>
+                    <h2 class="text-3xl font-headline font-bold mb-2">Gesture-Integrated Games</h2>
+                    <p class="text-on-surface-variant">Play using your body — no controllers needed</p>
+                </div>
+                <a href="/games"
+                    class="px-6 py-3 border border-primary/40 text-primary hover:bg-primary hover:text-on-primary transition-all rounded-lg font-mono text-sm uppercase tracking-wider">
+                    VIEW_ALL_GAMES →
+                </a>
+            </div>
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="glass-card p-6 rounded-2xl hover-glow transition-all cursor-pointer group">
+                    <div
+                        class="h-32 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-4">
+                        <span class="material-symbols-outlined text-5xl text-primary">sports_esports</span>
+                    </div>
+                    <h3 class="font-headline font-bold mb-1">Gesture Pong</h3>
+                    <p class="text-xs text-on-surface-variant mb-3">Swipe left/right to move paddle</p>
+                    <span class="text-[10px] text-tertiary uppercase tracking-wider">✓ Gesture Ready</span>
+                </div>
+                <div class="glass-card p-6 rounded-2xl hover-glow transition-all cursor-pointer group">
+                    <div
+                        class="h-32 rounded-xl bg-gradient-to-br from-secondary/20 to-tertiary/20 flex items-center justify-center mb-4">
+                        <span class="material-symbols-outlined text-5xl text-secondary">flight</span>
+                    </div>
+                    <h3 class="font-headline font-bold mb-1">Flappy Pulse</h3>
+                    <p class="text-xs text-on-surface-variant mb-3">Clap or snap to fly</p>
+                    <span class="text-[10px] text-tertiary uppercase tracking-wider">✓ Gesture Ready</span>
+                </div>
+                <div class="glass-card p-6 rounded-2xl hover-glow transition-all cursor-pointer group">
+                    <div
+                        class="h-32 rounded-xl bg-gradient-to-br from-tertiary/20 to-primary/20 flex items-center justify-center mb-4">
+                        <span class="material-symbols-outlined text-5xl text-tertiary">sports_tennis</span>
+                    </div>
+                    <h3 class="font-headline font-bold mb-1">Air Tennis</h3>
+                    <p class="text-xs text-on-surface-variant mb-3">Swing your hand to hit the ball</p>
+                    <span class="text-[10px] text-tertiary uppercase tracking-wider">✓ Gesture Ready</span>
+                </div>
+                <div class="glass-card p-6 rounded-2xl hover-glow transition-all cursor-pointer group">
+                    <div
+                        class="h-32 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-4">
+                        <span class="material-symbols-outlined text-5xl text-primary">extension</span>
+                    </div>
+                    <h3 class="font-headline font-bold mb-1">Memory Matrix</h3>
+                    <p class="text-xs text-on-surface-variant mb-3">Pinch to select matching cards</p>
+                    <span class="text-[10px] text-tertiary uppercase tracking-wider">✓ Gesture Ready</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works - Tony Stark Style -->
+        <section class="glass-card rounded-3xl p-12 mb-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-headline font-bold mb-4">How It Works</h2>
+                <p class="text-on-surface-variant">Like JARVIS, but for your hands</p>
+            </div>
+            <div class="grid md:grid-cols-4 gap-8 relative">
+                <div
+                    class="hidden md:block absolute top-10 left-0 w-full h-[1px] bg-gradient-to-r from-primary/0 via-primary/30 to-primary/0">
+                </div>
+                <div class="text-center relative z-10">
+                    <div
+                        class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4 border border-primary/40">
+                        <span class="text-xl font-headline font-bold text-primary">01</span>
+                    </div>
+                    <h4 class="font-headline font-bold mb-2">Show Your Hand</h4>
+                    <p class="text-xs text-on-surface-variant">Place your hand in front of your webcam</p>
+                </div>
+                <div class="text-center relative z-10">
+                    <div
+                        class="w-16 h-16 rounded-full bg-secondary/20 flex items-center justify-center mx-auto mb-4 border border-secondary/40">
+                        <span class="text-xl font-headline font-bold text-secondary">02</span>
+                    </div>
+                    <h4 class="font-headline font-bold mb-2">AI Recognizes Gestures</h4>
+                    <p class="text-xs text-on-surface-variant">Our neural network maps 21 hand landmarks</p>
+                </div>
+                <div class="text-center relative z-10">
+                    <div
+                        class="w-16 h-16 rounded-full bg-tertiary/20 flex items-center justify-center mx-auto mb-4 border border-tertiary/40">
+                        <span class="text-xl font-headline font-bold text-tertiary">03</span>
+                    </div>
+                    <h4 class="font-headline font-bold mb-2">Commands Executed</h4>
+                    <p class="text-xs text-on-surface-variant">Your gestures become digital actions</p>
+                </div>
+                <div class="text-center relative z-10">
+                    <div
+                        class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4 border border-primary/40">
+                        <span class="text-xl font-headline font-bold text-primary">04</span>
+                    </div>
+                    <h4 class="font-headline font-bold mb-2">Experience Magic</h4>
+                    <p class="text-xs text-on-surface-variant">Control everything without touching</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="grid md:grid-cols-4 gap-8 mb-20">
+            <div class="text-center">
+                <div class="text-4xl font-headline font-bold text-primary">4</div>
+                <div class="text-xs uppercase tracking-widest text-on-surface-variant mt-2">Active Users</div>
+            </div>
+            <div class="text-center">
+                <div class="text-4xl font-headline font-bold text-secondary">85.2%</div>
+                <div class="text-xs uppercase tracking-widest text-on-surface-variant mt-2">Gesture Accuracy</div>
+            </div>
+            <div class="text-center">
+                <div class="text-4xl font-headline font-bold text-tertiary">&lt;50ms</div>
+                <div class="text-xs uppercase tracking-widest text-on-surface-variant mt-2">Response Time</div>
+            </div>
+            <div class="text-center">
+                <div class="text-4xl font-headline font-bold text-primary">10+</div>
+                <div class="text-xs uppercase tracking-widest text-on-surface-variant mt-2">Gesture Types</div>
+            </div>
+        </section>
+
+        <!-- Call to Action -->
+        <section class="glass-card p-16 rounded-3xl text-center relative overflow-hidden">
+            <div class="absolute -top-24 -left-24 w-64 h-64 bg-primary/20 blur-[100px]"></div>
+            <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-secondary/20 blur-[100px]"></div>
+            <div class="relative z-10">
+                <h2 class="text-3xl md:text-4xl font-headline font-bold mb-4">Ready to Become a Next-Gen Pilot?</h2>
+                <p class="text-on-surface-variant mb-8 max-w-xl mx-auto">
+                    Join the revolution. Control your digital world with nothing but your hands — like Tony Stark, but
+                    better.
+                </p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="/register"
+                        class="px-8 py-4 bg-primary text-on-primary font-headline font-bold uppercase tracking-widest hover:brightness-110 transition-all rounded-lg">
+                        JOIN_THE_FUTURE →
+                    </a>
+                    <a href="/dashboard"
+                        class="px-8 py-4 border border-primary/40 text-primary hover:bg-primary/10 transition-all rounded-lg font-headline font-bold uppercase tracking-widest">
+                        EXPLORE_DASHBOARD
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 bg-neutral-950/40 py-8 mt-12">
+        <div class="flex flex-col md:flex-row justify-between items-center px-8 max-w-screen-2xl mx-auto gap-4">
+            <div
+                class="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 font-headline">
+                KINETIC PULSE
+            </div>
+            <div class="flex gap-6 font-mono text-[10px] uppercase tracking-widest">
+                <a href="#" class="text-slate-500 hover:text-cyan-200 transition-colors">Privacy</a>
+                <a href="#" class="text-slate-500 hover:text-cyan-200 transition-colors">Terms</a>
+                <a href="#" class="text-slate-500 hover:text-cyan-200 transition-colors">API Status</a>
+                <a href="#" class="text-slate-500 hover:text-cyan-200 transition-colors">Telemetry</a>
+            </div>
+            <div class="text-slate-500 font-mono text-[10px] uppercase tracking-widest">
+                © 2024 KINETIC PULSE. ALL RIGHTS RESERVED.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Decorative Corner Accents -->
+    <div class="fixed top-8 left-8 w-12 h-12 border-t border-l border-primary/20 pointer-events-none z-20"></div>
+    <div class="fixed top-8 right-8 w-12 h-12 border-t border-r border-primary/20 pointer-events-none z-20"></div>
+    <div class="fixed bottom-8 left-8 w-12 h-12 border-b border-l border-primary/20 pointer-events-none z-20"></div>
+    <div class="fixed bottom-8 right-8 w-12 h-12 border-b border-r border-primary/20 pointer-events-none z-20"></div>
+</body>
+
+</html>
