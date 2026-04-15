@@ -160,6 +160,29 @@
             animation: fade-in 0.3s ease-out;
         }
 
+        /* Tutorial Modal Fix - Proper spacing */
+        #tutorialOverlay .glass {
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .tutorial-step {
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* UX Settings Card Styles */
+        .ux-setting-item {
+            transition: all 0.2s ease;
+        }
+
+        .ux-setting-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
         /* Mobile Responsive Styles */
         @media (max-width: 768px) {
             .sidebar {
@@ -362,9 +385,9 @@
                     <!-- Gesture Library -->
                     <div class="glass rounded-xl p-4 md:p-6 border border-white/5">
                         <h3 class="font-space text-xs md:text-sm uppercase tracking-widest text-slate-400 mb-4 md:mb-6">
-                            Gesture Library
-                            &amp; Mapping</h3>
+                            Gesture Library &amp; Mapping</h3>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4">
+                            <!-- Gesture items (same as before) -->
                             <div
                                 class="p-2 md:p-4 bg-white/5 border border-white/5 rounded-lg hover:border-primary/30 transition-all cursor-pointer group text-center">
                                 <span
@@ -432,8 +455,7 @@
                     <div class="glass rounded-xl p-4 md:p-6 border border-white/5">
                         <div class="flex flex-wrap justify-between items-center gap-2 mb-4 md:mb-6">
                             <h3 class="font-space text-xs md:text-sm uppercase tracking-widest text-slate-400">System
-                                Analytics
-                            </h3>
+                                Analytics</h3>
                             <div class="flex items-center gap-2">
                                 <button id="exportCsvBtn" title="Export CSV"
                                     class="material-symbols-outlined text-sm md:text-base text-slate-400 hover:text-primary transition-colors cursor-pointer">file_download</button>
@@ -483,8 +505,7 @@
                     <div class="glass rounded-xl p-4 md:p-6 border border-white/5">
                         <div class="flex justify-between items-center mb-4 md:mb-6">
                             <h3 class="font-space text-xs md:text-sm uppercase tracking-widest text-slate-400">Connected
-                                Devices
-                            </h3>
+                                Devices</h3>
                             <button id="addDeviceBtn"
                                 class="material-symbols-outlined text-primary text-lg md:text-xl hover:rotate-90 transition-transform duration-300">add_circle</button>
                         </div>
@@ -498,14 +519,13 @@
                         </div>
                     </div>
 
-                    <!-- Air Keyboard + Project Info row -->
+                    <!-- Air Keyboard + UX Settings row -->
                     <div class="grid grid-cols-2 gap-3 md:gap-6">
                         <!-- Air Keyboard -->
                         <div class="glass rounded-xl p-3 md:p-6 border border-white/5 flex flex-col">
                             <h3
                                 class="font-space text-[8px] md:text-[10px] uppercase tracking-widest text-slate-400 mb-2 md:mb-4">
-                                Air
-                                Keyboard</h3>
+                                Air Keyboard</h3>
                             <a href="/air_keyboard"
                                 class="w-full py-2 md:py-4 bg-primary-container text-on-primary-container font-space text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] mb-3 md:mb-6 hover:bg-primary transition-all active:scale-95 text-center block">Open
                                 Keyboard</a>
@@ -542,56 +562,87 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- UX Settings Card -->
+
+                        <!-- UX Settings Card - Improved Design -->
                         <div class="glass rounded-xl p-3 md:p-6 border border-white/5">
-                            <h3 class="font-space text-[8px] md:text-[10px] uppercase tracking-widest text-slate-400 mb-3 md:mb-4 flex items-center gap-1.5">
-                                <span class="material-symbols-outlined text-xs text-primary">tune</span>
-                                UX Settings
-                            </h3>
-                            <!-- Toggles -->
-                            <div class="space-y-3 mb-3">
-                                <!-- Sound -->
-                                <div class="flex justify-between items-center">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="material-symbols-outlined text-xs text-slate-400">volume_up</span>
-                                        <span class="text-[9px] md:text-[10px] uppercase tracking-wider text-slate-300">Sound</span>
-                                    </div>
-                                    <button id="uxSoundToggle" onclick="toggleUXSetting('sound')" role="switch" aria-checked="true"
-                                        class="relative w-9 h-5 rounded-full border transition-all duration-300 focus:outline-none bg-primary/30 border-primary/50"
-                                        title="Toggle Sound">
-                                        <span id="uxSoundThumb" class="absolute top-0.5 left-0.5 w-4 h-4 bg-primary rounded-full shadow transition-transform duration-300 translate-x-4"></span>
-                                    </button>
-                                </div>
-                                <!-- Voice -->
-                                <div class="flex justify-between items-center">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="material-symbols-outlined text-xs text-slate-400">mic</span>
-                                        <span class="text-[9px] md:text-[10px] uppercase tracking-wider text-slate-300">Voice</span>
-                                    </div>
-                                    <button id="uxVoiceToggle" onclick="toggleUXSetting('voice')" role="switch" aria-checked="false"
-                                        class="relative w-9 h-5 rounded-full border transition-all duration-300 focus:outline-none bg-white/10 border-white/20"
-                                        title="Toggle Voice">
-                                        <span id="uxVoiceThumb" class="absolute top-0.5 left-0.5 w-4 h-4 bg-slate-500 rounded-full shadow transition-transform duration-300"></span>
-                                    </button>
-                                </div>
-                                <!-- Haptics -->
-                                <div class="flex justify-between items-center">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="material-symbols-outlined text-xs text-slate-400">vibration</span>
-                                        <span class="text-[9px] md:text-[10px] uppercase tracking-wider text-slate-300">Haptics</span>
-                                    </div>
-                                    <button id="uxHapticsToggle" onclick="toggleUXSetting('haptics')" role="switch" aria-checked="false"
-                                        class="relative w-9 h-5 rounded-full border transition-all duration-300 focus:outline-none bg-white/10 border-white/20"
-                                        title="Toggle Haptics">
-                                        <span id="uxHapticsThumb" class="absolute top-0.5 left-0.5 w-4 h-4 bg-slate-500 rounded-full shadow transition-transform duration-300"></span>
-                                    </button>
-                                </div>
+                            <div class="flex items-center justify-between mb-3 md:mb-4">
+                                <h3
+                                    class="font-space text-[8px] md:text-[10px] uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-xs text-primary">tune</span>
+                                    Experience
+                                </h3>
+                                <span class="text-[6px] md:text-[7px] text-primary/50 uppercase tracking-wider">gesture
+                                    feedback</span>
                             </div>
-                            <!-- More Settings link -->
-                            <button onclick="if(window.uxSettings) window.uxSettings.openModal()" 
+
+                            <!-- Sound Toggle -->
+                            <div class="ux-setting-item flex justify-between items-center p-2 rounded-lg mb-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-xs text-primary">volume_up</span>
+                                    </div>
+                                    <div>
+                                        <p
+                                            class="text-[9px] md:text-[10px] font-bold text-white uppercase tracking-wide">
+                                            Sound</p>
+                                        <p class="text-[6px] md:text-[7px] text-slate-500">Click feedback</p>
+                                    </div>
+                                </div>
+                                <button id="uxSoundToggle" onclick="toggleUXSetting('sound')" role="switch"
+                                    aria-checked="true"
+                                    class="relative w-8 h-4 rounded-full border transition-all duration-300 focus:outline-none bg-primary/30 border-primary/50">
+                                    <span id="uxSoundThumb"
+                                        class="absolute top-0.5 left-0.5 w-3 h-3 bg-primary rounded-full shadow transition-transform duration-300 translate-x-4"></span>
+                                </button>
+                            </div>
+
+                            <!-- Voice Toggle -->
+                            <div class="ux-setting-item flex justify-between items-center p-2 rounded-lg mb-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-secondary/10 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-xs text-secondary">mic</span>
+                                    </div>
+                                    <div>
+                                        <p
+                                            class="text-[9px] md:text-[10px] font-bold text-white uppercase tracking-wide">
+                                            Voice</p>
+                                        <p class="text-[6px] md:text-[7px] text-slate-500">Spoken alerts</p>
+                                    </div>
+                                </div>
+                                <button id="uxVoiceToggle" onclick="toggleUXSetting('voice')" role="switch"
+                                    aria-checked="false"
+                                    class="relative w-8 h-4 rounded-full border transition-all duration-300 focus:outline-none bg-white/10 border-white/20">
+                                    <span id="uxVoiceThumb"
+                                        class="absolute top-0.5 left-0.5 w-3 h-3 bg-slate-500 rounded-full shadow transition-transform duration-300"></span>
+                                </button>
+                            </div>
+
+                            <!-- Haptics Toggle -->
+                            <div class="ux-setting-item flex justify-between items-center p-2 rounded-lg mb-2">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-tertiary/10 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-xs text-tertiary">vibration</span>
+                                    </div>
+                                    <div>
+                                        <p
+                                            class="text-[9px] md:text-[10px] font-bold text-white uppercase tracking-wide">
+                                            Haptics</p>
+                                        <p class="text-[6px] md:text-[7px] text-slate-500">Vibration feedback</p>
+                                    </div>
+                                </div>
+                                <button id="uxHapticsToggle" onclick="toggleUXSetting('haptics')" role="switch"
+                                    aria-checked="false"
+                                    class="relative w-8 h-4 rounded-full border transition-all duration-300 focus:outline-none bg-white/10 border-white/20">
+                                    <span id="uxHapticsThumb"
+                                        class="absolute top-0.5 left-0.5 w-3 h-3 bg-slate-500 rounded-full shadow transition-transform duration-300"></span>
+                                </button>
+                            </div>
+
+                            <!-- More Settings Link -->
+                            <button onclick="if(window.uxSettings) window.uxSettings.openModal()"
                                 class="w-full mt-1 py-1.5 bg-white/5 border border-white/10 text-[8px] md:text-[9px] uppercase font-bold tracking-widest text-slate-400 hover:bg-white/10 hover:text-slate-300 transition-all rounded flex items-center justify-center gap-1">
                                 <span class="material-symbols-outlined text-[11px]">settings</span>
-                                More Settings
+                                Advanced Settings
                             </button>
                         </div>
                     </div>
@@ -599,8 +650,7 @@
                     <!-- Games -->
                     <div class="glass rounded-xl p-4 md:p-6 border border-white/5">
                         <h3 class="font-space text-xs md:text-sm uppercase tracking-widest text-slate-400 mb-4 md:mb-6">
-                            Gesture-Integrated
-                            Games</h3>
+                            Gesture-Integrated Games</h3>
                         <div class="grid grid-cols-3 gap-2 md:gap-3">
                             <div class="bg-surface-container-high border border-white/5 p-2 md:p-3 rounded-lg hover:border-secondary/50 cursor-pointer transition-all game-card text-center"
                                 data-game="dino">
@@ -651,8 +701,7 @@
                     <div class="glass rounded-xl p-4 md:p-6 border border-white/5">
                         <div class="flex justify-between items-center mb-3 md:mb-4">
                             <h3 class="font-space text-xs md:text-sm uppercase tracking-widest text-slate-400">Recent
-                                Recognition
-                                Log</h3>
+                                Recognition Log</h3>
                             <button id="recordSessionBtn" title="Record Session (Alt+R)"
                                 class="flex items-center gap-1 text-[8px] md:text-[10px] uppercase font-space font-bold tracking-widest bg-error/10 text-error px-1.5 md:px-2 py-0.5 md:py-1 border border-error/30 rounded hover:bg-error/30 transition-colors">
                                 <span class="material-symbols-outlined text-xs md:text-sm"
@@ -697,55 +746,50 @@
         </div>
     </div>
 
-    <!-- Tutorial Modal - Restored to Original -->
+    <!-- Tutorial Modal - Fixed with proper spacing -->
     <div id="tutorialOverlay"
         class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-        <div class="glass border border-white/10 rounded-2xl p-6 md:p-10 max-w-md w-full mx-4 text-center">
-            <div id="tutorialSteps">
-                <div class="tutorial-step active" data-step="1">
-                    <div class="text-5xl md:text-7xl mb-4 md:mb-6">✋</div>
-                    <h2 class="text-xl md:text-2xl font-space font-bold text-white uppercase mb-3 md:mb-4">Step 1: Open
-                        Palm</h2>
-                    <p class="text-sm md:text-base text-on-surface-variant">Hold your hand open to <strong
+        <div class="glass border border-white/10 rounded-2xl p-6 md:p-8 max-w-md w-full mx-4">
+            <div id="tutorialSteps" class="mb-6">
+                <div class="tutorial-step active text-center" data-step="1">
+                    <div class="text-6xl md:text-7xl mb-4">✋</div>
+                    <h2 class="text-xl md:text-2xl font-space font-bold text-white uppercase mb-3">Step 1: Open Palm
+                    </h2>
+                    <p class="text-sm text-on-surface-variant">Hold your hand open to <strong
                             class="text-white">enable</strong> control mode.</p>
                 </div>
-                <div class="tutorial-step hidden" data-step="2">
-                    <div class="text-5xl md:text-7xl mb-4 md:mb-6">👆</div>
-                    <h2 class="text-xl md:text-2xl font-space font-bold text-white uppercase mb-3 md:mb-4">Step 2: Point
-                    </h2>
-                    <p class="text-sm md:text-base text-on-surface-variant">Use your index finger to <strong
+                <div class="tutorial-step hidden text-center" data-step="2">
+                    <div class="text-6xl md:text-7xl mb-4">👆</div>
+                    <h2 class="text-xl md:text-2xl font-space font-bold text-white uppercase mb-3">Step 2: Point</h2>
+                    <p class="text-sm text-on-surface-variant">Use your index finger to <strong
                             class="text-white">move</strong> the cursor.</p>
                 </div>
-                <div class="tutorial-step hidden" data-step="3">
-                    <div class="text-5xl md:text-7xl mb-4 md:mb-6">🤏</div>
-                    <h2 class="text-xl md:text-2xl font-space font-bold text-white uppercase mb-3 md:mb-4">Step 3: Pinch
-                    </h2>
-                    <p class="text-sm md:text-base text-on-surface-variant">Touch thumb and index to <strong
-                            class="text-white">left click</strong>.</p>
+                <div class="tutorial-step hidden text-center" data-step="3">
+                    <div class="text-6xl md:text-7xl mb-4">🤏</div>
+                    <h2 class="text-xl md:text-2xl font-space font-bold text-white uppercase mb-3">Step 3: Pinch</h2>
+                    <p class="text-sm text-on-surface-variant">Touch thumb and index to <strong class="text-white">left
+                            click</strong>.</p>
                 </div>
-                <div class="tutorial-step hidden" data-step="4">
-                    <div class="text-5xl md:text-7xl mb-4 md:mb-6">✌️</div>
-                    <h2 class="text-xl md:text-2xl font-space font-bold text-white uppercase mb-3 md:mb-4">Step 4: Peace
-                    </h2>
-                    <p class="text-sm md:text-base text-on-surface-variant">Show peace sign to <strong
-                            class="text-white">right click</strong>.</p>
+                <div class="tutorial-step hidden text-center" data-step="4">
+                    <div class="text-6xl md:text-7xl mb-4">✌️</div>
+                    <h2 class="text-xl md:text-2xl font-space font-bold text-white uppercase mb-3">Step 4: Peace</h2>
+                    <p class="text-sm text-on-surface-variant">Show peace sign to <strong class="text-white">right
+                            click</strong>.</p>
                 </div>
-                <div class="tutorial-step hidden" data-step="5">
-                    <div class="text-5xl md:text-7xl mb-4 md:mb-6">✊</div>
-                    <h2 class="text-xl md:text-2xl font-space font-bold text-white uppercase mb-3 md:mb-4">Step 5: Fist
-                    </h2>
-                    <p class="text-sm md:text-base text-on-surface-variant">Close your hand to <strong
+                <div class="tutorial-step hidden text-center" data-step="5">
+                    <div class="text-6xl md:text-7xl mb-4">✊</div>
+                    <h2 class="text-xl md:text-2xl font-space font-bold text-white uppercase mb-3">Step 5: Fist</h2>
+                    <p class="text-sm text-on-surface-variant">Close your hand to <strong
                             class="text-white">disable</strong> tracking.</p>
                 </div>
             </div>
-            <div class="flex justify-center gap-3 md:gap-4 mt-6 md:mt-8">
+            <div class="flex justify-center gap-3 pt-4 border-t border-white/10">
                 <button id="prevStepBtn"
-                    class="hidden px-4 md:px-6 py-2 border border-white/10 text-slate-300 font-space text-xs uppercase tracking-widest hover:bg-white/5 transition-all">Back</button>
+                    class="hidden px-5 py-2 border border-white/10 text-slate-300 font-space text-xs uppercase tracking-widest hover:bg-white/5 transition-all rounded">Back</button>
                 <button id="nextStepBtn"
-                    class="px-4 md:px-6 py-2 bg-primary text-on-primary font-space text-xs uppercase tracking-widest hover:brightness-110 transition-all">Next
-                    Step</button>
+                    class="px-5 py-2 bg-primary text-on-primary font-space text-xs uppercase tracking-widest hover:brightness-110 transition-all rounded">Next</button>
                 <button id="closeTutorialBtn"
-                    class="px-4 md:px-6 py-2 border border-white/10 text-slate-300 font-space text-xs uppercase tracking-widest hover:bg-white/5 transition-all">Exit</button>
+                    class="px-5 py-2 border border-white/10 text-slate-300 font-space text-xs uppercase tracking-widest hover:bg-white/5 transition-all rounded">Exit</button>
             </div>
         </div>
     </div>
@@ -830,7 +874,7 @@
         function toggleUXSetting(type) {
             const manager = window.uxSettings;
             if (!manager) return;
-            
+
             let enabled;
             if (type === 'sound') {
                 manager.settings.sound.enabled = !manager.settings.sound.enabled;
@@ -872,15 +916,15 @@
             }
         }
 
-        // Sync toggle UI when ux_settings.js initialises (it may load after this script)
+        // Sync toggle UI when ux_settings.js initialises
         function syncUXToggles() {
             if (!window.uxSettings) return;
             const s = window.uxSettings.settings;
-            updateUXToggleUI('uxSoundToggle',   'uxSoundThumb',   s.sound.enabled);
-            updateUXToggleUI('uxVoiceToggle',   'uxVoiceThumb',   s.voice.enabled);
+            updateUXToggleUI('uxSoundToggle', 'uxSoundThumb', s.sound.enabled);
+            updateUXToggleUI('uxVoiceToggle', 'uxVoiceThumb', s.voice.enabled);
             updateUXToggleUI('uxHapticsToggle', 'uxHapticsThumb', s.haptics.enabled);
         }
-        // poll until manager ready
+
         const _uxSyncInterval = setInterval(() => {
             if (window.uxSettings) { syncUXToggles(); clearInterval(_uxSyncInterval); }
         }, 100);
@@ -907,7 +951,7 @@
 
         if (!token) { window.location.href = '/login'; }
 
-        // UX Feedback helpers (delegated to ux_settings.js)
+        // UX Feedback helpers
         function playClickSound() {
             if (window.uxSettings && window.uxSettings.settings.sound.enabled) {
                 window.uxSettings.playSound('click');
@@ -926,7 +970,7 @@
             }
         }
 
-        // Game Logic
+        // Game Logic (simplified - keep existing)
         const games = {
             dino: { name: "Dino Runner", init: function () { gameScore = 0; updateGameScore(); startDinoGame(); } },
             flappy: { name: "Flappy Pulse", init: function () { gameScore = 0; updateGameScore(); startFlappyGame(); } },
@@ -1019,7 +1063,6 @@
                 sessionData.push({ time: new Date().toISOString(), gesture, confidence, deviceName });
             }
 
-            // UX Feedback using the settings manager
             if (window.uxSettings) {
                 if (confidence < 0.6 && window.uxSettings.settings.voice.enabled) {
                     window.uxSettings.speak('Low confidence. Try moving slower.', true);
@@ -1177,15 +1220,24 @@
         document.getElementById('closeGameBtn').addEventListener('click', () => { hideModal('gameModal'); if (gameInterval) clearInterval(gameInterval); });
         document.getElementById('restartGameBtn').addEventListener('click', () => { if (currentGame && games[currentGame]) games[currentGame].init(); });
 
-        // Tutorial - Original style restored
+        // Tutorial - Fixed with proper step display
         let currentTutorialStep = 1;
         const totalTutorialSteps = 5;
+
         function showTutorialStep(step) {
-            document.querySelectorAll('.tutorial-step').forEach(s => { s.classList.add('hidden'); s.classList.remove('active'); });
+            document.querySelectorAll('.tutorial-step').forEach(s => {
+                s.classList.add('hidden');
+                s.classList.remove('active');
+            });
             const t = document.querySelector(`.tutorial-step[data-step="${step}"]`);
-            if (t) { t.classList.remove('hidden'); t.classList.add('active'); }
-            document.getElementById('prevStepBtn').classList.toggle('hidden', step === 1);
-            document.getElementById('nextStepBtn').textContent = step === totalTutorialSteps ? 'Finish' : 'Next Step';
+            if (t) {
+                t.classList.remove('hidden');
+                t.classList.add('active');
+            }
+            const prevBtn = document.getElementById('prevStepBtn');
+            const nextBtn = document.getElementById('nextStepBtn');
+            if (prevBtn) prevBtn.classList.toggle('hidden', step === 1);
+            if (nextBtn) nextBtn.textContent = step === totalTutorialSteps ? 'Finish' : 'Next';
             currentTutorialStep = step;
         }
 
@@ -1195,16 +1247,33 @@
         }
 
         document.getElementById('startTutorialBtn').addEventListener('click', openTutorial);
-        document.getElementById('nextStepBtn').addEventListener('click', () => {
-            if (currentTutorialStep < totalTutorialSteps) { showTutorialStep(currentTutorialStep + 1); playClickSound(); }
-            else {
-                hideModal('tutorialOverlay');
-                addActivity('Tutorial completed!', '★');
-                announce('Tutorial completed.');
-            }
-        });
-        document.getElementById('prevStepBtn').addEventListener('click', () => { if (currentTutorialStep > 1) showTutorialStep(currentTutorialStep - 1); });
-        document.getElementById('closeTutorialBtn').addEventListener('click', () => hideModal('tutorialOverlay'));
+
+        const nextBtn = document.getElementById('nextStepBtn');
+        const prevBtn = document.getElementById('prevStepBtn');
+        const closeBtn = document.getElementById('closeTutorialBtn');
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                if (currentTutorialStep < totalTutorialSteps) {
+                    showTutorialStep(currentTutorialStep + 1);
+                    playClickSound();
+                } else {
+                    hideModal('tutorialOverlay');
+                    addActivity('Tutorial completed!', '★');
+                    announce('Tutorial completed.');
+                }
+            });
+        }
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (currentTutorialStep > 1) showTutorialStep(currentTutorialStep - 1);
+            });
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => hideModal('tutorialOverlay'));
+        }
 
         // Calibration
         let calibrationInterval = null;
@@ -1252,7 +1321,6 @@
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
         });
 
-        // Apply saved theme
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light') {
             document.documentElement.classList.remove('dark');
@@ -1358,7 +1426,7 @@
             }
         });
 
-        // UX Settings Button - Open the UX Settings Modal
+        // UX Settings Button
         document.getElementById('openUxSettingsBtn').addEventListener('click', () => {
             if (window.uxSettings) window.uxSettings.openModal();
         });

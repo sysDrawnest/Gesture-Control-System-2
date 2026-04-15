@@ -8,7 +8,7 @@ from flask_login import LoginManager
 from config import config
 from utils.db import init_app
 from utils.websocket_handler import register_socket_events
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import socket
 import sys
@@ -83,12 +83,12 @@ try:
     from routes.auth_routes import auth_bp
     from routes.device_routes import device_bp
     from routes.control_routes import control_bp
-    from routes.canvas_routes import canvas_bp  # MOVED THIS INSIDE THE TRY BLOCK
+    from routes.canvas_routes import canvas_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(device_bp, url_prefix='/api')
     app.register_blueprint(control_bp, url_prefix='/api')
-    app.register_blueprint(canvas_bp, url_prefix='/api')  # Register canvas routes
+    app.register_blueprint(canvas_bp, url_prefix='/api')
     logger.info("Blueprints registered successfully")
 except Exception as e:
     logger.error(f"Blueprint registration failed: {e}")
@@ -145,7 +145,7 @@ def health_check():
         'environment': env,
         'database': 'connected' if app.config.get('DB_INITIALIZED', False) else 'pending',
         'websocket': 'enabled',
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': datetime.now(timezone.utc).isoformat()
     }), 200
 
 # API info endpoint
@@ -216,9 +216,8 @@ def forbidden(error):
 @app.context_processor
 def utility_processor():
     """Make utilities available in templates"""
-    from datetime import datetime
     return {
-        'now': datetime.utcnow(),
+        'now': datetime.now(timezone.utc),  # FIXED: replaced utcnow()
         'app_name': 'Gesture Control System',
         'version': '1.0.0'
     }
@@ -265,7 +264,8 @@ if __name__ == '__main__':
             app, 
             host=current_config.HOST, 
             port=current_config.PORT, 
-            debug=current_config.DEBUG
+            debug=current_config.DEBUG,
+            allow_unsafe_werkzeug=True  # Added for Windows compatibility
         )
     except KeyboardInterrupt:
         print("\n" + "=" * 60)

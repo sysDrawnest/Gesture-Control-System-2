@@ -10,11 +10,11 @@ class UXSettingsManager {
                 enabled: true,
                 volume: 0.7,
                 sounds: {
-                    click: new Audio(),
-                    gesture: new Audio(),
-                    success: new Audio(),
-                    error: new Audio(),
-                    notification: new Audio()
+                    click: null,
+                    gesture: null,
+                    success: null,
+                    error: null,
+                    notification: null
                 }
             },
             voice: {
@@ -43,17 +43,31 @@ class UXSettingsManager {
 
         this.speechSynthesis = window.speechSynthesis;
         this.voices = [];
+        this.audioContext = null;
         this.init();
     }
 
     async init() {
         await this.loadSettings();
+        this.initAudioContext();
         this.initSounds();
         this.initVoices();
         this.initHaptics();
         this.createSettingsUI();
         this.setupEventListeners();
         this.checkFirstTimeUser();
+    }
+
+    initAudioContext() {
+        // Create audio context on user interaction to comply with browser policies
+        document.addEventListener('click', () => {
+            if (!this.audioContext && this.settings.sound.enabled) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+            }
+        }, { once: true });
     }
 
     loadSettings() {
@@ -72,34 +86,13 @@ class UXSettingsManager {
     }
 
     initSounds() {
-        // Create audio contexts and sounds
-        const soundFiles = {
-            click: 'data:audio/wav;base64,U3RlYWx0aCBzb3VuZA==',
-            gesture: 'data:audio/wav;base64,U3RlYWx0aCBzb3VuZA==',
-            success: 'data:audio/wav;base64,U3RlYWx0aCBzb3VuZA==',
-            error: 'data:audio/wav;base64,U3RlYWx0aCBzb3VuZA==',
-            notification: 'data:audio/wav;base64,U3RlYWx0aCBzb3VuZA=='
-        };
+        // Initialize sound objects
+        const soundNames = ['click', 'gesture', 'success', 'error', 'notification'];
 
-        // Create actual audio elements with Web Audio API for better sounds
-        for (const [name, file] of Object.entries(soundFiles)) {
+        for (const name of soundNames) {
             try {
                 const audio = new Audio();
                 audio.volume = this.settings.sound.volume;
-
-                // Generate simple beep sounds using Web Audio API
-                if (name === 'click') {
-                    this.generateBeepSound(audio, 800, 0.1);
-                } else if (name === 'gesture') {
-                    this.generateBeepSound(audio, 600, 0.15);
-                } else if (name === 'success') {
-                    this.generateSuccessSound(audio);
-                } else if (name === 'error') {
-                    this.generateErrorSound(audio);
-                } else if (name === 'notification') {
-                    this.generateBeepSound(audio, 400, 0.2);
-                }
-
                 this.settings.sound.sounds[name] = audio;
             } catch (e) {
                 console.warn(`Could not load sound: ${name}`, e);
@@ -107,64 +100,45 @@ class UXSettingsManager {
         }
     }
 
-    generateBeepSound(audioElement, frequency, duration) {
-        // Create a simple beep using Web Audio API
+    generateBeep(frequency, duration, type = 'sine') {
+        if (!this.audioContext || !this.settings.sound.enabled) return;
+
         try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+            const now = this.audioContext.currentTime;
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
 
             oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+            gainNode.connect(this.audioContext.destination);
 
             oscillator.frequency.value = frequency;
-            gainNode.gain.value = 0.3;
+            oscillator.type = type;
 
-            const buffer = audioContext.createBuffer(1, audioContext.sampleRate * duration, audioContext.sampleRate);
-            const channelData = buffer.getChannelData(0);
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
-            for (let i = 0; i < buffer.length; i++) {
-                channelData[i] = Math.sin(2 * Math.PI * frequency * i / audioContext.sampleRate) *
-                    Math.exp(-i / (audioContext.sampleRate * duration / 2));
-            }
-
-            const source = audioContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioContext.destination);
-
-            audioElement.playSound = () => {
-                source.start();
-                setTimeout(() => source.stop(), duration * 1000);
-            };
+            oscillator.start();
+            oscillator.stop(now + duration);
         } catch (e) {
-            // Fallback to simple beep
-            audioElement.playSound = () => {
-                try {
-                    audioElement.play();
-                } catch (e) { }
-            };
+            console.log('Audio play failed:', e);
         }
-    }
-
-    generateSuccessSound(audioElement) {
-        // Two ascending beeps for success
-        this.generateBeepSound(audioElement, 600, 0.1);
-        setTimeout(() => this.generateBeepSound(audioElement, 800, 0.1), 150);
-    }
-
-    generateErrorSound(audioElement) {
-        // Descending beep for error
-        this.generateBeepSound(audioElement, 400, 0.2);
     }
 
     playSound(soundName) {
         if (!this.settings.sound.enabled) return;
 
-        const sound = this.settings.sound.sounds[soundName];
-        if (sound && sound.playSound) {
-            sound.playSound();
-        } else if (sound) {
-            sound.play().catch(e => console.log('Sound play failed:', e));
+        // Use Web Audio API for better sound generation
+        if (soundName === 'click') {
+            this.generateBeep(800, 0.08, 'sine');
+        } else if (soundName === 'gesture') {
+            this.generateBeep(600, 0.12, 'sine');
+        } else if (soundName === 'success') {
+            this.generateBeep(800, 0.08, 'sine');
+            setTimeout(() => this.generateBeep(1000, 0.08, 'sine'), 100);
+        } else if (soundName === 'error') {
+            this.generateBeep(400, 0.15, 'sawtooth');
+        } else if (soundName === 'notification') {
+            this.generateBeep(500, 0.1, 'sine');
         }
     }
 
@@ -174,7 +148,9 @@ class UXSettingsManager {
             const loadVoices = () => {
                 this.voices = this.speechSynthesis.getVoices();
                 if (this.voices.length > 0) {
-                    this.settings.voice.voice = this.voices[0];
+                    // Select a good default voice (prefer female/English)
+                    const defaultVoice = this.voices.find(v => v.lang === 'en-US' && v.name.includes('Google')) || this.voices[0];
+                    this.settings.voice.voice = defaultVoice;
                 }
             };
 
@@ -238,8 +214,11 @@ class UXSettingsManager {
     }
 
     createSettingsUI() {
+        // Check if modal already exists
+        if (document.getElementById('uxSettingsModal')) return;
+
         const settingsHTML = `
-            <div id="uxSettingsModal" class="modal ux-settings-modal">
+            <div id="uxSettingsModal" class="modal ux-settings-modal" style="display: none;">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h2><i class="fas fa-sliders-h"></i> UX Settings</h2>
@@ -351,21 +330,78 @@ class UXSettingsManager {
     }
 
     addSettingsStyles() {
+        // Check if styles already added
+        if (document.getElementById('ux-settings-styles')) return;
+
         const style = document.createElement('style');
+        style.id = 'ux-settings-styles';
         style.textContent = `
+            .ux-settings-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                backdrop-filter: blur(8px);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
             .ux-settings-modal .modal-content {
                 max-width: 600px;
-                background: var(--bg-card);
+                width: 90%;
+                max-height: 85vh;
+                overflow-y: auto;
+                background: var(--bg-card, #1a1a2e);
                 border-radius: 20px;
+                border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            }
+            .ux-settings-modal .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px 24px;
+                border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.1));
+            }
+            .ux-settings-modal .modal-header h2 {
+                font-size: 1.5rem;
+                margin: 0;
+                color: var(--text-primary, white);
+            }
+            .ux-settings-modal .close-modal {
+                background: none;
+                border: none;
+                font-size: 28px;
+                cursor: pointer;
+                color: var(--text-secondary, #888);
+            }
+            .ux-settings-modal .modal-body {
+                padding: 24px;
+            }
+            .ux-settings-modal .modal-footer {
+                padding: 16px 24px;
+                border-top: 1px solid var(--border-color, rgba(255,255,255,0.1));
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
             }
             .settings-section {
                 margin-bottom: 25px;
                 padding-bottom: 20px;
-                border-bottom: 1px solid var(--border-color);
+                border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.1));
+            }
+            .settings-section:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
             }
             .settings-section h3 {
                 margin-bottom: 15px;
-                color: var(--primary);
+                color: var(--primary, #81ecff);
+                font-size: 1.1rem;
             }
             .setting-item {
                 display: flex;
@@ -376,6 +412,7 @@ class UXSettingsManager {
             }
             .setting-item label {
                 min-width: 80px;
+                color: var(--text-secondary, #aaa);
             }
             .switch {
                 position: relative;
@@ -411,46 +448,67 @@ class UXSettingsManager {
                 border-radius: 50%;
             }
             input:checked + .slider {
-                background: var(--gradient);
+                background: var(--gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
             }
             input:checked + .slider:before {
                 transform: translateX(26px);
             }
             .test-btn {
                 padding: 5px 12px;
-                background: var(--bg-secondary);
-                border: 1px solid var(--border-color);
+                background: var(--bg-secondary, rgba(255,255,255,0.05));
+                border: 1px solid var(--border-color, rgba(255,255,255,0.1));
                 border-radius: 20px;
                 cursor: pointer;
                 font-size: 12px;
+                color: var(--text-primary, white);
             }
             .test-btn:hover {
-                background: var(--gradient);
+                background: var(--gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
                 color: white;
             }
             input[type="range"] {
                 flex: 1;
                 min-width: 200px;
+                height: 4px;
+                border-radius: 2px;
+                background: var(--border-color, rgba(255,255,255,0.2));
+            }
+            input[type="range"]::-webkit-slider-thumb {
+                background: var(--primary, #81ecff);
+                border-radius: 50%;
+                width: 16px;
+                height: 16px;
+                cursor: pointer;
             }
             select {
                 padding: 8px 12px;
-                background: var(--bg-secondary);
-                border: 1px solid var(--border-color);
+                background: var(--bg-secondary, rgba(255,255,255,0.05));
+                border: 1px solid var(--border-color, rgba(255,255,255,0.1));
                 border-radius: 8px;
-                color: var(--text-primary);
+                color: var(--text-primary, white);
             }
             .tutorial-step {
                 position: fixed;
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                background: var(--bg-card);
-                padding: 20px;
-                border-radius: 15px;
+                background: var(--bg-card, #1a1a2e);
+                padding: 24px;
+                border-radius: 20px;
                 max-width: 400px;
-                z-index: 10000;
-                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-                border: 2px solid var(--primary);
+                width: 90%;
+                z-index: 10001;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+                border: 2px solid var(--primary, #81ecff);
+                text-align: center;
+            }
+            .tutorial-step h3 {
+                color: var(--primary, #81ecff);
+                margin-bottom: 12px;
+            }
+            .tutorial-step p {
+                color: var(--text-secondary, #aaa);
+                line-height: 1.6;
             }
             .calibration-overlay {
                 position: fixed;
@@ -458,18 +516,52 @@ class UXSettingsManager {
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background: rgba(0,0,0,0.8);
-                z-index: 10000;
+                background: rgba(0,0,0,0.9);
+                z-index: 10001;
                 display: flex;
                 align-items: center;
                 justify-content: center;
             }
             .calibration-box {
-                background: var(--bg-card);
+                background: var(--bg-card, #1a1a2e);
                 padding: 30px;
                 border-radius: 20px;
                 text-align: center;
                 max-width: 500px;
+                width: 90%;
+                border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+            }
+            .calibration-box h3 {
+                color: var(--primary, #81ecff);
+                margin-bottom: 16px;
+            }
+            .notification {
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: var(--gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+                padding: 12px 20px;
+                border-radius: 8px;
+                color: white;
+                z-index: 10002;
+                animation: slideInRight 0.3s ease;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            }
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes fadeOut {
+                to {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
             }
         `;
         document.head.appendChild(style);
@@ -477,49 +569,80 @@ class UXSettingsManager {
 
     bindEvents() {
         // Sound
-        document.getElementById('soundToggle').onchange = (e) => {
-            this.settings.sound.enabled = e.target.checked;
-            this.saveSettings();
-            this.playSound('notification');
-        };
-        document.getElementById('volumeSlider').oninput = (e) => {
-            this.settings.sound.volume = parseFloat(e.target.value);
-            document.getElementById('volumeValue').innerText = Math.round(this.settings.sound.volume * 100) + '%';
-            this.saveSettings();
-        };
+        const soundToggle = document.getElementById('soundToggle');
+        if (soundToggle) {
+            soundToggle.onchange = (e) => {
+                this.settings.sound.enabled = e.target.checked;
+                this.saveSettings();
+                if (this.settings.sound.enabled) {
+                    this.playSound('notification');
+                }
+            };
+        }
+
+        const volumeSlider = document.getElementById('volumeSlider');
+        if (volumeSlider) {
+            volumeSlider.oninput = (e) => {
+                this.settings.sound.volume = parseFloat(e.target.value);
+                const volumeValue = document.getElementById('volumeValue');
+                if (volumeValue) volumeValue.innerText = Math.round(this.settings.sound.volume * 100) + '%';
+                this.saveSettings();
+            };
+        }
 
         // Voice
-        document.getElementById('voiceToggle').onchange = (e) => {
-            this.settings.voice.enabled = e.target.checked;
-            this.saveSettings();
-            if (this.settings.voice.enabled) {
-                this.speak('Voice feedback enabled');
-            }
-        };
-        document.getElementById('rateSlider').oninput = (e) => {
-            this.settings.voice.rate = parseFloat(e.target.value);
-            document.getElementById('rateValue').innerText = this.settings.voice.rate;
-            this.saveSettings();
-        };
-        document.getElementById('pitchSlider').oninput = (e) => {
-            this.settings.voice.pitch = parseFloat(e.target.value);
-            document.getElementById('pitchValue').innerText = this.settings.voice.pitch;
-            this.saveSettings();
-        };
+        const voiceToggle = document.getElementById('voiceToggle');
+        if (voiceToggle) {
+            voiceToggle.onchange = (e) => {
+                this.settings.voice.enabled = e.target.checked;
+                this.saveSettings();
+                if (this.settings.voice.enabled) {
+                    this.speak('Voice feedback enabled');
+                }
+            };
+        }
+
+        const rateSlider = document.getElementById('rateSlider');
+        if (rateSlider) {
+            rateSlider.oninput = (e) => {
+                this.settings.voice.rate = parseFloat(e.target.value);
+                const rateValue = document.getElementById('rateValue');
+                if (rateValue) rateValue.innerText = this.settings.voice.rate;
+                this.saveSettings();
+            };
+        }
+
+        const pitchSlider = document.getElementById('pitchSlider');
+        if (pitchSlider) {
+            pitchSlider.oninput = (e) => {
+                this.settings.voice.pitch = parseFloat(e.target.value);
+                const pitchValue = document.getElementById('pitchValue');
+                if (pitchValue) pitchValue.innerText = this.settings.voice.pitch;
+                this.saveSettings();
+            };
+        }
 
         // Haptics
-        document.getElementById('hapticsToggle').onchange = (e) => {
-            this.settings.haptics.enabled = e.target.checked;
-            this.saveSettings();
-            if (this.settings.haptics.enabled) {
-                this.vibrate(50);
-            }
-        };
-        document.getElementById('intensitySlider').oninput = (e) => {
-            this.settings.haptics.intensity = parseFloat(e.target.value);
-            document.getElementById('intensityValue').innerText = Math.round(this.settings.haptics.intensity * 100) + '%';
-            this.saveSettings();
-        };
+        const hapticsToggle = document.getElementById('hapticsToggle');
+        if (hapticsToggle) {
+            hapticsToggle.onchange = (e) => {
+                this.settings.haptics.enabled = e.target.checked;
+                this.saveSettings();
+                if (this.settings.haptics.enabled) {
+                    this.vibrate(50);
+                }
+            };
+        }
+
+        const intensitySlider = document.getElementById('intensitySlider');
+        if (intensitySlider) {
+            intensitySlider.oninput = (e) => {
+                this.settings.haptics.intensity = parseFloat(e.target.value);
+                const intensityValue = document.getElementById('intensityValue');
+                if (intensityValue) intensityValue.innerText = Math.round(this.settings.haptics.intensity * 100) + '%';
+                this.saveSettings();
+            };
+        }
 
         // Test buttons
         document.querySelectorAll('[data-test="sound"]').forEach(btn => {
@@ -533,37 +656,60 @@ class UXSettingsManager {
         });
 
         // Tutorial
-        document.getElementById('startTutorialBtn').onclick = () => this.startTutorial();
-        document.getElementById('resetTutorialBtn').onclick = () => this.resetTutorial();
+        const startTutorialBtn = document.getElementById('startTutorialBtn');
+        if (startTutorialBtn) startTutorialBtn.onclick = () => this.startTutorial();
+
+        const resetTutorialBtn = document.getElementById('resetTutorialBtn');
+        if (resetTutorialBtn) resetTutorialBtn.onclick = () => this.resetTutorial();
 
         // Calibration
-        document.getElementById('handSizeSelect').onchange = (e) => {
-            this.settings.calibration.handSize = e.target.value;
-            this.saveSettings();
-        };
-        document.getElementById('sensitivitySlider').oninput = (e) => {
-            this.settings.calibration.sensitivity = parseFloat(e.target.value);
-            document.getElementById('sensitivityValue').innerText = Math.round(this.settings.calibration.sensitivity * 100) + '%';
-            this.saveSettings();
-        };
-        document.getElementById('calibrateBtn').onclick = () => this.startCalibration();
+        const handSizeSelect = document.getElementById('handSizeSelect');
+        if (handSizeSelect) {
+            handSizeSelect.onchange = (e) => {
+                this.settings.calibration.handSize = e.target.value;
+                this.saveSettings();
+            };
+        }
+
+        const sensitivitySlider = document.getElementById('sensitivitySlider');
+        if (sensitivitySlider) {
+            sensitivitySlider.oninput = (e) => {
+                this.settings.calibration.sensitivity = parseFloat(e.target.value);
+                const sensitivityValue = document.getElementById('sensitivityValue');
+                if (sensitivityValue) sensitivityValue.innerText = Math.round(this.settings.calibration.sensitivity * 100) + '%';
+                this.saveSettings();
+            };
+        }
+
+        const calibrateBtn = document.getElementById('calibrateBtn');
+        if (calibrateBtn) calibrateBtn.onclick = () => this.startCalibration();
 
         // Modal controls
-        document.querySelector('#uxSettingsModal .close-modal').onclick = () => this.closeModal();
-        document.getElementById('closeSettingsBtn').onclick = () => this.closeModal();
-        document.getElementById('saveSettingsBtn').onclick = () => {
-            this.saveSettings();
-            this.playSound('success');
-            this.speak('Settings saved');
-            this.closeModal();
-        };
+        const closeModalBtn = document.querySelector('#uxSettingsModal .close-modal');
+        if (closeModalBtn) closeModalBtn.onclick = () => this.closeModal();
+
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        if (closeSettingsBtn) closeSettingsBtn.onclick = () => this.closeModal();
+
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        if (saveSettingsBtn) {
+            saveSettingsBtn.onclick = () => {
+                this.saveSettings();
+                this.playSound('success');
+                this.speak('Settings saved');
+                this.closeModal();
+            };
+        }
 
         // Close on outside click
-        document.getElementById('uxSettingsModal').onclick = (e) => {
-            if (e.target === document.getElementById('uxSettingsModal')) {
-                this.closeModal();
-            }
-        };
+        const modal = document.getElementById('uxSettingsModal');
+        if (modal) {
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    this.closeModal();
+                }
+            };
+        }
     }
 
     setupEventListeners() {
@@ -579,7 +725,11 @@ class UXSettingsManager {
     }
 
     addSettingsButton() {
+        // Check if button already exists
+        if (document.getElementById('uxSettingsNavBtn')) return;
+
         const settingsBtn = document.createElement('button');
+        settingsBtn.id = 'uxSettingsNavBtn';
         settingsBtn.className = 'btn btn-outline';
         settingsBtn.innerHTML = '<i class="fas fa-sliders-h"></i> UX Settings';
         settingsBtn.onclick = () => this.openModal();
@@ -692,7 +842,7 @@ class UXSettingsManager {
         tutorialDiv.innerHTML = `
             <h3>${step.title}</h3>
             <p>${step.content}</p>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
                 ${this.settings.tutorial.currentStep > 0 ? '<button class="btn btn-outline" id="prevTutorial">Previous</button>' : ''}
                 <button class="btn btn-primary" id="nextTutorial">${step.complete ? 'Finish' : 'Next'}</button>
                 <button class="btn btn-outline" id="skipTutorial">Skip</button>
@@ -722,7 +872,8 @@ class UXSettingsManager {
         // Practice mode - listen for gesture
         if (step.practice && step.action) {
             this.waitForPractice(step.action, () => {
-                tutorialDiv.querySelector('p').innerHTML += '<br><br>✅ Great! You did it!';
+                const p = tutorialDiv.querySelector('p');
+                if (p) p.innerHTML += '<br><br>✅ Great! You did it!';
                 setTimeout(() => {
                     document.getElementById('nextTutorial')?.click();
                 }, 1500);
@@ -775,14 +926,18 @@ class UXSettingsManager {
     }
 
     showCalibrationOverlay() {
+        // Remove existing overlay
+        const existing = document.querySelector('.calibration-overlay');
+        if (existing) existing.remove();
+
         const overlay = document.createElement('div');
         overlay.className = 'calibration-overlay';
         overlay.innerHTML = `
             <div class="calibration-box">
                 <h3><i class="fas fa-ruler"></i> Hand Calibration</h3>
                 <p>Please show your open palm to the camera and hold still for 3 seconds...</p>
-                <div id="calibrationProgress" style="width: 100%; height: 10px; background: #333; border-radius: 5px; margin: 20px 0;">
-                    <div id="calibrationFill" style="width: 0%; height: 100%; background: var(--gradient); border-radius: 5px; transition: width 0.1s linear;"></div>
+                <div style="width: 100%; height: 10px; background: #333; border-radius: 5px; margin: 20px 0;">
+                    <div id="calibrationFill" style="width: 0%; height: 100%; background: var(--gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%)); border-radius: 5px; transition: width 0.1s linear;"></div>
                 </div>
                 <div id="calibrationStatus">Preparing...</div>
                 <button id="cancelCalibration" class="btn btn-outline" style="margin-top: 20px;">Cancel</button>
@@ -802,8 +957,10 @@ class UXSettingsManager {
             const elapsed = (Date.now() - startTime) / 1000;
             const progress = Math.min(100, (elapsed / 3) * 100);
 
-            document.getElementById('calibrationFill').style.width = `${progress}%`;
-            document.getElementById('calibrationStatus').innerHTML = `Calibrating... ${Math.round(progress)}%`;
+            const fill = document.getElementById('calibrationFill');
+            const status = document.getElementById('calibrationStatus');
+            if (fill) fill.style.width = `${progress}%`;
+            if (status) status.innerHTML = `Calibrating... ${Math.round(progress)}%`;
 
             if (elapsed >= 3) {
                 clearInterval(calibrationInterval);
@@ -813,11 +970,14 @@ class UXSettingsManager {
 
         calibrationInterval = setInterval(updateCalibration, 100);
 
-        document.getElementById('cancelCalibration').onclick = () => {
-            clearInterval(calibrationInterval);
-            overlay.remove();
-            this.showNotification('Calibration cancelled');
-        };
+        const cancelBtn = document.getElementById('cancelCalibration');
+        if (cancelBtn) {
+            cancelBtn.onclick = () => {
+                clearInterval(calibrationInterval);
+                overlay.remove();
+                this.showNotification('Calibration cancelled');
+            };
+        }
     }
 
     completeCalibration(overlay) {
@@ -834,24 +994,29 @@ class UXSettingsManager {
             </div>
         `;
 
-        document.getElementById('closeCalibration').onclick = () => {
-            overlay.remove();
-            this.playSound('success');
-            if (this.settings.voice.enabled) {
-                this.speak('Calibration complete. You can now use gesture control.');
-            }
-        };
+        const closeBtn = document.getElementById('closeCalibration');
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                overlay.remove();
+                this.playSound('success');
+                if (this.settings.voice.enabled) {
+                    this.speak('Calibration complete. You can now use gesture control.');
+                }
+            };
+        }
 
         this.playSound('success');
         this.vibrate('success');
     }
 
     openModal() {
-        document.getElementById('uxSettingsModal').style.display = 'flex';
+        const modal = document.getElementById('uxSettingsModal');
+        if (modal) modal.style.display = 'flex';
     }
 
     closeModal() {
-        document.getElementById('uxSettingsModal').style.display = 'none';
+        const modal = document.getElementById('uxSettingsModal');
+        if (modal) modal.style.display = 'none';
     }
 
     updateUI() {
@@ -864,35 +1029,73 @@ class UXSettingsManager {
 
         const hapticsToggle = document.getElementById('hapticsToggle');
         if (hapticsToggle) hapticsToggle.checked = this.settings.haptics.enabled;
+
+        const volumeSlider = document.getElementById('volumeSlider');
+        if (volumeSlider) volumeSlider.value = this.settings.sound.volume;
+
+        const volumeValue = document.getElementById('volumeValue');
+        if (volumeValue) volumeValue.innerText = Math.round(this.settings.sound.volume * 100) + '%';
+
+        const rateSlider = document.getElementById('rateSlider');
+        if (rateSlider) rateSlider.value = this.settings.voice.rate;
+
+        const rateValue = document.getElementById('rateValue');
+        if (rateValue) rateValue.innerText = this.settings.voice.rate;
+
+        const pitchSlider = document.getElementById('pitchSlider');
+        if (pitchSlider) pitchSlider.value = this.settings.voice.pitch;
+
+        const pitchValue = document.getElementById('pitchValue');
+        if (pitchValue) pitchValue.innerText = this.settings.voice.pitch;
+
+        const intensitySlider = document.getElementById('intensitySlider');
+        if (intensitySlider) intensitySlider.value = this.settings.haptics.intensity;
+
+        const intensityValue = document.getElementById('intensityValue');
+        if (intensityValue) intensityValue.innerText = Math.round(this.settings.haptics.intensity * 100) + '%';
+
+        const handSizeSelect = document.getElementById('handSizeSelect');
+        if (handSizeSelect) handSizeSelect.value = this.settings.calibration.handSize;
+
+        const sensitivitySlider = document.getElementById('sensitivitySlider');
+        if (sensitivitySlider) sensitivitySlider.value = this.settings.calibration.sensitivity;
+
+        const sensitivityValue = document.getElementById('sensitivityValue');
+        if (sensitivityValue) sensitivityValue.innerText = Math.round(this.settings.calibration.sensitivity * 100) + '%';
     }
 
     showNotification(message) {
+        // Remove existing notification
+        const existing = document.querySelector('.notification');
+        if (existing) existing.remove();
+
         const notification = document.createElement('div');
         notification.className = 'notification';
         notification.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
-        notification.style.position = 'fixed';
-        notification.style.top = '80px';
-        notification.style.right = '20px';
-        notification.style.background = 'var(--gradient)';
-        notification.style.padding = '12px 20px';
-        notification.style.borderRadius = '8px';
-        notification.style.zIndex = '10001';
-        notification.style.animation = 'slideInRight 0.3s ease';
         document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
+        setTimeout(() => {
+            notification.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
     }
 
     checkFirstTimeUser() {
         if (!localStorage.getItem('ux_settings')) {
-            this.showNotification('👋 Welcome! Click the UX Settings button to customize sound, voice, and haptics.');
+            setTimeout(() => {
+                this.showNotification('👋 Welcome! Click the UX Settings button to customize sound, voice, and haptics.');
+            }, 1000);
             setTimeout(() => {
                 this.startTutorial();
-            }, 2000);
+            }, 3000);
         }
     }
 }
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.uxSettings = new UXSettingsManager();
+    });
+} else {
     window.uxSettings = new UXSettingsManager();
-});
+}

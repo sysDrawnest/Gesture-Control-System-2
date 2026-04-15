@@ -4,7 +4,7 @@ from models.user_model import UserModel
 from models.device_model import DeviceModel
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -15,16 +15,6 @@ connected_clients = {}
 def register_socket_events(socketio):
     """
     Register all WebSocket event handlers.
-
-    Architecture
-    ------------
-    Both the Python gesture client AND the browser dashboard connect to the
-    same SocketIO server.  They join a shared room ``user_{id}`` so that
-    gesture events emitted by the client are broadcast to the dashboard in
-    real-time.
-
-    The dashboard is detected by its User-Agent header and additionally joins
-    ``dashboard_room`` for targeted broadcasts.
     """
 
     # ------------------------------------------------------------------
@@ -32,7 +22,7 @@ def register_socket_events(socketio):
     # ------------------------------------------------------------------
 
     @socketio.on('connect')
-    def handle_connect():
+    def handle_connect(auth=None):  # IMPORTANT: Accept auth parameter
         """Authenticate and register the connecting client."""
         sid = request.sid
         token = request.args.get('token')
@@ -45,17 +35,14 @@ def register_socket_events(socketio):
 
         if is_browser:
             # --- Dashboard connection -----------------------------------------
-            # Browsers may not supply a valid JWT token, so we fall back to
-            # hard-coding user_id=1 (admin).  If a token IS present we still
-            # verify it for correctness.
             user_id = 1
             username = 'admin'
 
             if token:
                 payload = UserModel.verify_token(token)
-                if payload:
-                    user_id = payload['user_id']
-                    username = payload['username']
+                if payload and isinstance(payload, dict):
+                    user_id = payload.get('user_id', 1)
+                    username = payload.get('username', 'admin')
 
             connected_clients[sid] = {
                 'user_id': user_id,
@@ -69,31 +56,34 @@ def register_socket_events(socketio):
             join_room(f'user_{user_id}')
             emit('connected', {'message': 'Dashboard connected', 'type': 'dashboard'})
             print(f"[WS] Dashboard connected (sid={sid}, user={username})")
-            return  # accept
+            return True
 
         # --- Gesture client connection ------------------------------------
         if token:
             payload = UserModel.verify_token(token)
-            if payload:
+            if payload and isinstance(payload, dict):
+                user_id = payload.get('user_id', 1)
+                username = payload.get('username', 'user')
+                
                 connected_clients[sid] = {
-                    'user_id': payload['user_id'],
-                    'username': payload['username'],
+                    'user_id': user_id,
+                    'username': username,
                     'device_id': None,
                     'device_name': None,
                     'is_dashboard': False,
                     'type': 'gesture_client'
                 }
-                join_room(f"user_{payload['user_id']}")
+                join_room(f"user_{user_id}")
                 emit('connected', {'message': 'Authenticated successfully', 'type': 'gesture_client'})
-                print(f"[WS] Client authenticated: {payload['username']} (sid={sid})")
-                return  # accept
+                print(f"[WS] Client authenticated: {username} (sid={sid})")
+                return True
 
-        # If we reach here, reject the connection
         print(f"[WS] Connection rejected: {sid}")
         return False
 
     @socketio.on('disconnect')
     def handle_disconnect():
+        """Handle client disconnection."""
         sid = request.sid
         if sid in connected_clients:
             client = connected_clients[sid]
@@ -134,7 +124,6 @@ def register_socket_events(socketio):
             client['device_id'] = device_id
             client['device_name'] = device_name
 
-            # Confirm back to the sender
             emit('device_registered', {
                 'device_id': device_id,
                 'device_name': device_name,
@@ -142,7 +131,6 @@ def register_socket_events(socketio):
             })
             print(f"[WS] Device registered: {device_name} (id={device_id})")
 
-            # Notify all dashboards so they can refresh the device list
             _broadcast_to_dashboard('gesture_activity', {
                 'gesture': 'DEVICE_CONNECTED',
                 'device_id': device_id,
@@ -151,7 +139,7 @@ def register_socket_events(socketio):
                 'username': client['username'],
                 'confidence': 1.0,
                 'timestamp': time.time(),
-            }, socketio, user_id)
+            }, socketio)
         else:
             emit('error', {'message': message})
             print(f"[WS] Device registration failed: {message}")
@@ -162,7 +150,7 @@ def register_socket_events(socketio):
 
     @socketio.on('gesture_move')
     def handle_gesture_move(data):
-        """Handle cursor movement - high frequency, no DB logging."""
+        """Handle cursor movement."""
         sid = request.sid
         if sid not in connected_clients:
             return
@@ -179,7 +167,6 @@ def register_socket_events(socketio):
         y = data.get('y')
 
         if x is not None and y is not None:
-            # Send both formats for compatibility
             _broadcast_to_dashboard('gesture_activity', {
                 'gesture': 'CURSOR_MOVE',
                 'device_id': device_id,
@@ -189,9 +176,8 @@ def register_socket_events(socketio):
                 'x': x,
                 'y': y,
                 'timestamp': time.time(),
-            }, socketio, client['user_id'])
+            }, socketio)
             
-            # Also send as gesture_update for UX feedback
             _broadcast_to_dashboard('gesture_update', {
                 'gesture': 'CURSOR_MOVE',
                 'device_id': device_id,
@@ -201,12 +187,12 @@ def register_socket_events(socketio):
                 'type': 'move',
                 'x': x,
                 'y': y,
-                'timestamp': datetime.now().isoformat(),
-            }, socketio, client['user_id'])
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+            }, socketio)
 
     @socketio.on('gesture_click')
     def handle_gesture_click(data):
-        """Handle click events - log to DB and broadcast."""
+        """Handle click events."""
         sid = request.sid
         if sid not in connected_clients:
             return
@@ -217,29 +203,25 @@ def register_socket_events(socketio):
 
         device_id = client.get('device_id')
         if not device_id:
-            emit('error', {'message': 'Device not registered. Please register device first.'})
+            emit('error', {'message': 'Device not registered'})
             return
 
         click_type = data.get('type', 'left')
         confidence = data.get('confidence', 0.95)
-        gesture_name = f'{click_type.upper()}_CLICK'
 
-        print(f"[WS] Click: {gesture_name} from {client.get('device_name')} (device {device_id})")
+        print(f"[WS] Click: {click_type} from {client.get('device_name')}")
 
-        # Save to database
         _log_gesture(client['user_id'], device_id, f'{click_type}_click', confidence)
 
-        # Broadcast to dashboards
         _broadcast_to_dashboard('gesture_activity', {
-            'gesture': gesture_name,
+            'gesture': f'{click_type.upper()}_CLICK',
             'device_id': device_id,
             'device_name': client.get('device_name', 'Unknown'),
             'username': client['username'],
             'confidence': confidence,
             'timestamp': time.time(),
-        }, socketio, client['user_id'])
+        }, socketio)
         
-        # Send gesture_update for UX feedback (sound, haptics)
         _broadcast_to_dashboard('gesture_update', {
             'gesture': 'PINCH',
             'device_id': device_id,
@@ -248,15 +230,14 @@ def register_socket_events(socketio):
             'confidence': confidence,
             'type': 'click',
             'click_type': click_type,
-            'timestamp': datetime.now().isoformat(),
-        }, socketio, client['user_id'])
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+        }, socketio)
 
-        # Confirm back to sending client
         emit('click_confirmed', {'type': click_type, 'status': 'success'})
 
     @socketio.on('gesture_scroll')
     def handle_gesture_scroll(data):
-        """Handle scroll events - log to DB and broadcast."""
+        """Handle scroll events."""
         sid = request.sid
         if sid not in connected_clients:
             return
@@ -272,14 +253,13 @@ def register_socket_events(socketio):
         direction = data.get('direction', 'down')
         amount = data.get('amount', 1)
         confidence = data.get('confidence', 0.9)
-        gesture_name = f'SCROLL_{direction.upper()}'
 
-        print(f"[WS] Scroll: {gesture_name} from {client.get('device_name')} (device {device_id})")
+        print(f"[WS] Scroll: {direction} from {client.get('device_name')}")
 
         _log_gesture(client['user_id'], device_id, f'scroll_{direction}', confidence)
 
         _broadcast_to_dashboard('gesture_activity', {
-            'gesture': gesture_name,
+            'gesture': f'SCROLL_{direction.upper()}',
             'device_id': device_id,
             'device_name': client.get('device_name', 'Unknown'),
             'username': client['username'],
@@ -287,9 +267,8 @@ def register_socket_events(socketio):
             'direction': direction,
             'amount': amount,
             'timestamp': time.time(),
-        }, socketio, client['user_id'])
+        }, socketio)
         
-        # Send gesture_update for UX feedback
         _broadcast_to_dashboard('gesture_update', {
             'gesture': 'SCROLL',
             'device_id': device_id,
@@ -299,8 +278,8 @@ def register_socket_events(socketio):
             'type': 'scroll',
             'direction': direction,
             'amount': amount,
-            'timestamp': datetime.now().isoformat(),
-        }, socketio, client['user_id'])
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+        }, socketio)
 
     @socketio.on('gesture_toggle')
     def handle_gesture_toggle(data):
@@ -321,7 +300,7 @@ def register_socket_events(socketio):
         confidence = data.get('confidence', 0.95)
         gesture_name = 'OPEN_PALM' if enabled else 'FIST'
 
-        print(f"[WS] Toggle: {gesture_name} ({'ENABLED' if enabled else 'DISABLED'}) from {client.get('device_name')}")
+        print(f"[WS] Toggle: {gesture_name}")
 
         action = 'enable_control' if enabled else 'disable_control'
         _log_gesture(client['user_id'], device_id, action, confidence)
@@ -334,9 +313,8 @@ def register_socket_events(socketio):
             'confidence': confidence,
             'enabled': enabled,
             'timestamp': time.time(),
-        }, socketio, client['user_id'])
+        }, socketio)
         
-        # Send gesture_update for UX feedback
         _broadcast_to_dashboard('gesture_update', {
             'gesture': gesture_name,
             'device_id': device_id,
@@ -345,12 +323,12 @@ def register_socket_events(socketio):
             'confidence': confidence,
             'type': 'toggle',
             'enabled': enabled,
-            'timestamp': datetime.now().isoformat(),
-        }, socketio, client['user_id'])
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+        }, socketio)
 
     @socketio.on('gesture_zoom')
     def handle_gesture_zoom(data):
-        """Handle zoom events - log to DB and broadcast."""
+        """Handle zoom events."""
         sid = request.sid
         if sid not in connected_clients:
             return
@@ -365,23 +343,21 @@ def register_socket_events(socketio):
 
         amount = data.get('amount', 0)
         confidence = data.get('confidence', 0.95)
-        gesture_name = 'ZOOM_IN' if amount > 0 else 'ZOOM_OUT' if amount < 0 else 'ZOOM'
 
-        print(f"[WS] Zoom: {gesture_name} ({amount}) from {client.get('device_name')}")
+        print(f"[WS] Zoom: {amount} from {client.get('device_name')}")
 
-        _log_gesture(client['user_id'], device_id, gesture_name.lower(), confidence)
+        _log_gesture(client['user_id'], device_id, 'zoom', confidence)
 
         _broadcast_to_dashboard('gesture_activity', {
-            'gesture': gesture_name,
+            'gesture': 'ZOOM_IN' if amount > 0 else 'ZOOM_OUT',
             'device_id': device_id,
             'device_name': client.get('device_name', 'Unknown'),
             'username': client['username'],
             'confidence': confidence,
             'amount': amount,
             'timestamp': time.time(),
-        }, socketio, client['user_id'])
+        }, socketio)
         
-        # Send gesture_update for UX feedback
         _broadcast_to_dashboard('gesture_update', {
             'gesture': 'ZOOM',
             'device_id': device_id,
@@ -390,12 +366,12 @@ def register_socket_events(socketio):
             'confidence': confidence,
             'type': 'zoom',
             'amount': amount,
-            'timestamp': datetime.now().isoformat(),
-        }, socketio, client['user_id'])
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+        }, socketio)
 
     @socketio.on('gesture_screenshot')
     def handle_gesture_screenshot(data):
-        """Handle screenshot events - log to DB and broadcast."""
+        """Handle screenshot events."""
         sid = request.sid
         if sid not in connected_clients:
             return
@@ -423,9 +399,8 @@ def register_socket_events(socketio):
             'confidence': confidence,
             'path': path,
             'timestamp': time.time(),
-        }, socketio, client['user_id'])
+        }, socketio)
         
-        # Send gesture_update for UX feedback
         _broadcast_to_dashboard('gesture_update', {
             'gesture': 'SCREENSHOT',
             'device_id': device_id,
@@ -433,46 +408,37 @@ def register_socket_events(socketio):
             'username': client['username'],
             'confidence': confidence,
             'type': 'screenshot',
-            'timestamp': datetime.now().isoformat(),
-        }, socketio, client['user_id'])
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+        }, socketio)
 
     @socketio.on('gesture_update')
     def handle_gesture_update(data):
-        """
-        Handle generic gesture updates from client and broadcast to dashboard.
-        This is the main event for UX feedback (sound, voice, haptics).
-        """
+        """Handle generic gesture updates for UX feedback."""
         sid = request.sid
         
-        # Get client info if available
         gesture = data.get('gesture', 'UNKNOWN')
         confidence = data.get('confidence', 0.9)
         gesture_type = data.get('type', 'unknown')
         
-        # Get device info from connected client if available
         device_name = 'Unknown'
         username = 'User'
+        
         if sid in connected_clients:
             client = connected_clients[sid]
             device_name = client.get('device_name', 'Unknown')
             username = client.get('username', 'User')
-            user_id = client.get('user_id', 1)
-        else:
-            user_id = 1
         
-        print(f"[WS] Gesture update: {gesture} (conf={confidence}, type={gesture_type})")
+        print(f"[WS] Gesture update: {gesture} (conf={confidence})")
         
-        # Broadcast to all dashboards for UX feedback
         broadcast_data = {
             'gesture': gesture,
             'confidence': confidence,
             'type': gesture_type,
             'device_name': device_name,
             'username': username,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
         
-        # Add extra fields if present
         if 'x' in data:
             broadcast_data['x'] = data['x']
         if 'y' in data:
@@ -484,21 +450,19 @@ def register_socket_events(socketio):
         if 'enabled' in data:
             broadcast_data['enabled'] = data['enabled']
         
-        # Broadcast to dashboard room
         try:
             socketio.emit('gesture_update', broadcast_data, room='dashboard_room')
             socketio.emit('gesture_activity', broadcast_data, room='dashboard_room')
-            logger.debug(f"Gesture update broadcast: {gesture}")
         except Exception as e:
             logger.error(f"Gesture update broadcast error: {e}")
 
     # ------------------------------------------------------------------
-    # Air Canvas Drawing Events
+    # Air Canvas Events
     # ------------------------------------------------------------------
 
     @socketio.on('register_drawing_client')
     def handle_register_drawing_client(data):
-        """Register a drawing client for Air Canvas"""
+        """Register a drawing client."""
         sid = request.sid
         device_name = data.get('device_name', 'Unknown')
         
@@ -509,81 +473,32 @@ def register_socket_events(socketio):
         connected_clients[sid]['is_drawing'] = True
         
         print(f"[Canvas] Drawing client registered: {device_name}")
-        
-        # Join drawing room for real-time collaboration
         join_room('drawing_room')
         emit('drawing_ready', {'message': 'Ready to draw', 'device': device_name})
 
     @socketio.on('drawing_stroke')
     def handle_drawing_stroke(data):
-        """Handle drawing stroke from gesture client and broadcast to all connected canvases"""
-        # Get drawing data
-        x1 = data.get('x1')
-        y1 = data.get('y1')
-        x2 = data.get('x2')
-        y2 = data.get('y2')
-        color = data.get('color', '#ff4444')
-        size = data.get('size', 5)
-        
-        # Broadcast to ALL connected clients in drawing_room (including web canvas)
+        """Handle drawing stroke."""
         emit('drawing_data', {
             'type': 'draw',
-            'x1': x1, 'y1': y1,
-            'x2': x2, 'y2': y2,
-            'color': color,
-            'size': size,
+            'x1': data.get('x1'), 'y1': data.get('y1'),
+            'x2': data.get('x2'), 'y2': data.get('y2'),
+            'color': data.get('color', '#ff4444'),
+            'size': data.get('size', 5),
             'timestamp': time.time()
         }, room='drawing_room', broadcast=True, include_self=False)
-        
-        # Also broadcast to any shared session room if exists
-        if 'room_id' in data:
-            emit('drawing_data', {
-                'type': 'draw',
-                'x1': x1, 'y1': y1,
-                'x2': x2, 'y2': y2,
-                'color': color,
-                'size': size
-            }, room=data['room_id'], broadcast=True)
 
     @socketio.on('drawing_clear')
     def handle_drawing_clear(data):
-        """Handle clear canvas command"""
+        """Handle clear canvas."""
         print(f"[Canvas] Clear canvas requested")
-        emit('drawing_data', {
-            'type': 'clear',
-            'timestamp': time.time()
-        }, room='drawing_room', broadcast=True)
+        emit('drawing_data', {'type': 'clear', 'timestamp': time.time()}, room='drawing_room', broadcast=True)
 
     @socketio.on('drawing_undo')
     def handle_drawing_undo(data):
-        """Handle undo command"""
+        """Handle undo."""
         print(f"[Canvas] Undo requested")
-        emit('drawing_data', {
-            'type': 'undo',
-            'timestamp': time.time()
-        }, room='drawing_room', broadcast=True)
-
-    @socketio.on('drawing_toggle')
-    def handle_drawing_toggle(data):
-        """Handle toggle drawing mode"""
-        enabled = data.get('enabled', True)
-        print(f"[Canvas] Drawing mode: {'ON' if enabled else 'OFF'}")
-        emit('drawing_mode_toggle', {
-            'enabled': enabled,
-            'timestamp': time.time()
-        }, room='drawing_room', broadcast=True)
-
-    @socketio.on('share_drawing')
-    def handle_share_drawing(data):
-        """Create a shared drawing session"""
-        import uuid
-        room_id = str(uuid.uuid4())[:8]
-        join_room(room_id)
-        print(f"[Canvas] Shared drawing session created: {room_id}")
-        emit('drawing_shared', {
-            'room_id': room_id,
-            'message': 'Drawing session shared'
-        })
+        emit('drawing_data', {'type': 'undo', 'timestamp': time.time()}, room='drawing_room', broadcast=True)
 
     # ------------------------------------------------------------------
     # Air Keyboard Events
@@ -591,7 +506,7 @@ def register_socket_events(socketio):
     
     @socketio.on('register_keyboard_client')
     def handle_register_keyboard_client(data):
-        """Register a keyboard client and join keyboard room"""
+        """Register a keyboard client."""
         sid = request.sid
         device_name = data.get('device_name', 'Unknown')
         
@@ -606,27 +521,22 @@ def register_socket_events(socketio):
 
     @socketio.on('keyboard_text_update')
     def handle_keyboard_text_update(data):
-        """Broadcast typed UI text to dashboard"""
-        text_lines = data.get('text_lines', [])
-        current_word = data.get('current_word', "")
-        suggestions = data.get('suggestions', [])
-        status_msg = data.get('status_msg', "")
-        
+        """Broadcast typed text."""
         emit('keyboard_data', {
-            'text_lines': text_lines,
-            'current_word': current_word,
-            'suggestions': suggestions,
-            'status_msg': status_msg,
+            'text_lines': data.get('text_lines', []),
+            'current_word': data.get('current_word', ''),
+            'suggestions': data.get('suggestions', []),
+            'status_msg': data.get('status_msg', ''),
             'timestamp': time.time()
         }, room='keyboard_room', broadcast=True, include_self=False)
 
     # ------------------------------------------------------------------
-    # Admin / Utility
+    # Utility Events
     # ------------------------------------------------------------------
 
     @socketio.on('get_online_users')
     def handle_get_online_users():
-        """Return a list of online gesture clients (not dashboards)."""
+        """Return list of online users."""
         online_users = {}
         for sid, info in connected_clients.items():
             if info.get('device_id') and not info.get('is_dashboard'):
@@ -634,86 +544,25 @@ def register_socket_events(socketio):
                     'user_id': info['user_id'],
                     'device_id': info['device_id'],
                     'device_name': info.get('device_name', 'Unknown'),
-                    'sid': sid,
                 }
         emit('online_users', online_users)
 
-    @socketio.on('get_device_status')
-    def handle_get_device_status():
-        """Return registration status of the caller's device."""
-        sid = request.sid
-        if sid not in connected_clients:
-            emit('error', {'message': 'Not authenticated'})
-            return
-
-        client = connected_clients[sid]
-        device_id = client.get('device_id')
-        if device_id:
-            emit('device_status', {
-                'device_id': device_id,
-                'device_name': client.get('device_name', 'Unknown'),
-                'is_registered': True,
-                'status': 'active',
-            })
-        else:
-            emit('device_status', {
-                'is_registered': False,
-                'message': 'No device registered yet',
-            })
-
-    @socketio.on('delete_device')
-    def handle_delete_device(data):
-        """Delete a device via WebSocket."""
-        sid = request.sid
-        if sid not in connected_clients:
-            emit('error', {'message': 'Not authenticated'})
-            return
-
-        user_id = connected_clients[sid]['user_id']
-        device_id = data.get('device_id')
-        if not device_id:
-            emit('error', {'message': 'Device ID is required'})
-            return
-
-        print(f"[WS] Delete request: device {device_id} by user {user_id}")
-
-        if DeviceModel.delete_device(device_id, user_id):
-            emit('device_deleted', {
-                'device_id': device_id,
-                'message': 'Device deleted successfully',
-            })
-            if connected_clients[sid].get('device_id') == device_id:
-                connected_clients[sid]['device_id'] = None
-            print(f"[WS] Device {device_id} deleted")
-        else:
-            emit('error', {'message': 'Failed to delete device or device not found'})
-
 
 # ======================================================================
-# Helper Functions (module-level)
+# Helper Functions
 # ======================================================================
 
-def _broadcast_to_dashboard(event_name, data, socketio, user_id):
-    """
-    Broadcast an event to all dashboard clients watching a user.
-
-    Uses ``socketio.emit`` (server-level emit) instead of ``emit``
-    (request-context emit) to avoid issues with ``include_self`` / ``skip_sid``
-    across different Flask-SocketIO versions.
-    """
+def _broadcast_to_dashboard(event_name, data, socketio):
+    """Broadcast an event to all dashboard clients."""
     try:
         socketio.emit(event_name, data, room='dashboard_room')
-        logger.debug(f"Broadcast {event_name} -> dashboard_room: {data.get('gesture', '?')}")
     except Exception as e:
         logger.error(f"Broadcast error ({event_name}): {e}")
-        print(f"[WS] Broadcast error ({event_name}): {e}")
 
 
 def _log_gesture(user_id, device_id, gesture_type, confidence):
-    """Save a gesture to the database.  Failures are logged, never raised."""
+    """Save a gesture to the database."""
     try:
         DeviceModel.log_gesture(user_id, device_id, gesture_type, confidence, 0.01)
-        logger.debug(f"Saved gesture: {gesture_type} (user={user_id}, device={device_id})")
     except Exception as e:
         logger.error(f"DB log_gesture error: {e}")
-        print(f"[WS] DB log error: {e}")

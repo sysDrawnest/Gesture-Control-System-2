@@ -46,5 +46,17 @@ server/
 ├── gesture_control.db         # Local SQLite storage (fallback)
 ├── requirements.txt           # Python dependencies
 └── .env                       # Environment secrets
+
+/server/templates/
+├── index.html              # Landing page (main marketing site)
+├── dashboard.html          # User dashboard after login
+├── login.html              # Login page
+├── register.html           # Registration page
+├── about.html              # About page (new)
+├── air_canvas.html         # Gesture drawing page
+├── air_keyboard.html       # Virtual keyboard page
+├── games.html              # Games page
+└── base.html               # Base template
+
 ```
 
