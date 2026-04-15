@@ -1,6 +1,6 @@
 /**
  * UX Settings Manager - Sound, Voice, Haptics, Tutorial, Calibration
- * Fully functional with real feedback
+ * Fully functional with real feedback....version 2 for 18 april
  */
 
 class UXSettingsManager {
