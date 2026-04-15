@@ -109,6 +109,11 @@ def air_keyboard():
     """Air Keyboard notes page"""
     return render_template('air_keyboard.html')
 
+@app.route('/about')
+def about():
+    """About page"""
+    return render_template('about.html')
+
 @app.route('/login')
 def login_page():
     """Login page"""
