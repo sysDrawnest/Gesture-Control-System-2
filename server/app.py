@@ -129,6 +129,11 @@ def dashboard():
     """Main control dashboard"""
     return render_template('dashboard.html')
 
+@app.route('/tutorial')
+def tutorial():
+    """Interactive tutorial page"""
+    return render_template('tutorial.html')
+
 # Static files
 @app.route('/static/<path:path>')
 def serve_static(path):
