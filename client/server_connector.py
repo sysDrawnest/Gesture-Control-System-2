@@ -158,6 +158,7 @@ class ServerConnector:
     def connect(self) -> bool:
         """
         Open the WebSocket connection (non-blocking - runs in background thread).
+        Tries WebSocket transport first; falls back to polling if it fails.
         Requires a valid token from login().
         """
         if not self.authenticated or not self.token:
@@ -165,43 +166,58 @@ class ServerConnector:
             return False
 
         def _connect():
-            try:
-                # CRITICAL FIX: Send token as query parameter (server expects request.args.get('token'))
-                connection_url = f"{self.server_url}?token={self.token}"
-                
-                print(f"[CONN] Connecting to WebSocket with authentication...")
-                
-                self.sio.connect(
-                    connection_url,
-                    transports=["websocket", "polling"],
-                    wait=True,
-                    wait_timeout=10,
-                )
-                self.sio.wait()  # blocks until disconnect
-            except socketio.exceptions.ConnectionError as e:
-                logger.warning(f"[ServerConnector] WebSocket connection failed: {e}")
-                print(f"[WARN] WebSocket connection failed: {e}")
-            except Exception as e:
-                logger.error(f"[ServerConnector] WebSocket error: {e}")
-                print(f"[ERROR] WebSocket error: {e}")
+            connection_url = f"{self.server_url}?token={self.token}"
+            print(f"[CONN] Connecting to WebSocket with authentication...")
+
+            # Try WebSocket first, then fall back to polling
+            for transports in (["websocket"], ["polling"]):
+                try:
+                    self.sio.connect(
+                        connection_url,
+                        transports=transports,
+                        wait=True,
+                        wait_timeout=10,
+                    )
+                    self.sio.wait()  # blocks until disconnect
+                    break  # If we reach here cleanly, stop retrying
+                except socketio.exceptions.ConnectionError as e:
+                    if transports == ["websocket"]:
+                        print(f"[WARN] WebSocket transport failed, retrying with polling...")
+                        logger.warning(f"[ServerConnector] WS failed, trying polling: {e}")
+                        continue
+                    else:
+                        logger.warning(f"[ServerConnector] Polling also failed: {e}")
+                        print(f"[WARN] WebSocket connection failed: {e}")
+                        break
+                except Exception as e:
+                    logger.error(f"[ServerConnector] WebSocket error: {e}")
+                    print(f"[ERROR] WebSocket error: {e}")
+                    break
 
         self._ws_thread = threading.Thread(target=_connect, daemon=True)
         self._ws_thread.start()
 
-        # Give the connection a moment to establish
-        time.sleep(2)
+        # Give the connection time to establish (up to 5s)
+        deadline = time.time() + 5
+        while time.time() < deadline:
+            if self.connected:
+                break
+            time.sleep(0.3)
         return self.connected
 
     def _register_device(self):
         """Send device registration event after WebSocket auth succeeds."""
-        if self.connected and self.token:
-            import socket as _socket
-            device_name = self.custom_device_name or _socket.gethostname()
-            print(f"[DEVICE] Registering device '{device_name}'...")
-            self.sio.emit("register_device", {
-                "device_name": device_name,
-                "device_type": "laptop"
-            })
+        if not self.connected or not self.token:
+            return
+        import socket as _socket
+        device_name = self.custom_device_name or _socket.gethostname()
+        print(f"[DEVICE] Registering device '{device_name}'...")
+        # Small delay to ensure server has fully processed the connect event
+        time.sleep(0.5)
+        self.sio.emit("register_device", {
+            "device_name": device_name,
+            "device_type": "laptop"
+        })
 
     def disconnect(self):
         """Close the WebSocket connection gracefully."""
