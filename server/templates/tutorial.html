@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>KINETIC_PULSE | Interactive Tutorial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-animation .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(129, 236, 255, 0.1) 0%, rgba(210, 119, 255, 0.05) 100%);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .bg-animation .circle:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .bg-animation .circle:nth-child(2) {
+            width: 500px;
+            height: 500px;
+            bottom: -200px;
+            right: -100px;
+            animation-delay: 5s;
+        }
+
+        .bg-animation .circle:nth-child(3) {
+            width: 200px;
+            height: 200px;
+            top: 50%;
+            left: 50%;
+            animation-delay: 10s;
+        }
+
+        .bg-animation .circle:nth-child(4) {
+            width: 400px;
+            height: 400px;
+            top: 20%;
+            right: 20%;
+            animation-delay: 15s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: translate(30px, -30px) scale(1.1);
+                opacity: 0.5;
+            }
+        }
+
+        /* Tutorial Container */
+        .tutorial-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .tutorial-card {
+            background: rgba(23, 26, 31, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid rgba(129, 236, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(129, 236, 255, 0.1);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            padding: 20px 24px 0;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .step-indicator {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .step-dot {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(129, 236, 255, 0.3);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .step-indicator.active .step-dot {
+            background: linear-gradient(135deg, #81ecff, #d277ff);
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 0 20px rgba(129, 236, 255, 0.5);
+        }
+
+        .step-indicator.completed .step-dot {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 10px;
+            margin-top: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .step-indicator.active .step-label {
+            color: #81ecff;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: -1;
+        }
+
+        .progress-fill-line {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, #81ecff, #d277ff);
+            transition: width 0.3s ease;
+            z-index: -1;
+        }
+
+        /* Content Area */
+        .tutorial-content {
+            padding: 32px 40px;
+            text-align: center;
+        }
+
+        .gesture-icon {
+            font-size: 120px;
+            margin-bottom: 24px;
+            animation: bounce 0.5s ease;
+            display: inline-block;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .gesture-title {
+            font-family: 'Space Grotesk', monospace;
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #81ecff, #d277ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .gesture-description {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .practice-hint {
+            background: rgba(129, 236, 255, 0.1);
+            border-left: 3px solid #81ecff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 13px;
+            color: #81ecff;
+        }
+
+        /* Button Area */
+        .tutorial-buttons {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 24px 24px;
+            gap: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #81ecff, #d277ff);
+            color: #1a1a2e;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(129, 236, 255, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(129, 236, 255, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Success Animation */
+        .success-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(40, 167, 69, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            border-radius: 60px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            animation: fadeOut 2s ease forwards;
+            pointer-events: none;
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            80% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.2);
+                visibility: hidden;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .tutorial-content {
+                padding: 24px 20px;
+            }
+
+            .gesture-icon {
+                font-size: 80px;
+            }
+
+            .gesture-title {
+                font-size: 22px;
+            }
+
+            .step-dot {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+
+            .step-label {
+                font-size: 8px;
+            }
+
+            .btn {
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+    </div>
+
+    <div class="tutorial-container">
+        <div class="tutorial-card">
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-steps" id="progressSteps">
+                    <!-- Dynamic steps will be inserted here -->
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-fill-line" id="progressFillLine"></div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="tutorial-content" id="tutorialContent">
+                <div class="gesture-icon" id="gestureIcon">✋</div>
+                <h2 class="gesture-title" id="gestureTitle">Welcome to Gesture Control!</h2>
+                <p class="gesture-description" id="gestureDescription">
+                    Learn to control your computer using hand gestures.
+                    This interactive tutorial will guide you through all the gestures.
+                </p>
+                <div class="practice-hint" id="practiceHint" style="display: none;">
+                    <span class="material-symbols-outlined"
+                        style="font-size: 16px; vertical-align: middle;">hand_gesture</span>
+                    Try the gesture now!
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="tutorial-buttons">
+                <button class="btn btn-outline" id="prevBtn" style="visibility: hidden;">← Previous</button>
+                <button class="btn btn-secondary" id="skipBtn">Skip Tutorial</button>
+                <button class="btn btn-primary" id="nextBtn">Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tutorial Steps Data
+        const tutorialSteps = [
+            {
+                icon: "✋",
+                title: "Welcome to Gesture Control!",
+                description: "Learn to control your computer using hand gestures. This interactive tutorial will guide you through all the gestures.",
+                practice: false,
+                action: null
+            },
+            {
+                icon: "👆",
+                title: "Cursor Movement",
+                description: "Raise your index finger (pointer finger) to move the cursor. Move your hand around to control the mouse position.",
+                practice: true,
+                action: "POINT"
+            },
+            {
+                icon: "🤏",
+                title: "Left Click",
+                description: "Pinch your thumb and index finger together to perform a left click. Just like clicking a mouse button!",
+                practice: true,
+                action: "PINCH"
+            },
+            {
+                icon: "✌️",
+                title: "Right Click",
+                description: "Make a peace sign (✌️) with your index and middle fingers to perform a right click.",
+                practice: true,
+                action: "PEACE"
+            },
+            {
+                icon: "🖐️",
+                title: "Scrolling",
+                description: "Use three fingers (index, middle, ring) and move them up or down to scroll through pages.",
+                practice: true,
+                action: "THREE_FINGERS"
+            },
+            {
+                icon: "🔍",
+                title: "Zoom In/Out",
+                description: "Pinch with three fingers (thumb, index, middle) and move them apart to zoom in, or together to zoom out.",
+                practice: true,
+                action: "ZOOM"
+            },
+            {
+                icon: "✋",
+                title: "Enable/Disable Control",
+                description: "Open palm (✋) to enable gesture control. Make a fist (✊) to disable it when you need to type or use the mouse normally.",
+                practice: false,
+                action: null
+            },
+            {
+                icon: "🎉",
+                title: "Tutorial Complete!",
+                description: "You're now ready to use gesture control! Practice makes perfect. Try the gestures and have fun!",
+                practice: false,
+                action: null,
+                complete: true
+            }
+        ];
+
+        let currentStep = 0;
+        let waitingForPractice = false;
+        let practiceTimeout = null;
+        let socket = null;
+
+        // Initialize WebSocket connection
+        function initWebSocket() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            socket = io('/', {
+                query: { token },
+                transports: ['websocket', 'polling']
+            });
+
+            socket.on('gesture_update', (data) => {
+                if (waitingForPractice) {
+                    const currentAction = tutorialSteps[currentStep].action;
+                    if (data.gesture === currentAction) {
+                        // Practice successful!
+                        clearTimeout(practiceTimeout);
+                        waitingForPractice = false;
+                        showSuccessMessage('Great! You did it! 🎉');
+                        setTimeout(() => {
+                            nextStep();
+                        }, 1500);
+                    }
+                }
+            });
+        }
+
+        function showSuccessMessage(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-animation';
+            successDiv.innerHTML = `✅ ${message}`;
+            document.body.appendChild(successDiv);
+            setTimeout(() => successDiv.remove(), 2000);
+        }
+
+        function updateProgressBar() {
+            const totalSteps = tutorialSteps.length - 1; // Excluding welcome and complete
+            const progress = (currentStep / totalSteps) * 100;
+            const fillLine = document.getElementById('progressFillLine');
+            const stepsContainer = document.getElementById('progressSteps');
+
+            // Calculate position
+            const stepWidth = 100 / totalSteps;
+            const fillWidth = (currentStep / totalSteps) * 100;
+            fillLine.style.width = `${fillWidth}%`;
+            fillLine.style.left = '0%';
+
+            // Update step indicators
+            stepsContainer.innerHTML = '';
+            for (let i = 0; i <= totalSteps; i++) {
+                const stepDiv = document.createElement('div');
+                stepDiv.className = 'step-indicator';
+                if (i < currentStep) stepDiv.classList.add('completed');
+                if (i === currentStep) stepDiv.classList.add('active');
+
+                stepDiv.innerHTML = `
+                    <div class="step-dot">${i < currentStep ? '✓' : (i + 1)}</div>
+                    <div class="step-label">Step ${i + 1}</div>
+                `;
+                stepsContainer.appendChild(stepDiv);
+            }
+        }
+
+        function updateContent() {
+            const step = tutorialSteps[currentStep];
+            document.getElementById('gestureIcon').textContent = step.icon;
+            document.getElementById('gestureTitle').textContent = step.title;
+            document.getElementById('gestureDescription').innerHTML = step.description;
+
+            const practiceHint = document.getElementById('practiceHint');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const skipBtn = document.getElementById('skipBtn');
+
+            // Update buttons
+            if (currentStep === 0) {
+                prevBtn.style.visibility = 'hidden';
+                nextBtn.textContent = 'Start Tutorial →';
+            } else if (step.complete) {
+                nextBtn.textContent = 'Finish';
+                prevBtn.style.visibility = 'visible';
+            } else {
+                prevBtn.style.visibility = 'visible';
+                nextBtn.textContent = 'Next →';
+            }
+
+            if (currentStep === tutorialSteps.length - 1) {
+                skipBtn.style.display = 'none';
+            } else {
+                skipBtn.style.display = 'block';
+            }
+
+            // Handle practice mode
+            if (step.practice && step.action && currentStep !== 0 && !step.complete) {
+                practiceHint.style.display = 'block';
+                waitingForPractice = true;
+
+                // Timeout after 30 seconds
+                practiceTimeout = setTimeout(() => {
+                    if (waitingForPractice) {
+                        waitingForPractice = false;
+                        practiceHint.innerHTML = '<span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">info</span> Tip: Make sure your hand is visible to the camera. Try the gesture again!';
+                        setTimeout(() => {
+                            practiceHint.innerHTML = '<span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">hand_gesture</span> Try the gesture now!';
+                        }, 3000);
+                    }
+                }, 30000);
+            } else {
+                practiceHint.style.display = 'none';
+                waitingForPractice = false;
+                if (practiceTimeout) {
+                    clearTimeout(practiceTimeout);
+                    practiceTimeout = null;
+                }
+            }
+
+            // Animation for icon
+            const icon = document.getElementById('gestureIcon');
+            icon.style.animation = 'none';
+            icon.offsetHeight;
+            icon.style.animation = 'bounce 0.5s ease';
+        }
+
+        function nextStep() {
+            if (waitingForPractice) return;
+
+            if (currentStep < tutorialSteps.length - 1) {
+                currentStep++;
+                updateProgressBar();
+                updateContent();
+
+                // Play sound feedback
+                if (window.uxSettings && window.uxSettings.settings.sound.enabled) {
+                    window.uxSettings.playSound('click');
+                }
+            } else {
+                // Tutorial complete
+                if (window.uxSettings) {
+                    window.uxSettings.settings.tutorial.completed = true;
+                    window.uxSettings.saveSettings();
+                    if (window.uxSettings.settings.voice.enabled) {
+                        window.uxSettings.speak('Tutorial completed! Enjoy using gesture control.');
+                    }
+                }
+                window.location.href = '/dashboard';
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateProgressBar();
+                updateContent();
+            }
+        }
+
+        function skipTutorial() {
+            if (window.uxSettings) {
+                window.uxSettings.settings.tutorial.completed = true;
+                window.uxSettings.saveSettings();
+            }
+            window.location.href = '/dashboard';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateProgressBar();
+            updateContent();
+            initWebSocket();
+
+            document.getElementById('nextBtn').addEventListener('click', nextStep);
+            document.getElementById('prevBtn').addEventListener('click', prevStep);
+            document.getElementById('skipBtn').addEventListener('click', skipTutorial);
+        });
+    </script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</body>
+
+</html>
