@@ -53,7 +53,7 @@ def main():
     # Import waitress
     from waitress import serve
     
-    # Run with waitress (no development warning)
+    # Run with waitress - REMOVED invalid parameters
     serve(
         app,
         host=config.HOST,
@@ -61,9 +61,9 @@ def main():
         threads=4,  # Number of threads for handling requests
         channel_timeout=60,  # Timeout for socket operations
         clear_untrusted_proxy_headers=True,
-        trust_proxy_headers=False,  # Set to True if behind a reverse proxy
-        url_scheme='http',
-        ident='GestureControlServer/1.0'
+        # REMOVED: trust_proxy_headers - not valid in this version
+        # REMOVED: url_scheme - not valid
+        # REMOVED: ident - not valid
     )
 
 if __name__ == '__main__':
@@ -76,4 +76,5 @@ if __name__ == '__main__':
     except Exception as e:
         logger.error(f"Server failed to start: {e}")
         print(f"\nError: {e}")
+        print("Try running: python app.py")
         sys.exit(1)
