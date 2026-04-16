@@ -22,7 +22,7 @@ def register_socket_events(socketio):
     # ------------------------------------------------------------------
 
     @socketio.on('connect')
-    def handle_connect(auth=None):  # IMPORTANT: Accept auth parameter
+    def handle_connect(auth=None):  # Accept auth parameter
         """Authenticate and register the connecting client."""
         sid = request.sid
         token = request.args.get('token')
@@ -39,7 +39,9 @@ def register_socket_events(socketio):
             username = 'admin'
 
             if token:
-                payload = UserModel.verify_token(token)
+                # verify_token returns a (payload, message) TUPLE
+                result = UserModel.verify_token(token)
+                payload = result[0] if isinstance(result, tuple) else result
                 if payload and isinstance(payload, dict):
                     user_id = payload.get('user_id', 1)
                     username = payload.get('username', 'admin')
@@ -60,11 +62,13 @@ def register_socket_events(socketio):
 
         # --- Gesture client connection ------------------------------------
         if token:
-            payload = UserModel.verify_token(token)
+            # verify_token returns a (payload, message) TUPLE
+            result = UserModel.verify_token(token)
+            payload = result[0] if isinstance(result, tuple) else result
             if payload and isinstance(payload, dict):
                 user_id = payload.get('user_id', 1)
                 username = payload.get('username', 'user')
-                
+
                 connected_clients[sid] = {
                     'user_id': user_id,
                     'username': username,
@@ -77,8 +81,12 @@ def register_socket_events(socketio):
                 emit('connected', {'message': 'Authenticated successfully', 'type': 'gesture_client'})
                 print(f"[WS] Client authenticated: {username} (sid={sid})")
                 return True
+            else:
+                # Log why auth failed
+                msg = result[1] if isinstance(result, tuple) else 'unknown error'
+                print(f"[WS] Token rejected for {sid}: {msg}")
 
-        print(f"[WS] Connection rejected: {sid}")
+        print(f"[WS] Connection rejected (no valid token): {sid}")
         return False
 
     @socketio.on('disconnect')
