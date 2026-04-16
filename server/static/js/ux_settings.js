@@ -1,6 +1,7 @@
 /**
- * UX Settings Manager - Sound, Voice, Haptics, Tutorial, Calibration
- * Fully functional with real feedback....version 2 for 18 april
+ * UX Settings Manager - Sound, Voice, Haptics, Calibration
+ * Fully functional with real feedback....version 3 for 18 april
+ * Tutorial functionality moved to standalone tutorial.html
  */
 
 class UXSettingsManager {
@@ -86,9 +87,7 @@ class UXSettingsManager {
     }
 
     initSounds() {
-        // Initialize sound objects
         const soundNames = ['click', 'gesture', 'success', 'error', 'notification'];
-
         for (const name of soundNames) {
             try {
                 const audio = new Audio();
@@ -102,21 +101,16 @@ class UXSettingsManager {
 
     generateBeep(frequency, duration, type = 'sine') {
         if (!this.audioContext || !this.settings.sound.enabled) return;
-
         try {
             const now = this.audioContext.currentTime;
             const oscillator = this.audioContext.createOscillator();
             const gainNode = this.audioContext.createGain();
-
             oscillator.connect(gainNode);
             gainNode.connect(this.audioContext.destination);
-
             oscillator.frequency.value = frequency;
             oscillator.type = type;
-
             gainNode.gain.setValueAtTime(0.3, now);
             gainNode.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
             oscillator.start();
             oscillator.stop(now + duration);
         } catch (e) {
@@ -126,8 +120,6 @@ class UXSettingsManager {
 
     playSound(soundName) {
         if (!this.settings.sound.enabled) return;
-
-        // Use Web Audio API for better sound generation
         if (soundName === 'click') {
             this.generateBeep(800, 0.08, 'sine');
         } else if (soundName === 'gesture') {
@@ -143,17 +135,14 @@ class UXSettingsManager {
     }
 
     initVoices() {
-        // Load available voices
         if (this.speechSynthesis) {
             const loadVoices = () => {
                 this.voices = this.speechSynthesis.getVoices();
                 if (this.voices.length > 0) {
-                    // Select a good default voice (prefer female/English)
                     const defaultVoice = this.voices.find(v => v.lang === 'en-US' && v.name.includes('Google')) || this.voices[0];
                     this.settings.voice.voice = defaultVoice;
                 }
             };
-
             loadVoices();
             if (this.speechSynthesis.onvoiceschanged !== undefined) {
                 this.speechSynthesis.onvoiceschanged = loadVoices;
@@ -163,26 +152,20 @@ class UXSettingsManager {
 
     speak(text, priority = false) {
         if (!this.settings.voice.enabled || !this.speechSynthesis) return;
-
-        // Cancel any ongoing speech if priority
         if (priority) {
             this.speechSynthesis.cancel();
         }
-
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = this.settings.voice.rate;
         utterance.pitch = this.settings.voice.pitch;
         utterance.volume = this.settings.voice.volume;
-
         if (this.settings.voice.voice) {
             utterance.voice = this.settings.voice.voice;
         }
-
         this.speechSynthesis.speak(utterance);
     }
 
     initHaptics() {
-        // Check if vibration is supported
         if (!('vibrate' in navigator)) {
             console.log('Vibration not supported');
             this.settings.haptics.enabled = false;
@@ -192,7 +175,6 @@ class UXSettingsManager {
     vibrate(pattern) {
         if (!this.settings.haptics.enabled) return;
         if (!navigator.vibrate) return;
-
         let vibratePattern;
         if (typeof pattern === 'number') {
             vibratePattern = pattern;
@@ -207,16 +189,13 @@ class UXSettingsManager {
         } else {
             vibratePattern = pattern || 50;
         }
-
         try {
             navigator.vibrate(vibratePattern);
         } catch (e) { }
     }
 
     createSettingsUI() {
-        // Check if modal already exists
         if (document.getElementById('uxSettingsModal')) return;
-
         const settingsHTML = `
             <div id="uxSettingsModal" class="modal ux-settings-modal" style="display: none;">
                 <div class="modal-content">
@@ -280,7 +259,7 @@ class UXSettingsManager {
                             </div>
                         </div>
                         
-                        <!-- Tutorial -->
+                        <!-- Tutorial - Redirects to standalone page -->
                         <div class="settings-section">
                             <h3><i class="fas fa-graduation-cap"></i> Tutorial</h3>
                             <div class="setting-item">
@@ -322,17 +301,13 @@ class UXSettingsManager {
                 </div>
             </div>
         `;
-
-        // Add modal to body
         document.body.insertAdjacentHTML('beforeend', settingsHTML);
         this.addSettingsStyles();
         this.bindEvents();
     }
 
     addSettingsStyles() {
-        // Check if styles already added
         if (document.getElementById('ux-settings-styles')) return;
-
         const style = document.createElement('style');
         style.id = 'ux-settings-styles';
         style.textContent = `
@@ -487,29 +462,6 @@ class UXSettingsManager {
                 border-radius: 8px;
                 color: var(--text-primary, white);
             }
-            .tutorial-step {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: var(--bg-card, #1a1a2e);
-                padding: 24px;
-                border-radius: 20px;
-                max-width: 400px;
-                width: 90%;
-                z-index: 10001;
-                box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-                border: 2px solid var(--primary, #81ecff);
-                text-align: center;
-            }
-            .tutorial-step h3 {
-                color: var(--primary, #81ecff);
-                margin-bottom: 12px;
-            }
-            .tutorial-step p {
-                color: var(--text-secondary, #aaa);
-                line-height: 1.6;
-            }
             .calibration-overlay {
                 position: fixed;
                 top: 0;
@@ -548,20 +500,11 @@ class UXSettingsManager {
                 box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             }
             @keyframes slideInRight {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
             }
             @keyframes fadeOut {
-                to {
-                    opacity: 0;
-                    transform: translateY(-10px);
-                }
+                to { opacity: 0; transform: translateY(-10px); }
             }
         `;
         document.head.appendChild(style);
@@ -579,7 +522,6 @@ class UXSettingsManager {
                 }
             };
         }
-
         const volumeSlider = document.getElementById('volumeSlider');
         if (volumeSlider) {
             volumeSlider.oninput = (e) => {
@@ -601,7 +543,6 @@ class UXSettingsManager {
                 }
             };
         }
-
         const rateSlider = document.getElementById('rateSlider');
         if (rateSlider) {
             rateSlider.oninput = (e) => {
@@ -611,7 +552,6 @@ class UXSettingsManager {
                 this.saveSettings();
             };
         }
-
         const pitchSlider = document.getElementById('pitchSlider');
         if (pitchSlider) {
             pitchSlider.oninput = (e) => {
@@ -633,7 +573,6 @@ class UXSettingsManager {
                 }
             };
         }
-
         const intensitySlider = document.getElementById('intensitySlider');
         if (intensitySlider) {
             intensitySlider.oninput = (e) => {
@@ -655,12 +594,25 @@ class UXSettingsManager {
             btn.onclick = () => this.vibrate([50, 100, 50]);
         });
 
-        // Tutorial
+        // Tutorial - Redirect to standalone page
         const startTutorialBtn = document.getElementById('startTutorialBtn');
-        if (startTutorialBtn) startTutorialBtn.onclick = () => this.startTutorial();
-
+        if (startTutorialBtn) {
+            startTutorialBtn.onclick = () => {
+                window.location.href = '/tutorial';
+            };
+        }
         const resetTutorialBtn = document.getElementById('resetTutorialBtn');
-        if (resetTutorialBtn) resetTutorialBtn.onclick = () => this.resetTutorial();
+        if (resetTutorialBtn) {
+            resetTutorialBtn.onclick = () => {
+                if (confirm('Reset tutorial progress? You will need to complete the tutorial again.')) {
+                    this.settings.tutorial.completed = false;
+                    this.settings.tutorial.currentStep = 0;
+                    this.saveSettings();
+                    localStorage.removeItem('tutorial_completed');
+                    window.location.href = '/tutorial';
+                }
+            };
+        }
 
         // Calibration
         const handSizeSelect = document.getElementById('handSizeSelect');
@@ -670,7 +622,6 @@ class UXSettingsManager {
                 this.saveSettings();
             };
         }
-
         const sensitivitySlider = document.getElementById('sensitivitySlider');
         if (sensitivitySlider) {
             sensitivitySlider.oninput = (e) => {
@@ -680,17 +631,14 @@ class UXSettingsManager {
                 this.saveSettings();
             };
         }
-
         const calibrateBtn = document.getElementById('calibrateBtn');
         if (calibrateBtn) calibrateBtn.onclick = () => this.startCalibration();
 
         // Modal controls
         const closeModalBtn = document.querySelector('#uxSettingsModal .close-modal');
         if (closeModalBtn) closeModalBtn.onclick = () => this.closeModal();
-
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         if (closeSettingsBtn) closeSettingsBtn.onclick = () => this.closeModal();
-
         const saveSettingsBtn = document.getElementById('saveSettingsBtn');
         if (saveSettingsBtn) {
             saveSettingsBtn.onclick = () => {
@@ -713,27 +661,21 @@ class UXSettingsManager {
     }
 
     setupEventListeners() {
-        // Listen for gesture events from WebSocket
         if (window.socket) {
             window.socket.on('gesture_update', (data) => {
                 this.onGestureDetected(data);
             });
         }
-
-        // Add settings button to navbar
         this.addSettingsButton();
     }
 
     addSettingsButton() {
-        // Check if button already exists
         if (document.getElementById('uxSettingsNavBtn')) return;
-
         const settingsBtn = document.createElement('button');
         settingsBtn.id = 'uxSettingsNavBtn';
         settingsBtn.className = 'btn btn-outline';
         settingsBtn.innerHTML = '<i class="fas fa-sliders-h"></i> UX Settings';
         settingsBtn.onclick = () => this.openModal();
-
         const navLinks = document.querySelector('.nav-links');
         if (navLinks) {
             navLinks.appendChild(settingsBtn);
@@ -741,11 +683,8 @@ class UXSettingsManager {
     }
 
     onGestureDetected(data) {
-        // Play sound for gesture
         if (data.gesture && data.gesture !== 'UNKNOWN') {
             this.playSound('gesture');
-
-            // Voice feedback for important gestures
             if (this.settings.voice.enabled && data.confidence > 0.8) {
                 if (data.gesture === 'PINCH') {
                     this.speak('Click', true);
@@ -757,8 +696,6 @@ class UXSettingsManager {
                     this.speak('Scroll', true);
                 }
             }
-
-            // Haptic feedback
             if (data.gesture === 'PINCH') {
                 this.vibrate('click');
             } else if (data.gesture === 'PEACE') {
@@ -769,167 +706,13 @@ class UXSettingsManager {
         }
     }
 
-    startTutorial() {
-        this.settings.tutorial.completed = false;
-        this.settings.tutorial.currentStep = 0;
-        this.showTutorialStep();
-    }
-
-    showTutorialStep() {
-        const steps = [
-            {
-                title: 'Welcome to Gesture Control!',
-                content: 'Let me guide you through the basic gestures. Press Next to continue.',
-                action: null
-            },
-            {
-                title: 'Cursor Movement',
-                content: 'Raise your index finger (pointer) to move the cursor. Try moving your hand around.',
-                action: 'POINT',
-                practice: true
-            },
-            {
-                title: 'Left Click',
-                content: 'Pinch your thumb and index finger together to click. Try it now!',
-                action: 'PINCH',
-                practice: true
-            },
-            {
-                title: 'Right Click',
-                content: 'Make a peace sign (✌️) to right-click.',
-                action: 'PEACE',
-                practice: true
-            },
-            {
-                title: 'Scrolling',
-                content: 'Use three fingers up/down to scroll pages.',
-                action: 'THREE_FINGERS',
-                practice: true
-            },
-            {
-                title: 'Zoom In/Out',
-                content: 'Pinch with three fingers (thumb, index, middle) and move apart/closer to zoom.',
-                action: 'ZOOM',
-                practice: true
-            },
-            {
-                title: 'Enable/Disable',
-                content: 'Open palm (✋) to enable, fist (✊) to disable gesture control.',
-                action: null,
-                practice: false
-            },
-            {
-                title: 'Tutorial Complete!',
-                content: 'You\'re now ready to use gesture control! Practice makes perfect.',
-                action: null,
-                complete: true
-            }
-        ];
-
-        const step = steps[this.settings.tutorial.currentStep];
-        if (!step) {
-            this.completeTutorial();
-            return;
-        }
-
-        // Remove existing tutorial overlay
-        const existing = document.querySelector('.tutorial-step');
-        if (existing) existing.remove();
-
-        // Create tutorial step UI
-        const tutorialDiv = document.createElement('div');
-        tutorialDiv.className = 'tutorial-step';
-        tutorialDiv.innerHTML = `
-            <h3>${step.title}</h3>
-            <p>${step.content}</p>
-            <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
-                ${this.settings.tutorial.currentStep > 0 ? '<button class="btn btn-outline" id="prevTutorial">Previous</button>' : ''}
-                <button class="btn btn-primary" id="nextTutorial">${step.complete ? 'Finish' : 'Next'}</button>
-                <button class="btn btn-outline" id="skipTutorial">Skip</button>
-            </div>
-        `;
-
-        document.body.appendChild(tutorialDiv);
-
-        // Add event listeners
-        document.getElementById('nextTutorial')?.addEventListener('click', () => {
-            this.settings.tutorial.currentStep++;
-            tutorialDiv.remove();
-            this.showTutorialStep();
-        });
-
-        document.getElementById('prevTutorial')?.addEventListener('click', () => {
-            this.settings.tutorial.currentStep--;
-            tutorialDiv.remove();
-            this.showTutorialStep();
-        });
-
-        document.getElementById('skipTutorial')?.addEventListener('click', () => {
-            tutorialDiv.remove();
-            this.completeTutorial();
-        });
-
-        // Practice mode - listen for gesture
-        if (step.practice && step.action) {
-            this.waitForPractice(step.action, () => {
-                const p = tutorialDiv.querySelector('p');
-                if (p) p.innerHTML += '<br><br>✅ Great! You did it!';
-                setTimeout(() => {
-                    document.getElementById('nextTutorial')?.click();
-                }, 1500);
-            });
-        }
-
-        // Voice guidance
-        if (this.settings.voice.enabled) {
-            this.speak(step.content);
-        }
-    }
-
-    waitForPractice(expectedGesture, callback) {
-        const handler = (data) => {
-            if (data.gesture === expectedGesture) {
-                window.socket?.off('gesture_update', handler);
-                this.playSound('success');
-                this.vibrate('success');
-                callback();
-            }
-        };
-
-        window.socket?.on('gesture_update', handler);
-
-        // Timeout after 30 seconds
-        setTimeout(() => {
-            window.socket?.off('gesture_update', handler);
-        }, 30000);
-    }
-
-    completeTutorial() {
-        this.settings.tutorial.completed = true;
-        this.saveSettings();
-        this.playSound('success');
-        if (this.settings.voice.enabled) {
-            this.speak('Tutorial completed! Enjoy using gesture control.');
-        }
-        this.showNotification('🎉 Tutorial completed! You\'re ready to go!');
-    }
-
-    resetTutorial() {
-        this.settings.tutorial.completed = false;
-        this.settings.tutorial.currentStep = 0;
-        this.saveSettings();
-        this.showNotification('Tutorial reset. Click Start Tutorial to begin.');
-    }
-
     startCalibration() {
         this.showCalibrationOverlay();
     }
 
     showCalibrationOverlay() {
-        // Remove existing overlay
         const existing = document.querySelector('.calibration-overlay');
         if (existing) existing.remove();
-
         const overlay = document.createElement('div');
         overlay.className = 'calibration-overlay';
         overlay.innerHTML = `
@@ -943,33 +726,23 @@ class UXSettingsManager {
                 <button id="cancelCalibration" class="btn btn-outline" style="margin-top: 20px;">Cancel</button>
             </div>
         `;
-
         document.body.appendChild(overlay);
-
         let startTime = null;
         let calibrationInterval = null;
-
         const updateCalibration = () => {
-            if (!startTime) {
-                startTime = Date.now();
-            }
-
+            if (!startTime) startTime = Date.now();
             const elapsed = (Date.now() - startTime) / 1000;
             const progress = Math.min(100, (elapsed / 3) * 100);
-
             const fill = document.getElementById('calibrationFill');
             const status = document.getElementById('calibrationStatus');
             if (fill) fill.style.width = `${progress}%`;
             if (status) status.innerHTML = `Calibrating... ${Math.round(progress)}%`;
-
             if (elapsed >= 3) {
                 clearInterval(calibrationInterval);
                 this.completeCalibration(overlay);
             }
         };
-
         calibrationInterval = setInterval(updateCalibration, 100);
-
         const cancelBtn = document.getElementById('cancelCalibration');
         if (cancelBtn) {
             cancelBtn.onclick = () => {
@@ -983,7 +756,6 @@ class UXSettingsManager {
     completeCalibration(overlay) {
         this.settings.calibration.completed = true;
         this.saveSettings();
-
         overlay.innerHTML = `
             <div class="calibration-box">
                 <h3><i class="fas fa-check-circle"></i> Calibration Complete!</h3>
@@ -993,7 +765,6 @@ class UXSettingsManager {
                 <button id="closeCalibration" class="btn btn-primary" style="margin-top: 20px;">Start Using</button>
             </div>
         `;
-
         const closeBtn = document.getElementById('closeCalibration');
         if (closeBtn) {
             closeBtn.onclick = () => {
@@ -1004,7 +775,6 @@ class UXSettingsManager {
                 }
             };
         }
-
         this.playSound('success');
         this.vibrate('success');
     }
@@ -1020,55 +790,39 @@ class UXSettingsManager {
     }
 
     updateUI() {
-        // Update all UI elements to match current settings
         const soundToggle = document.getElementById('soundToggle');
         if (soundToggle) soundToggle.checked = this.settings.sound.enabled;
-
         const voiceToggle = document.getElementById('voiceToggle');
         if (voiceToggle) voiceToggle.checked = this.settings.voice.enabled;
-
         const hapticsToggle = document.getElementById('hapticsToggle');
         if (hapticsToggle) hapticsToggle.checked = this.settings.haptics.enabled;
-
         const volumeSlider = document.getElementById('volumeSlider');
         if (volumeSlider) volumeSlider.value = this.settings.sound.volume;
-
         const volumeValue = document.getElementById('volumeValue');
         if (volumeValue) volumeValue.innerText = Math.round(this.settings.sound.volume * 100) + '%';
-
         const rateSlider = document.getElementById('rateSlider');
         if (rateSlider) rateSlider.value = this.settings.voice.rate;
-
         const rateValue = document.getElementById('rateValue');
         if (rateValue) rateValue.innerText = this.settings.voice.rate;
-
         const pitchSlider = document.getElementById('pitchSlider');
         if (pitchSlider) pitchSlider.value = this.settings.voice.pitch;
-
         const pitchValue = document.getElementById('pitchValue');
         if (pitchValue) pitchValue.innerText = this.settings.voice.pitch;
-
         const intensitySlider = document.getElementById('intensitySlider');
         if (intensitySlider) intensitySlider.value = this.settings.haptics.intensity;
-
         const intensityValue = document.getElementById('intensityValue');
         if (intensityValue) intensityValue.innerText = Math.round(this.settings.haptics.intensity * 100) + '%';
-
         const handSizeSelect = document.getElementById('handSizeSelect');
         if (handSizeSelect) handSizeSelect.value = this.settings.calibration.handSize;
-
         const sensitivitySlider = document.getElementById('sensitivitySlider');
         if (sensitivitySlider) sensitivitySlider.value = this.settings.calibration.sensitivity;
-
         const sensitivityValue = document.getElementById('sensitivityValue');
         if (sensitivityValue) sensitivityValue.innerText = Math.round(this.settings.calibration.sensitivity * 100) + '%';
     }
 
     showNotification(message) {
-        // Remove existing notification
         const existing = document.querySelector('.notification');
         if (existing) existing.remove();
-
         const notification = document.createElement('div');
         notification.className = 'notification';
         notification.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
@@ -1084,9 +838,7 @@ class UXSettingsManager {
             setTimeout(() => {
                 this.showNotification('👋 Welcome! Click the UX Settings button to customize sound, voice, and haptics.');
             }, 1000);
-            setTimeout(() => {
-                this.startTutorial();
-            }, 3000);
+            // No auto-start tutorial - user must click button
         }
     }
 }

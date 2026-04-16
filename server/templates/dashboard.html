@@ -1242,8 +1242,7 @@
         }
 
         function openTutorial() {
-            showModal('tutorialOverlay');
-            showTutorialStep(1);
+            window.location.href = '/tutorial'; // Open the standalone tutorial page in a modal-like window
         }
 
         document.getElementById('startTutorialBtn').addEventListener('click', openTutorial);
