@@ -1,0 +1,8 @@
+# Gesture Control System - Client Dependencies
+opencv-python>=4.9.0
+mediapipe>=0.10.8
+pyautogui>=0.9.54
+python-socketio[client]>=5.11.0
+requests>=2.31.0
+numpy>=1.24.3
+websocket-client>=1.7.0
