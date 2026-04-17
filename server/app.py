@@ -81,12 +81,13 @@ except Exception as e:
 
 # Import and register blueprints
 try:
-    from routes import auth_bp, device_bp, control_bp, canvas_bp
+    from routes import auth_bp, device_bp, control_bp, canvas_bp, profile_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(device_bp, url_prefix='/api')
     app.register_blueprint(control_bp, url_prefix='/api')
     app.register_blueprint(canvas_bp, url_prefix='/api')
+    app.register_blueprint(profile_bp, url_prefix='/api/profile')
     
     logger.info("All blueprints registered successfully")
 except ImportError as e:
@@ -132,6 +133,12 @@ def register_page():
 def dashboard():
     """Main control dashboard"""
     return render_template('dashboard.html')
+
+@app.route('/profile')
+@login_required
+def profile():
+    """User profile page"""
+    return render_template('profile.html')
 
 @app.route('/tutorial')
 @login_required

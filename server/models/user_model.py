@@ -148,6 +148,13 @@ class UserModel:
             user.email = user_data['email']
             user.created_at = user_data['created_at']
             user.last_login = user_data['last_login']
+            user.full_name = user_data['full_name']
+            user.bio = user_data['bio']
+            user.location = user_data['location']
+            user.avatar = user_data['avatar']
+            user.theme = user_data['theme']
+            user.dominant_hand = user_data['dominant_hand']
+            user.gesture_sensitivity = user_data['gesture_sensitivity']
             return user, None
         return None, "User not found"
 
@@ -168,16 +175,93 @@ class UserModel:
         return False
     
     @staticmethod
-    def update_user_profile(user_id, email=None, password=None):
-        """Update user profile"""
+    def update_user_profile(user_id, email=None, password=None, full_name=None, bio=None, location=None, 
+                             avatar=None, theme=None, dominant_hand=None, gesture_sensitivity=None):
+        """Update user profile information"""
         db = get_db()
         
+        updates = []
+        params = []
+        
         if email:
-            db.execute('UPDATE users SET email = ? WHERE id = ?', (email, user_id))
+            updates.append('email = ?')
+            params.append(email)
         
         if password:
             password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-            db.execute('UPDATE users SET password_hash = ? WHERE id = ?', (password_hash, user_id))
+            updates.append('password_hash = ?')
+            params.append(password_hash)
+            
+        if full_name is not None:
+            updates.append('full_name = ?')
+            params.append(full_name)
+            
+        if bio is not None:
+            updates.append('bio = ?')
+            params.append(bio)
+            
+        if location is not None:
+            updates.append('location = ?')
+            params.append(location)
+            
+        if avatar is not None:
+            updates.append('avatar = ?')
+            params.append(avatar)
+            
+        if theme is not None:
+            updates.append('theme = ?')
+            params.append(theme)
+            
+        if dominant_hand is not None:
+            updates.append('dominant_hand = ?')
+            params.append(dominant_hand)
+            
+        if gesture_sensitivity is not None:
+            updates.append('gesture_sensitivity = ?')
+            params.append(gesture_sensitivity)
+            
+        if not updates:
+            return True, "No changes provided"
+            
+        query = f'UPDATE users SET {", ".join(updates)} WHERE id = ?'
+        params.append(user_id)
         
+        try:
+            db.execute(query, tuple(params))
+            db.commit()
+            return True, "Profile updated successfully"
+        except Exception as e:
+            return False, f"Update failed: {str(e)}"
+            
+    @staticmethod
+    def get_user_stats(user_id):
+        """Get user statistics"""
+        db = get_db()
+        stats = db.execute(
+            'SELECT total_gestures, total_games_played, total_play_time, average_accuracy FROM user_stats WHERE user_id = ?',
+            (user_id,)
+        ).fetchone()
+        
+        if stats:
+            return dict(stats)
+        
+        # Initialize stats if not present
+        db.execute('INSERT INTO user_stats (user_id) VALUES (?)', (user_id,))
         db.commit()
-        return True, "Profile updated successfully"
+        return {
+            'total_gestures': 0,
+            'total_games_played': 0,
+            'total_play_time': 0,
+            'average_accuracy': 0
+        }
+        
+    @staticmethod
+    def get_user_achievements(user_id):
+        """Get user achievements"""
+        db = get_db()
+        achievements = db.execute(
+            'SELECT achievement_id, unlocked_at FROM user_achievements WHERE user_id = ?',
+            (user_id,)
+        ).fetchall()
+        
+        return [dict(a) for a in achievements]

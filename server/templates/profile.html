@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KINETIC PULSE | User Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
+        }
+
+        .glass {
+            backdrop-filter: blur(24px);
+            background: rgba(35, 38, 44, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-card {
+            backdrop-filter: blur(24px);
+            background: rgba(35, 38, 44, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            background: rgba(35, 38, 44, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            background: linear-gradient(135deg, #81ecff, #d277ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+
+        .edit-icon {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .editable-field:hover .edit-icon {
+            opacity: 1;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+    </style>
+</head>
+
+<body class="text-white">
+
+    <!-- Navigation -->
+    <header
+        class="w-full sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/10 shadow-[0_0_30px_rgba(0,229,255,0.1)] flex justify-between items-center px-6 py-4">
+        <div class="flex items-center gap-8">
+            <a href="/" class="text-2xl font-bold tracking-tighter text-cyan-400 uppercase font-space">KINETIC_PULSE</a>
+            <nav class="hidden md:flex gap-6">
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors" href="/dashboard">Dashboard</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors" href="/games">Games</a>
+                <a class="text-cyan-400 font-space tracking-tight text-sm uppercase" href="/profile">Profile</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors" href="/air_canvas">Air Canvas</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors" href="/air_keyboard">Air Keyboard</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-4">
+            <span id="userName" class="text-cyan-400 text-sm hidden md:block"></span>
+            <button onclick="logout()" class="text-slate-400 hover:text-cyan-300 text-sm">Logout</button>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 max-w-6xl">
+
+        <!-- Profile Header -->
+        <div class="glass rounded-2xl p-6 mb-6 animate-fade-in">
+            <div class="flex flex-col md:flex-row gap-6 items-center md:items-start">
+                <!-- Avatar -->
+                <div class="relative group">
+                    <div class="w-28 h-28 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center text-5xl"
+                        id="avatar">
+                        👤
+                    </div>
+                    <button
+                        class="absolute bottom-0 right-0 bg-primary/80 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all"
+                        onclick="changeAvatar()">
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                    </button>
+                </div>
+
+                <!-- User Info -->
+                <div class="flex-1 text-center md:text-left">
+                    <div class="flex items-center gap-3 flex-wrap justify-center md:justify-start">
+                        <h1 id="displayName" class="text-2xl md:text-3xl font-space font-bold">Loading...</h1>
+                        <span class="px-3 py-1 bg-primary/20 text-primary text-xs rounded-full">Pro Member</span>
+                    </div>
+                    <p id="userBio" class="text-slate-400 mt-2 max-w-md">Gesture control enthusiast | Tech lover</p>
+                    <div class="flex gap-4 mt-3 justify-center md:justify-start">
+                        <div class="flex items-center gap-1 text-sm text-slate-500">
+                            <span class="material-symbols-outlined text-sm">calendar_today</span>
+                            <span>Joined: <span id="joinDate">Loading...</span></span>
+                        </div>
+                        <div class="flex items-center gap-1 text-sm text-slate-500">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            <span>Last active: <span id="lastActive">Just now</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Profile Button -->
+                <button onclick="openEditModal()"
+                    class="px-5 py-2.5 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">edit</span>
+                    Edit Profile
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- LEFT COLUMN - Personal & Security -->
+            <div class="lg:col-span-1 space-y-6">
+
+                <!-- Personal Information Card -->
+                <div class="glass-card rounded-2xl p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-space font-bold text-white uppercase tracking-wider text-sm">
+                            <span class="material-symbols-outlined text-primary align-middle mr-2">person</span>
+                            Personal Info
+                        </h3>
+                        <button onclick="openEditModal()" class="text-xs text-primary hover:text-cyan-300">Edit</button>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="editable-field">
+                            <label class="text-slate-500 text-xs uppercase tracking-wider">Username</label>
+                            <p id="username" class="text-white font-mono text-sm">admin</p>
+                        </div>
+                        <div class="editable-field">
+                            <label class="text-slate-500 text-xs uppercase tracking-wider">Email</label>
+                            <p id="email" class="text-white text-sm">admin@gesturecontrol.com</p>
+                        </div>
+                        <div class="editable-field">
+                            <label class="text-slate-500 text-xs uppercase tracking-wider">Full Name</label>
+                            <p id="fullname" class="text-white text-sm">Admin User</p>
+                        </div>
+                        <div class="editable-field">
+                            <label class="text-slate-500 text-xs uppercase tracking-wider">Location</label>
+                            <p id="location" class="text-white text-sm">India</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Card -->
+                <div class="glass-card rounded-2xl p-5">
+                    <h3 class="font-space font-bold text-white uppercase tracking-wider text-sm mb-4">
+                        <span class="material-symbols-outlined text-secondary align-middle mr-2">security</span>
+                        Security
+                    </h3>
+                    <div class="space-y-4">
+                        <button onclick="openChangePasswordModal()"
+                            class="w-full flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-all">
+                            <span class="text-sm">Change Password</span>
+                            <span class="material-symbols-outlined text-sm text-slate-400">chevron_right</span>
+                        </button>
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <div>
+                                <span class="text-sm">Two-Factor Authentication</span>
+                                <p class="text-xs text-slate-500">Add extra security</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="twoFactorToggle" class="sr-only peer">
+                                <div
+                                    class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
+                                </div>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="text-slate-500 text-xs uppercase tracking-wider block mb-2">Active
+                                Sessions</label>
+                            <div id="activeSessions" class="space-y-2">
+                                <div class="flex items-center justify-between text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-xs text-green-400">circle</span>
+                                        <span>Chrome on Windows</span>
+                                    </div>
+                                    <span class="text-xs text-slate-500">Current session</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferences Card -->
+                <div class="glass-card rounded-2xl p-5">
+                    <h3 class="font-space font-bold text-white uppercase tracking-wider text-sm mb-4">
+                        <span class="material-symbols-outlined text-tertiary align-middle mr-2">settings</span>
+                        Preferences
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-slate-500 text-xs uppercase tracking-wider block mb-2">Dominant
+                                Hand</label>
+                            <select id="dominantHand"
+                                class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm">
+                                <option value="right">Right Handed</option>
+                                <option value="left">Left Handed</option>
+                                <option value="ambidextrous">Ambidextrous</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-slate-500 text-xs uppercase tracking-wider block mb-2">Gesture
+                                Sensitivity</label>
+                            <input type="range" id="sensitivity" min="0" max="100" value="70" class="w-full">
+                            <div class="flex justify-between text-xs text-slate-500">
+                                <span>Low</span>
+                                <span id="sensitivityVal">70%</span>
+                                <span>High</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-slate-500 text-xs uppercase tracking-wider block mb-2">Theme</label>
+                            <div class="flex gap-2">
+                                <button onclick="setTheme('dark')"
+                                    class="flex-1 py-2 px-3 rounded-lg bg-cyan-500/20 border border-cyan-500/50 text-sm">Dark</button>
+                                <button onclick="setTheme('light')"
+                                    class="flex-1 py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-sm">Light</button>
+                                <button onclick="setTheme('system')"
+                                    class="flex-1 py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-sm">System</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN - Stats & Analytics -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="glass-card rounded-2xl p-4 text-center">
+                        <span class="material-symbols-outlined text-primary text-2xl">gesture</span>
+                        <div class="text-2xl font-bold stat-value" id="totalGestures">0</div>
+                        <div class="text-xs text-slate-500 uppercase tracking-wider">Total Gestures</div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 text-center">
+                        <span class="material-symbols-outlined text-secondary text-2xl">sports_esports</span>
+                        <div class="text-2xl font-bold stat-value" id="totalGames">0</div>
+                        <div class="text-xs text-slate-500 uppercase tracking-wider">Games Played</div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 text-center">
+                        <span class="material-symbols-outlined text-tertiary text-2xl">target</span>
+                        <div class="text-2xl font-bold stat-value" id="accuracy">0%</div>
+                        <div class="text-xs text-slate-500 uppercase tracking-wider">Accuracy Rate</div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 text-center">
+                        <span class="material-symbols-outlined text-primary text-2xl">schedule</span>
+                        <div class="text-2xl font-bold stat-value" id="playTime">0h</div>
+                        <div class="text-xs text-slate-500 uppercase tracking-wider">Play Time</div>
+                    </div>
+                </div>
+
+                <!-- Gesture Analytics Chart -->
+                <div class="glass-card rounded-2xl p-5">
+                    <h3 class="font-space font-bold text-white uppercase tracking-wider text-sm mb-4">
+                        <span class="material-symbols-outlined text-primary align-middle mr-2">show_chart</span>
+                        Gesture Analytics (Last 7 Days)
+                    </h3>
+                    <canvas id="gestureChart" height="200"></canvas>
+                </div>
+
+                <!-- High Scores -->
+                <div class="glass-card rounded-2xl p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-space font-bold text-white uppercase tracking-wider text-sm">
+                            <span class="material-symbols-outlined text-secondary align-middle mr-2">leaderboard</span>
+                            High Scores
+                        </h3>
+                        <button onclick="viewAllScores()" class="text-xs text-primary">View All →</button>
+                    </div>
+                    <div class="space-y-2" id="highScores">
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🦏</span>
+                                <span class="text-sm">Rhino Dino</span>
+                            </div>
+                            <span class="text-primary font-bold" id="rhinoScore">0</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🦖</span>
+                                <span class="text-sm">Dino Runner</span>
+                            </div>
+                            <span class="text-primary font-bold" id="dinoScore">0</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🐦</span>
+                                <span class="text-sm">Flappy Pulse</span>
+                            </div>
+                            <span class="text-primary font-bold" id="flappyScore">0</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🚀</span>
+                                <span class="text-sm">Space Shooter</span>
+                            </div>
+                            <span class="text-primary font-bold" id="spaceScore">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Achievements / Badges -->
+                <div class="glass-card rounded-2xl p-5">
+                    <h3 class="font-space font-bold text-white uppercase tracking-wider text-sm mb-4">
+                        <span class="material-symbols-outlined text-tertiary align-middle mr-2">military_tech</span>
+                        Achievements
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="achievements">
+                        <div class="text-center p-3 bg-white/5 rounded-lg opacity-50">
+                            <div class="text-3xl mb-1">🎯</div>
+                            <div class="text-xs">First Blood</div>
+                            <div class="text-[10px] text-slate-500">Play first game</div>
+                        </div>
+                        <div class="text-center p-3 bg-white/5 rounded-lg opacity-50">
+                            <div class="text-3xl mb-1">🏆</div>
+                            <div class="text-xs">100 Gestures</div>
+                            <div class="text-[10px] text-slate-500">100 gestures made</div>
+                        </div>
+                        <div class="text-center p-3 bg-white/5 rounded-lg opacity-50">
+                            <div class="text-3xl mb-1">⭐</div>
+                            <div class="text-xs">Perfect Score</div>
+                            <div class="text-[10px] text-slate-500">100% accuracy</div>
+                        </div>
+                        <div class="text-center p-3 bg-white/5 rounded-lg opacity-50">
+                            <div class="text-3xl mb-1">🎮</div>
+                            <div class="text-xs">Game Master</div>
+                            <div class="text-[10px] text-slate-500">Play all games</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connected Devices -->
+                <div class="glass-card rounded-2xl p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-space font-bold text-white uppercase tracking-wider text-sm">
+                            <span class="material-symbols-outlined text-primary align-middle mr-2">devices</span>
+                            Connected Devices
+                        </h3>
+                        <button onclick="addDevice()" class="text-xs text-primary">+ Add Device</button>
+                    </div>
+                    <div id="devicesList" class="space-y-2">
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-slate-400">laptop</span>
+                                <div>
+                                    <div class="text-sm font-medium">Main Laptop</div>
+                                    <div class="text-xs text-slate-500">Last active: Today</div>
+                                </div>
+                            </div>
+                            <span class="text-xs text-green-400">● Online</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit Profile Modal -->
+    <div id="editModal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="glass rounded-2xl p-6 max-w-md w-full mx-4 animate-fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-space font-bold">Edit Profile</h2>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-slate-400 text-sm block mb-1">Full Name</label>
+                    <input type="text" id="editFullname"
+                        class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white">
+                </div>
+                <div>
+                    <label class="text-slate-400 text-sm block mb-1">Email</label>
+                    <input type="email" id="editEmail"
+                        class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white">
+                </div>
+                <div>
+                    <label class="text-slate-400 text-sm block mb-1">Bio</label>
+                    <textarea id="editBio" rows="3"
+                        class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white"></textarea>
+                </div>
+                <div>
+                    <label class="text-slate-400 text-sm block mb-1">Location</label>
+                    <input type="text" id="editLocation"
+                        class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white">
+                </div>
+                <button onclick="saveProfile()"
+                    class="w-full py-3 bg-primary text-on-primary rounded-lg font-semibold mt-4">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="passwordModal"
+        class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="glass rounded-2xl p-6 max-w-md w-full mx-4 animate-fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-space font-bold">Change Password</h2>
+                <button onclick="closePasswordModal()" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-slate-400 text-sm block mb-1">Current Password</label>
+                    <input type="password" id="currentPassword"
+                        class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white">
+                </div>
+                <div>
+                    <label class="text-slate-400 text-sm block mb-1">New Password</label>
+                    <input type="password" id="newPassword"
+                        class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white">
+                </div>
+                <div>
+                    <label class="text-slate-400 text-sm block mb-1">Confirm Password</label>
+                    <input type="password" id="confirmPassword"
+                        class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white">
+                </div>
+                <button onclick="changePassword()"
+                    class="w-full py-3 bg-primary text-on-primary rounded-lg font-semibold mt-4">Update
+                    Password</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+
+        function checkAuth() {
+            if (!token) {
+                window.location.href = '/login';
+                return false;
+            }
+            return true;
+        }
+
+        if (!checkAuth()) return;
+
+        // Load user data
+        async function loadUserData() {
+            try {
+                const res = await fetch('/api/auth/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const user = (await res.json()).user;
+
+                document.getElementById('displayName').textContent = user.username;
+                document.getElementById('username').textContent = user.username;
+                document.getElementById('email').textContent = user.email;
+                document.getElementById('fullname').textContent = user.full_name || user.username;
+                document.getElementById('userBio').textContent = user.bio || 'Gesture control enthusiast';
+                document.getElementById('location').textContent = user.location || 'India';
+                document.getElementById('joinDate').textContent = new Date(user.created_at).toLocaleDateString();
+                document.getElementById('userName').textContent = `Welcome, ${user.username}`;
+
+                // Load stats
+                await loadStats();
+                await loadHighScores();
+                await loadDevices();
+                initChart();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/profile/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const stats = data.stats;
+                    document.getElementById('totalGestures').textContent = stats.total_gestures.toLocaleString();
+                    document.getElementById('totalGames').textContent = stats.total_games_played.toLocaleString();
+                    document.getElementById('accuracy').textContent = stats.average_accuracy + '%';
+
+                    const hours = Math.floor(stats.total_play_time / 3600);
+                    document.getElementById('playTime').textContent = hours + 'h';
+                }
+            } catch (e) {
+                console.error("Stats fail", e);
+            }
+        }
+
+        async function loadHighScores() {
+            document.getElementById('rhinoScore').textContent = localStorage.getItem('rhinoBest') || '0';
+            document.getElementById('dinoScore').textContent = localStorage.getItem('dinoBest') || '0';
+            document.getElementById('flappyScore').textContent = localStorage.getItem('flappyBest') || '0';
+            document.getElementById('spaceScore').textContent = localStorage.getItem('spaceBest') || '0';
+        }
+
+        async function loadDevices() {
+            try {
+                const res = await fetch('/api/devices', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success && data.devices) {
+                    const container = document.getElementById('devicesList');
+                    container.innerHTML = data.devices.map(d => `
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-slate-400">${d.device_type === 'laptop' ? 'laptop' : 'desktop_windows'}</span>
+                                <div>
+                                    <div class="text-sm font-medium">${escapeHtml(d.device_name)}</div>
+                                    <div class="text-xs text-slate-500">Last active: ${new Date(d.last_seen || Date.now()).toLocaleDateString()}</div>
+                                </div>
+                            </div>
+                            <span class="text-xs ${d.status === 'online' ? 'text-green-400' : 'text-slate-500'}">● ${d.status || 'offline'}</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) { }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('gestureChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Gestures',
+                        data: [65, 89, 120, 95, 150, 200, 180],
+                        borderColor: '#81ecff',
+                        backgroundColor: 'rgba(129, 236, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { labels: { color: '#fff' } }
+                    },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#fff' } },
+                        x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#fff' } }
+                    }
+                }
+            });
+        }
+
+        // Modal functions
+        function openEditModal() {
+            document.getElementById('editFullname').value = document.getElementById('fullname').textContent;
+            document.getElementById('editEmail').value = document.getElementById('email').textContent;
+            document.getElementById('editBio').value = document.getElementById('userBio').textContent;
+            document.getElementById('editLocation').value = document.getElementById('location').textContent;
+            document.getElementById('editModal').classList.remove('hidden');
+            document.getElementById('editModal').classList.add('flex');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+            document.getElementById('editModal').classList.remove('flex');
+        }
+
+        function openChangePasswordModal() {
+            document.getElementById('passwordModal').classList.remove('hidden');
+            document.getElementById('passwordModal').classList.add('flex');
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.add('hidden');
+            document.getElementById('passwordModal').classList.remove('flex');
+        }
+
+        async function saveProfile() {
+            const data = {
+                full_name: document.getElementById('editFullname').value,
+                email: document.getElementById('editEmail').value,
+                bio: document.getElementById('editBio').value,
+                location: document.getElementById('editLocation').value
+            };
+
+            try {
+                const res = await fetch('/api/profile/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('Profile updated successfully!');
+                    loadUserData();
+                    closeEditModal();
+                } else {
+                    showToast(result.error || 'Update failed', 'error');
+                }
+            } catch (e) {
+                showToast('Network error', 'error');
+            }
+        }
+
+        async function changePassword() {
+            const currentPass = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+
+            if (newPass !== confirmPass) {
+                showToast('Passwords do not match!', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/profile/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ password: newPass })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('Password updated successfully!');
+                    closePasswordModal();
+                } else {
+                    showToast(result.error || 'Update failed', 'error');
+                }
+            } catch (e) {
+                showToast('Network error', 'error');
+            }
+        }
+
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else if (theme === 'light') {
+                document.documentElement.classList.remove('dark');
+            }
+            localStorage.setItem('theme', theme);
+            showToast(`${theme} theme applied`);
+
+            // Persist to server
+            fetch('/api/profile/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ theme })
+            });
+        }
+
+        function addDevice() {
+            window.location.href = '/dashboard';
+        }
+
+        function changeAvatar() {
+            showToast('Avatar upload feature coming soon!');
+        }
+
+        function viewAllScores() {
+            window.location.href = '/games';
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg text-sm z-[300] ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white shadow-lg animate-fade-in`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Sensitivity slider
+        const sensitivity = document.getElementById('sensitivity');
+        const sensitivityVal = document.getElementById('sensitivityVal');
+        sensitivity.addEventListener('input', () => {
+            sensitivityVal.textContent = sensitivity.value + '%';
+        });
+
+        sensitivity.addEventListener('change', () => {
+            // Persist to server
+            fetch('/api/profile/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ gesture_sensitivity: parseInt(sensitivity.value) })
+            });
+        });
+
+        // Dominant hand
+        document.getElementById('dominantHand').addEventListener('change', (e) => {
+            fetch('/api/profile/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ dominant_hand: e.target.value })
+            });
+        });
+
+        // Load everything
+        loadUserData();
+    </script>
+</body>
+
+</html>

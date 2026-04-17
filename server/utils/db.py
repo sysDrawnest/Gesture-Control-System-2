@@ -30,7 +30,16 @@ def init_db():
             password_hash TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             last_login TIMESTAMP,
-            is_active BOOLEAN DEFAULT 1
+            is_active BOOLEAN DEFAULT 1,
+            full_name TEXT,
+            bio TEXT,
+            location TEXT,
+            avatar TEXT,
+            preferences TEXT, -- JSON field
+            two_factor_enabled BOOLEAN DEFAULT 0,
+            theme TEXT DEFAULT 'dark',
+            dominant_hand TEXT DEFAULT 'right',
+            gesture_sensitivity INTEGER DEFAULT 70
         )
     ''')
     
@@ -75,6 +84,53 @@ def init_db():
             is_revoked BOOLEAN DEFAULT 0,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
+    ''')
+    
+    # Create user_stats table
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS user_stats (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            total_gestures INTEGER DEFAULT 0,
+            total_games_played INTEGER DEFAULT 0,
+            total_play_time INTEGER DEFAULT 0, -- seconds
+            average_accuracy REAL DEFAULT 0,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ''')
+    
+    # Create user_achievements table
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS user_achievements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            achievement_id TEXT NOT NULL,
+            unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ''')
+    
+    # Run ALTER TABLE commands for existing users who already have the table
+    # Standard SQLite doesn't support 'IF NOT EXISTS' for columns, so we check existence
+    columns = [
+        ('full_name', 'TEXT'),
+        ('bio', 'TEXT'),
+        ('location', 'TEXT'),
+        ('avatar', 'TEXT'),
+        ('preferences', 'TEXT'),
+        ('two_factor_enabled', 'BOOLEAN DEFAULT 0'),
+        ('theme', 'TEXT DEFAULT "dark"'),
+        ('dominant_hand', 'TEXT DEFAULT "right"'),
+        ('gesture_sensitivity', 'INTEGER DEFAULT 70')
+    ]
+    
+    for col_name, col_type in columns:
+        try:
+            db.execute(f'ALTER TABLE users ADD COLUMN {col_name} {col_type}')
+        except sqlite3.OperationalError:
+            # Column already exists
+            pass
     ''')
     
     db.commit()
