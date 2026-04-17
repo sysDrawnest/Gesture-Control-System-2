@@ -131,7 +131,6 @@ def init_db():
         except sqlite3.OperationalError:
             # Column already exists
             pass
-    ''')
     
     db.commit()
     
