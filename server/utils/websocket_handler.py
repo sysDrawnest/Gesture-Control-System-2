@@ -464,7 +464,7 @@ def register_socket_events(socketio):
         except Exception as e:
             logger.error(f"Gesture update broadcast error: {e}")
 
-    # ------------------------------------------------------------------
+       # ------------------------------------------------------------------
     # Air Canvas Events
     # ------------------------------------------------------------------
 
@@ -480,33 +480,97 @@ def register_socket_events(socketio):
         connected_clients[sid]['device_name'] = device_name
         connected_clients[sid]['is_drawing'] = True
         
-        print(f"[Canvas] Drawing client registered: {device_name}")
+        print(f"[Canvas] Drawing client registered: {device_name} (sid={sid})")
         join_room('drawing_room')
+        
+        # Log current rooms for debugging
+        print(f"[Canvas] Client joined drawing_room. Total clients in room: {len(socketio.server.manager.rooms.get('/drawing_room', {}))}")
+        
         emit('drawing_ready', {'message': 'Ready to draw', 'device': device_name})
 
     @socketio.on('drawing_stroke')
     def handle_drawing_stroke(data):
-        """Handle drawing stroke."""
-        emit('drawing_data', {
+        """Handle drawing stroke from gesture client and broadcast to web canvas."""
+        sid = request.sid
+        print(f"[Canvas] Drawing stroke received from {sid}: ({data.get('x1')},{data.get('y1')}) -> ({data.get('x2')},{data.get('y2')})")
+        print(f"[Canvas] Color: {data.get('color')}, Size: {data.get('size')}")
+        
+        # Prepare drawing data
+        drawing_data = {
             'type': 'draw',
-            'x1': data.get('x1'), 'y1': data.get('y1'),
-            'x2': data.get('x2'), 'y2': data.get('y2'),
+            'x1': data.get('x1'), 
+            'y1': data.get('y1'),
+            'x2': data.get('x2'), 
+            'y2': data.get('y2'),
             'color': data.get('color', '#ff4444'),
             'size': data.get('size', 5),
             'timestamp': time.time()
-        }, room='drawing_room', broadcast=True, include_self=False)
+        }
+        
+        # Broadcast to all clients in drawing_room
+        try:
+            # Emit to drawing_room
+            socketio.emit('drawing_data', drawing_data, room='drawing_room', broadcast=True, include_self=False)
+            print(f"[Canvas] Drawing data broadcast to drawing_room")
+        except Exception as e:
+            print(f"[Canvas] Error broadcasting drawing: {e}")
+        
+        # Also broadcast to dashboard_room for real-time updates
+        try:
+            socketio.emit('drawing_update', drawing_data, room='dashboard_room', broadcast=True)
+        except Exception as e:
+            print(f"[Canvas] Error broadcasting to dashboard: {e}")
 
     @socketio.on('drawing_clear')
     def handle_drawing_clear(data):
-        """Handle clear canvas."""
+        """Handle clear canvas command."""
         print(f"[Canvas] Clear canvas requested")
-        emit('drawing_data', {'type': 'clear', 'timestamp': time.time()}, room='drawing_room', broadcast=True)
+        try:
+            socketio.emit('drawing_data', {
+                'type': 'clear', 
+                'timestamp': time.time()
+            }, room='drawing_room', broadcast=True, include_self=False)
+            print(f"[Canvas] Clear broadcast to drawing_room")
+        except Exception as e:
+            print(f"[Canvas] Error broadcasting clear: {e}")
 
     @socketio.on('drawing_undo')
     def handle_drawing_undo(data):
-        """Handle undo."""
+        """Handle undo command."""
         print(f"[Canvas] Undo requested")
-        emit('drawing_data', {'type': 'undo', 'timestamp': time.time()}, room='drawing_room', broadcast=True)
+        try:
+            socketio.emit('drawing_data', {
+                'type': 'undo', 
+                'timestamp': time.time()
+            }, room='drawing_room', broadcast=True, include_self=False)
+            print(f"[Canvas] Undo broadcast to drawing_room")
+        except Exception as e:
+            print(f"[Canvas] Error broadcasting undo: {e}")
+
+    @socketio.on('drawing_toggle')
+    def handle_drawing_toggle(data):
+        """Handle toggle drawing mode."""
+        enabled = data.get('enabled', True)
+        print(f"[Canvas] Drawing mode toggled: {'ON' if enabled else 'OFF'}")
+        try:
+            socketio.emit('drawing_mode_toggle', {
+                'enabled': enabled,
+                'timestamp': time.time()
+            }, room='drawing_room', broadcast=True)
+        except Exception as e:
+            print(f"[Canvas] Error broadcasting toggle: {e}")
+
+    @socketio.on('share_drawing')
+    def handle_share_drawing(data):
+        """Create a shared drawing session."""
+        import uuid
+        room_id = data.get('room_id', str(uuid.uuid4())[:8])
+        join_room(room_id)
+        print(f"[Canvas] Shared drawing session created: {room_id}")
+        emit('drawing_shared', {
+            'room_id': room_id,
+            'message': 'Drawing session shared'
+        })
 
     # ------------------------------------------------------------------
     # Air Keyboard Events
