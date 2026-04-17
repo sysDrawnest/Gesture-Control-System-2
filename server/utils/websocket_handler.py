@@ -528,14 +528,14 @@ def register_socket_events(socketio):
         # Broadcast to all clients in drawing_room
         try:
             # Emit to drawing_room
-            socketio.emit('drawing_data', drawing_data, room='drawing_room', broadcast=True, include_self=False)
+            socketio.emit('drawing_data', drawing_data, room='drawing_room', include_self=False)
             print(f"[Canvas] Drawing data broadcast to drawing_room")
         except Exception as e:
             print(f"[Canvas] Error broadcasting drawing: {e}")
         
         # Also broadcast to dashboard_room for real-time updates
         try:
-            socketio.emit('drawing_update', drawing_data, room='dashboard_room', broadcast=True)
+            socketio.emit('drawing_update', drawing_data, room='dashboard_room', include_self=False)
         except Exception as e:
             print(f"[Canvas] Error broadcasting to dashboard: {e}")
 
@@ -547,7 +547,7 @@ def register_socket_events(socketio):
             socketio.emit('drawing_data', {
                 'type': 'clear', 
                 'timestamp': time.time()
-            }, room='drawing_room', broadcast=True, include_self=False)
+            }, room='drawing_room', include_self=False)
             print(f"[Canvas] Clear broadcast to drawing_room")
         except Exception as e:
             print(f"[Canvas] Error broadcasting clear: {e}")
@@ -560,7 +560,7 @@ def register_socket_events(socketio):
             socketio.emit('drawing_data', {
                 'type': 'undo', 
                 'timestamp': time.time()
-            }, room='drawing_room', broadcast=True, include_self=False)
+            }, room='drawing_room', include_self=False)
             print(f"[Canvas] Undo broadcast to drawing_room")
         except Exception as e:
             print(f"[Canvas] Error broadcasting undo: {e}")
@@ -574,7 +574,7 @@ def register_socket_events(socketio):
             socketio.emit('drawing_mode_toggle', {
                 'enabled': enabled,
                 'timestamp': time.time()
-            }, room='drawing_room', broadcast=True)
+            }, room='drawing_room')
         except Exception as e:
             print(f"[Canvas] Error broadcasting toggle: {e}")
 
@@ -618,7 +618,7 @@ def register_socket_events(socketio):
             'suggestions': data.get('suggestions', []),
             'status_msg': data.get('status_msg', ''),
             'timestamp': time.time()
-        }, room='keyboard_room', broadcast=True, include_self=False)
+        }, room='keyboard_room', include_self=False)
 
     # ------------------------------------------------------------------
     # Utility Events
