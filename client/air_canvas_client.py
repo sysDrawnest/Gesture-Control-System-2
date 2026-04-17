@@ -31,11 +31,15 @@ def login_and_get_token():
         )
         if response.status_code == 200:
             data = response.json()
+            # Handle both response formats
             if data.get('success'):
-                token = data['data']['token']
+                token = data.get('token') or data.get('data', {}).get('token')
                 print(f"[OK] Logged in as {USERNAME}")
                 return token
-        print(f"[FAIL] Login failed")
+            elif data.get('token'):
+                print(f"[OK] Logged in as {USERNAME}")
+                return data.get('token')
+        print(f"[FAIL] Login failed: {response.status_code}")
         return None
     except Exception as e:
         print(f"[ERROR] Login error: {e}")
@@ -68,12 +72,6 @@ def disconnect():
     connected = False
     print("[WARN] WebSocket disconnected - Attempting to reconnect...")
 
-@sio.on("*")
-def catch_all(event, data):
-    """Log all incoming events for debugging"""
-    if event not in ['drawing_ready']: # Filter noisy events
-        pass
-
 @sio.event
 def connect_error(data):
     print(f"[ERROR] Connection error: {data}")
@@ -81,10 +79,6 @@ def connect_error(data):
 @sio.event
 def drawing_ready(data):
     print(f"[OK] {data.get('message')} - {data.get('device')}")
-
-@sio.event
-def drawing_shared(data):
-    print(f"[OK] Drawing session shared! Room: {data.get('room_id')}")
 
 @sio.event
 def error(data):
@@ -131,13 +125,12 @@ drawing_mode = True  # Start with drawing mode ON
 current_color = "#ff4444"
 current_size = 5
 
-# --- Fix: Gesture Persistence & Throttling ---
+# Gesture detection
 gesture_counters = {"TOGGLE": 0, "CLEAR": 0, "UNDO": 0}
-GESTURE_CONFIRM_FRAMES = 8  # Must see gesture for 8 frames
+GESTURE_CONFIRM_FRAMES = 8
 last_emit_time = 0
-MIN_MOVE_DISTANCE = 2       # Only send if moved > 2 pixels
-EMIT_THROTTLE = 0.015       # Max ~60 events per second
-# ---------------------------------------------
+MIN_MOVE_DISTANCE = 2
+EMIT_THROTTLE = 0.015
 
 # Color mapping for different fingers
 FINGER_COLORS = {
@@ -148,7 +141,6 @@ FINGER_COLORS = {
     'thumb': '#aa44ff'    # Purple
 }
 
-# Size mapping based on hand distance
 MIN_SIZE = 3
 MAX_SIZE = 25
 
@@ -156,12 +148,9 @@ def get_active_finger(hand_landmarks):
     """Determine which finger is extended"""
     fingers = []
     
-    # Thumb (special check based on hand orientation)
-    wrist = hand_landmarks.landmark[0]
+    # Thumb (check based on x position for right hand)
     thumb_tip = hand_landmarks.landmark[4]
     thumb_ip = hand_landmarks.landmark[3]
-    
-    # For right hand (mirrored in camera)
     if thumb_tip.x < thumb_ip.x:
         fingers.append('thumb')
     
@@ -188,7 +177,6 @@ def calculate_brush_size(hand_landmarks):
     wrist = hand_landmarks.landmark[0]
     middle_tip = hand_landmarks.landmark[12]
     distance = math.hypot(wrist.x - middle_tip.x, wrist.y - middle_tip.y)
-    # Closer hand = smaller brush, farther = larger brush
     size = int(distance * 30)
     return max(MIN_SIZE, min(MAX_SIZE, size))
 
@@ -201,7 +189,6 @@ def detect_special_gestures(hand_landmarks):
         else:
             fingers_up.append(False)
     
-    # Count fingers up
     count = sum(fingers_up)
     
     # Fist (0 fingers) - Clear canvas
@@ -212,7 +199,7 @@ def detect_special_gestures(hand_landmarks):
     if count == 4:
         return "UNDO"
     
-    # Peace sign (index + middle only) - Toggle drawing mode
+    # Peace sign (index + middle only)
     if fingers_up[0] and fingers_up[1] and not fingers_up[2] and not fingers_up[3]:
         return "TOGGLE"
     
@@ -238,10 +225,11 @@ print("")
 print("Press 'q' to quit")
 print("="*60 + "\n")
 
-frame_count = 0
 last_toggle_time = 0
 last_clear_time = 0
 last_undo_time = 0
+last_gesture_sent_time = 0
+GESTURE_SEND_INTERVAL = 0.5  # Send gesture updates every 0.5 seconds
 
 while True:
     ret, frame = cap.read()
@@ -265,26 +253,49 @@ while True:
             canvas_x = int(index_tip.x * CANVAS_WIDTH)
             canvas_y = int(index_tip.y * CANVAS_HEIGHT)
             
-            # Clamp coordinates
             canvas_x = max(0, min(canvas_x, CANVAS_WIDTH - 1))
             canvas_y = max(0, min(canvas_y, CANVAS_HEIGHT - 1))
             
-            # --- FIX: Call the detect_special_gestures function ---
             active_gesture = detect_special_gestures(hand_landmarks)
-            # ----------------------------------------------------
             
             # Reset other counters
             for g in gesture_counters:
                 if g != active_gesture:
                     gesture_counters[g] = 0
             
-            # Increment active gesture counter
             if active_gesture in gesture_counters:
                 gesture_counters[active_gesture] += 1
             
-            # Process special gestures only after confirmation
+            # Send gesture update to server for UI feedback
+            if current_time - last_gesture_sent_time > GESTURE_SEND_INTERVAL:
+                active_fingers = get_active_finger(hand_landmarks)
+                if active_fingers:
+                    finger = active_fingers[0]
+                    gesture_name = finger
+                    if active_gesture == "TOGGLE":
+                        gesture_name = "peace"
+                    elif active_gesture == "CLEAR":
+                        gesture_name = "fist"
+                    elif active_gesture == "UNDO":
+                        gesture_name = "open_palm"
+                    
+                    if connected:
+                        try:
+                            sio.emit('gesture_update', {
+                                'gesture': gesture_name,
+                                'confidence': 0.95,
+                                'type': 'drawing',
+                                'finger': finger,
+                                'color': FINGER_COLORS.get(finger, '#ff4444'),
+                                'size': current_size
+                            })
+                            last_gesture_sent_time = current_time
+                        except:
+                            pass
+            
+            # Process special gestures
             if active_gesture == "TOGGLE" and gesture_counters["TOGGLE"] >= GESTURE_CONFIRM_FRAMES:
-                if current_time - last_toggle_time > 1.5:  # Increased cooldown
+                if current_time - last_toggle_time > 1.5:
                     drawing_mode = not drawing_mode
                     status = "ON" if drawing_mode else "OFF"
                     print(f"[MODE] Drawing mode: {status}")
@@ -294,7 +305,7 @@ while True:
                         except Exception as e:
                             print(f"[!] Toggle emit error: {e}")
                     last_toggle_time = current_time
-                    gesture_counters["TOGGLE"] = 0 # Reset after action
+                    gesture_counters["TOGGLE"] = 0
                 continue
             
             elif active_gesture == "CLEAR" and gesture_counters["CLEAR"] >= GESTURE_CONFIRM_FRAMES:
@@ -320,30 +331,22 @@ while True:
                     last_undo_time = current_time
                     gesture_counters["UNDO"] = 0
                 continue
-            # -----------------------------------------------
             
             # Normal drawing mode
             if drawing_mode:
-                # Get active finger for color
                 active_fingers = get_active_finger(hand_landmarks)
                 
                 if active_fingers:
-                    # Use the first active finger for color
                     finger = active_fingers[0]
                     current_color = FINGER_COLORS.get(finger, '#ff4444')
-                    
-                    # Calculate brush size
                     current_size = calculate_brush_size(hand_landmarks)
                     
-                    # Draw on canvas (send to server with throttling)
                     if prev_x is not None and prev_y is not None and connected:
-                        # Calculate distance moved
                         dist = math.hypot(canvas_x - prev_x, canvas_y - prev_y)
                         
-                        # Fix: Only emit if significant movement and not too fast
                         if dist >= MIN_MOVE_DISTANCE and (current_time - last_emit_time) >= EMIT_THROTTLE:
                             try:
-                                # Send drawing stroke to server
+                                # Send drawing stroke using drawing_stroke event
                                 sio.emit('drawing_stroke', {
                                     'x1': prev_x, 'y1': prev_y,
                                     'x2': canvas_x, 'y2': canvas_y,
@@ -351,6 +354,9 @@ while True:
                                     'size': current_size
                                 })
                                 last_emit_time = current_time
+                                # Print occasional debug
+                                if int(current_time) % 5 == 0:
+                                    print(f"[DRAW] Stroke: ({prev_x},{prev_y}) -> ({canvas_x},{canvas_y})")
                             except Exception as e:
                                 print(f"[!] Stroke emit error: {e}")
                     
@@ -360,7 +366,6 @@ while True:
                     cv2.circle(frame, (int(index_tip.x * 640), int(index_tip.y * 480)), 
                               current_size, (0, 255, 0), -1)
                     
-                    # Show info on frame
                     cv2.putText(frame, f"Drawing: {finger.upper()} - Size: {current_size}px", 
                                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                     cv2.putText(frame, f"Color: {current_color}", 
@@ -374,7 +379,7 @@ while True:
     else:
         prev_x, prev_y = None, None
     
-    # Display status on frame
+    # Display status
     status_color = (0, 255, 0) if drawing_mode else (0, 0, 255)
     cv2.putText(frame, f"Drawing Mode: {'ON' if drawing_mode else 'OFF'}", 
                (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, status_color, 2)
@@ -385,7 +390,6 @@ while True:
     
     cv2.imshow("Air Canvas - Gesture Drawing", frame)
     
-    frame_count += 1
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
