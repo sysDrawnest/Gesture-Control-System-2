@@ -137,7 +137,7 @@ class UserModel:
         """Get user information by ID and return a UserModel instance"""
         db = get_db()
         user_data = db.execute(
-            'SELECT id, username, email, created_at, last_login FROM users WHERE id = ?',
+            'SELECT * FROM users WHERE id = ?',
             (user_id,)
         ).fetchone()
         
@@ -155,6 +155,8 @@ class UserModel:
             user.theme = user_data['theme']
             user.dominant_hand = user_data['dominant_hand']
             user.gesture_sensitivity = user_data['gesture_sensitivity']
+            user.two_factor_enabled = user_data['two_factor_enabled']
+            user.preferences = user_data['preferences']
             return user, None
         return None, "User not found"
 
