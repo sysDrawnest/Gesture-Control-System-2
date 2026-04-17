@@ -52,428 +52,753 @@
     .kinetic-gradient {
       background: linear-gradient(135deg, #81ecff 0%, #d277ff 100%);
     }
+
+    /* Splash Screen Styles */
+    .splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 9999;
+      transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
+    }
+
+    .splash-screen.fade-out {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .glass-panel {
+      background: rgba(35, 38, 44, 0.4);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    .kinetic-grid {
+      background-image:
+        linear-gradient(to right, rgba(129, 236, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(129, 236, 255, 0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(0.95);
+        opacity: 0.3;
+      }
+
+      50% {
+        transform: scale(1.05);
+        opacity: 0.6;
+      }
+
+      100% {
+        transform: scale(0.95);
+        opacity: 0.3;
+      }
+    }
+
+    .animate-pulse-ring {
+      animation: pulse-ring 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .text-glow {
+      text-shadow: 0 0 12px rgba(0, 227, 253, 0.6);
+    }
+
+    .orb {
+      filter: blur(80px);
+      opacity: 0.15;
+      position: absolute;
+      border-radius: 100%;
+    }
+
+    @keyframes typewriter {
+      from {
+        width: 0;
+      }
+
+      to {
+        width: 100%;
+      }
+    }
+
+    @keyframes blink {
+
+      from,
+      to {
+        border-color: transparent;
+      }
+
+      50% {
+        border-color: #81ecff;
+      }
+    }
+
+    .typing-text {
+      overflow: hidden;
+      white-space: nowrap;
+      border-right: 2px solid #81ecff;
+      animation: typewriter 2s steps(30) forwards, blink 0.75s step-end infinite;
+      width: 0;
+    }
+
+    /* Main content initial state */
+    .main-content {
+      opacity: 0;
+      transition: opacity 0.5s ease-in;
+    }
+
+    .main-content.visible {
+      opacity: 1;
+    }
   </style>
 </head>
 
 <body class="bg-surface-container-lowest text-on-surface font-body selection:bg-primary selection:text-on-primary">
 
-  <!-- Nav -->
-  <nav class="fixed top-0 w-full z-50 bg-neutral-950/40 backdrop-blur-xl shadow-[0_0_20px_rgba(0,229,255,0.1)]">
-    <div class="flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto">
-      <div
-        class="text-2xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 font-headline">
-        KINETIC PULSE</div>
-      <div class="hidden md:flex items-center gap-10 font-headline uppercase tracking-widest text-sm">
-        <a class="text-cyan-400 border-b-2 border-cyan-400 pb-1" href="#features">Features</a>
-        <a class="text-slate-400 hover:text-cyan-300 transition-colors" href="/about">About</a>
-        <a class="text-neutral-400 hover:text-white transition-colors" href="#guide">Guide</a>
-        <a class="text-slate-400 hover:text-cyan-300 transition-colors" href="/games">Games</a>
-      </div>
-      <div class="flex items-center gap-4">
-        <a href="/login"
-          class="px-6 py-2 text-neutral-400 hover:text-cyan-300 transition-all duration-200 font-headline uppercase tracking-widest text-sm">Login</a>
-        <a href="/register"
-          class="px-6 py-2 bg-primary/20 border border-primary text-primary hover:bg-primary hover:text-on-primary transition-all duration-300 rounded font-headline uppercase tracking-widest text-sm">Register</a>
-      </div>
-    </div>
-  </nav>
+  <!-- SPLASH SCREEN -->
+  <div id="splashScreen"
+    class="splash-screen bg-surface-container-lowest overflow-hidden relative flex items-center justify-center">
+    <!-- Background Elements -->
+    <div class="absolute inset-0 kinetic-grid z-0"></div>
+    <div class="orb bg-primary w-[500px] h-[500px] top-[-100px] left-[-100px]"></div>
+    <div class="orb bg-secondary w-[400px] h-[400px] bottom-[-50px] right-[-50px]"></div>
+    <div class="orb bg-tertiary w-[300px] h-[300px] top-1/2 left-1/4"></div>
 
-  <main class="pt-24">
-    <!-- Hero -->
-    <section class="relative min-h-screen flex items-center px-8 max-w-screen-2xl mx-auto overflow-hidden">
-      <div class="grid lg:grid-cols-2 gap-12 items-center z-10">
-        <div class="space-y-8">
+    <!-- Main Splash Content -->
+    <div class="relative z-10 flex flex-col items-center justify-center w-full max-w-4xl px-6">
+      <!-- Top Visual Anchor -->
+      <div class="mb-12 text-center">
+        <h1
+          class="font-headline text-6xl md:text-8xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-primary via-primary-fixed to-secondary drop-shadow-[0_0_25px_rgba(129,236,255,0.4)]">
+          KINETIC_PULSE
+        </h1>
+        <div class="mt-4 flex items-center justify-center space-x-3">
+          <span class="h-[1px] w-12 bg-primary/30"></span>
+          <span class="font-headline text-sm tracking-[0.4em] text-primary-dim uppercase font-medium">Neural Interface
+            Active</span>
+          <span class="h-[1px] w-12 bg-primary/30"></span>
+        </div>
+      </div>
+
+      <!-- Kinetic Visualizer -->
+      <div class="relative w-80 h-80 flex items-center justify-center mb-16">
+        <div class="absolute inset-0 rounded-full bg-primary/5 animate-pulse-ring"></div>
+        <div class="absolute inset-0 rounded-full border border-primary/20 scale-110"></div>
+
+        <!-- Progress Circle -->
+        <svg class="w-full h-full transform -rotate-90">
+          <circle class="text-surface-container-highest" cx="160" cy="160" fill="transparent" r="140"
+            stroke="currentColor" stroke-width="2"></circle>
+          <circle id="progressCircle" class="text-primary drop-shadow-[0_0_8px_#81ecff]" cx="160" cy="160"
+            fill="transparent" r="140" stroke="currentColor" stroke-dasharray="880" stroke-dashoffset="880"
+            stroke-width="4"></circle>
+        </svg>
+
+        <!-- Floating Gesture Icons -->
+        <div class="absolute inset-0 flex items-center justify-center">
           <div
-            class="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-bold tracking-widest uppercase">
-            <span class="relative flex h-2 w-2">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-            </span>
-            System v4.0 Active
+            class="absolute -top-4 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
+            <span class="material-symbols-outlined text-primary text-3xl">touch_app</span>
           </div>
-          <h1 class="text-6xl md:text-8xl font-headline font-bold leading-tight tracking-tighter">
-            Control Your <br />
-            <span class="text-transparent bg-clip-text kinetic-gradient">World With</span><br />
-            Hand Gestures
-          </h1>
-          <p class="text-on-surface-variant text-lg md:text-xl max-w-xl leading-relaxed">
-            Experience the ultimate in touchless interaction. Move your cursor, click, scroll, and manage devices with
-            precise hand tracking.
+          <div
+            class="absolute top-1/4 -right-6 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
+            <span class="material-symbols-outlined text-primary text-3xl">pinch</span>
+          </div>
+          <div
+            class="absolute bottom-4 right-8 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
+            <span class="material-symbols-outlined text-primary text-3xl">front_hand</span>
+          </div>
+          <div
+            class="absolute bottom-4 left-8 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
+            <span class="material-symbols-outlined text-primary text-3xl">pan_tool</span>
+          </div>
+          <div
+            class="absolute top-1/4 -left-6 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
+            <span class="material-symbols-outlined text-primary text-3xl">back_hand</span>
+          </div>
+        </div>
+
+        <!-- Core Hub -->
+        <div
+          class="relative w-48 h-48 rounded-full glass-panel border border-outline-variant/30 flex flex-col items-center justify-center shadow-2xl">
+          <div
+            class="w-24 h-24 rounded-full bg-gradient-to-tr from-primary/20 to-secondary/20 flex items-center justify-center relative overflow-hidden group">
+            <div class="absolute inset-0 bg-[radial-gradient(circle,rgba(0,227,253,0.3)_0%,transparent_70%)]"></div>
+            <span class="material-symbols-outlined text-5xl text-primary drop-shadow-md">sensors</span>
+          </div>
+          <div class="mt-4 font-headline text-xs tracking-widest text-primary-fixed-dim">CORE_READY</div>
+        </div>
+      </div>
+
+      <!-- Status & HUD Elements -->
+      <div class="w-full max-w-md text-center space-y-6">
+        <div class="relative inline-block">
+          <p id="typingText" class="font-headline text-lg tracking-[0.2em] text-on-surface-variant typing-text">
+            INITIALIZING NEURAL INTERFACE...
           </p>
-          <div class="flex flex-wrap gap-4 pt-4">
-            <a href="/register"
-              class="px-8 py-4 bg-primary text-on-primary font-headline font-bold uppercase tracking-widest hover:brightness-110 transition-all active:scale-95 flex items-center gap-2">
-              Get Started Free
-              <span class="material-symbols-outlined">arrow_forward</span>
-            </a>
-            <a href="#features"
-              class="px-8 py-4 border border-outline-variant hover:border-primary text-on-surface font-headline font-bold uppercase tracking-widest transition-all glass-card">
-              Learn More
-            </a>
+        </div>
+
+        <!-- Telemetry Bar -->
+        <div class="grid grid-cols-3 gap-4">
+          <div class="glass-panel py-3 px-4 border-b border-primary/20 flex flex-col items-start">
+            <span class="text-[10px] text-on-surface-variant/60 uppercase font-medium">Latency</span>
+            <span class="font-headline text-sm text-primary">0.04ms</span>
           </div>
-          <div class="grid grid-cols-3 gap-8 pt-12 border-t border-outline-variant/20">
-            <div>
-              <div class="text-3xl font-headline font-bold text-primary">99%</div>
-              <div class="text-xs uppercase tracking-widest text-on-surface-variant">Accuracy</div>
-            </div>
-            <div>
-              <div class="text-3xl font-headline font-bold text-secondary">50ms</div>
-              <div class="text-xs uppercase tracking-widest text-on-surface-variant">Response</div>
-            </div>
-            <div>
-              <div class="text-3xl font-headline font-bold text-tertiary">10+</div>
-              <div class="text-xs uppercase tracking-widest text-on-surface-variant">Gestures</div>
-            </div>
+          <div class="glass-panel py-3 px-4 border-b border-secondary/20 flex flex-col items-start">
+            <span class="text-[10px] text-on-surface-variant/60 uppercase font-medium">Confidence</span>
+            <span class="font-headline text-sm text-secondary">99.8%</span>
+          </div>
+          <div class="glass-panel py-3 px-4 border-b border-tertiary/20 flex flex-col items-start">
+            <span class="text-[10px] text-on-surface-variant/60 uppercase font-medium">Sync State</span>
+            <span class="font-headline text-sm text-tertiary">Locked</span>
           </div>
         </div>
-        <div class="relative group">
-          <div
-            class="absolute inset-0 bg-primary/20 blur-[120px] rounded-full group-hover:bg-secondary/20 transition-colors duration-1000">
+
+        <!-- Loading Progress -->
+        <div class="w-full mt-4">
+          <div class="flex justify-between text-[10px] text-on-surface-variant/60 mb-1">
+            <span>System Load</span>
+            <span id="loadPercent">0%</span>
           </div>
-          <div
-            class="relative glass-card rounded-3xl p-8 overflow-hidden aspect-square flex flex-col items-center justify-center gap-6">
-            <div class="text-[8rem] animate-bounce select-none">✋</div>
-            <div class="flex gap-6 text-4xl">
-              <span class="opacity-60 hover:opacity-100 transition-opacity cursor-default"
-                style="animation: bounce 1s infinite 0s">👉</span>
-              <span class="opacity-60 hover:opacity-100 transition-opacity cursor-default"
-                style="animation: bounce 1s infinite 0.2s">🤏</span>
-              <span class="opacity-60 hover:opacity-100 transition-opacity cursor-default"
-                style="animation: bounce 1s infinite 0.4s">✌️</span>
-              <span class="opacity-60 hover:opacity-100 transition-opacity cursor-default"
-                style="animation: bounce 1s infinite 0.6s">✊</span>
-            </div>
-            <p class="text-on-surface-variant text-sm uppercase tracking-widest">Try these gestures!</p>
-            <div class="absolute bottom-6 left-6 right-6 p-4 glass-card rounded-xl border-l-4 border-primary">
-              <div class="flex justify-between items-center">
-                <div>
-                  <div class="text-xs text-on-surface-variant uppercase tracking-tighter">Live Tracking</div>
-                  <div class="font-mono text-primary text-sm">X: 142.4 Y: 89.2 Z: 12.0</div>
-                </div>
-                <span class="material-symbols-outlined text-primary"
-                  style="font-variation-settings:'FILL' 1;">pan_tool</span>
-              </div>
-            </div>
+          <div class="w-full h-1 bg-surface-container-high rounded-full overflow-hidden">
+            <div id="loadBar"
+              class="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-100"
+              style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Bottom Hint -->
+        <div class="pt-4">
+          <div class="flex items-center justify-center space-x-2 text-on-surface-variant/40">
+            <span class="material-symbols-outlined text-sm">info</span>
+            <p class="text-xs tracking-tight">Loading immersive workspace...</p>
           </div>
         </div>
       </div>
-    </section>
-
-    <!-- Features Bento Grid -->
-    <section id="features" class="py-24 px-8 max-w-screen-2xl mx-auto">
-      <div class="mb-16">
-        <h2 class="text-4xl font-headline font-bold tracking-tighter mb-4 uppercase">Core Capabilities</h2>
-        <div class="h-1 w-24 kinetic-gradient"></div>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div
-          class="md:col-span-2 glass-card p-8 rounded-2xl group hover:border-primary/40 transition-all flex items-end relative overflow-hidden h-[350px]">
-          <div
-            class="absolute top-8 right-8 h-24 w-24 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/30 transition-all">
-          </div>
-          <div class="relative z-10 w-full">
-            <span class="material-symbols-outlined text-4xl text-primary mb-6 block">mouse</span>
-            <h3 class="text-2xl font-headline font-bold mb-2">Cursor Control</h3>
-            <p class="text-on-surface-variant max-w-md">Precision navigation using your index finger. No mouse, no
-              trackpad, just pure spatial intent.</p>
-          </div>
-          <div class="absolute top-0 right-0 p-8"><span
-              class="text-xs font-headline text-outline tracking-widest uppercase">01 / Index Finger</span></div>
-        </div>
-        <div
-          class="glass-card p-8 rounded-2xl group hover:border-secondary/40 transition-all h-[350px] flex flex-col justify-between">
-          <span class="material-symbols-outlined text-4xl text-secondary">touch_app</span>
-          <div>
-            <h3 class="text-2xl font-headline font-bold mb-2">Click Gestures</h3>
-            <p class="text-on-surface-variant">Simple pinch or peace signs to trigger primary and secondary actions
-              instantly.</p>
-            <span class="text-xs font-headline text-outline tracking-widest uppercase mt-4 block">Pinch / Peace</span>
-          </div>
-        </div>
-        <div
-          class="glass-card p-8 rounded-2xl group hover:border-tertiary/40 transition-all h-[350px] flex flex-col justify-between">
-          <span class="material-symbols-outlined text-4xl text-tertiary">height</span>
-          <div>
-            <h3 class="text-2xl font-headline font-bold mb-2">Scroll Support</h3>
-            <p class="text-on-surface-variant">Multi-finger vertical and horizontal motion for fluid navigation through
-              long content.</p>
-          </div>
-        </div>
-        <div
-          class="md:col-span-2 glass-card p-8 rounded-2xl group hover:border-primary/40 transition-all flex items-end relative overflow-hidden h-[350px]">
-          <div class="relative z-10 grid md:grid-cols-2 gap-8 w-full items-center">
-            <div>
-              <span class="material-symbols-outlined text-4xl text-primary mb-6 block">devices</span>
-              <h3 class="text-2xl font-headline font-bold mb-2">Multi-Device Control</h3>
-              <p class="text-on-surface-variant">Seamlessly switch control between your laptop, tablet, and smart home
-                system.</p>
-            </div>
-            <div class="flex justify-center">
-              <div class="grid grid-cols-2 gap-4">
-                <div class="h-16 w-16 glass-card rounded-lg flex items-center justify-center text-primary"><span
-                    class="material-symbols-outlined">laptop</span></div>
-                <div class="h-16 w-16 glass-card rounded-lg flex items-center justify-center text-secondary"><span
-                    class="material-symbols-outlined">smartphone</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="glass-card p-8 rounded-2xl group hover:border-white/20 transition-all">
-          <span class="material-symbols-outlined text-4xl text-on-surface mb-6 block">analytics</span>
-          <h3 class="text-2xl font-headline font-bold mb-2">Real-time Analytics</h3>
-          <p class="text-on-surface-variant">Monitor tracking health and gesture success rates with low-latency data
-            visualization.</p>
-        </div>
-        <div class="glass-card p-8 rounded-2xl group hover:border-error/40 transition-all">
-          <span class="material-symbols-outlined text-4xl text-error mb-6 block">enhanced_encryption</span>
-          <h3 class="text-2xl font-headline font-bold mb-2">Secure Encryption</h3>
-          <p class="text-on-surface-variant">All visual data is processed locally. We only transmit spatial coordinates
-            via end-to-end encryption.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- How It Works -->
-    <section class="py-24 bg-surface-container-low">
-      <div class="px-8 max-w-screen-2xl mx-auto">
-        <div class="text-center mb-20">
-          <h2 class="text-4xl font-headline font-bold tracking-tighter uppercase mb-4">Activation Sequence</h2>
-          <p class="text-on-surface-variant max-w-2xl mx-auto">Go from zero to touchless in under three minutes. No
-            specialized hardware required.</p>
-        </div>
-        <div class="grid md:grid-cols-4 gap-12 relative">
-          <div
-            class="hidden md:block absolute top-10 left-0 w-full h-[1px] bg-gradient-to-r from-primary/0 via-primary/30 to-primary/0 z-0">
-          </div>
-          <div class="relative z-10 text-center group">
-            <div
-              class="h-20 w-20 bg-surface-container-high rounded-full flex items-center justify-center mx-auto mb-6 border border-outline-variant group-hover:border-primary transition-all duration-300">
-              <span class="text-2xl font-headline font-bold text-primary">01</span>
-            </div>
-            <h4 class="text-xl font-headline font-bold mb-2">Register Account</h4>
-            <p class="text-sm text-on-surface-variant px-4">Create your unique Kinetic ID to sync preferences across
-              devices.</p>
-          </div>
-          <div class="relative z-10 text-center group">
-            <div
-              class="h-20 w-20 bg-surface-container-high rounded-full flex items-center justify-center mx-auto mb-6 border border-outline-variant group-hover:border-primary transition-all duration-300">
-              <span class="text-2xl font-headline font-bold text-primary">02</span>
-            </div>
-            <h4 class="text-xl font-headline font-bold mb-2">Install Client</h4>
-            <p class="text-sm text-on-surface-variant px-4">Run the lightweight Python gesture client on your machine.
-            </p>
-          </div>
-          <div class="relative z-10 text-center group">
-            <div
-              class="h-20 w-20 bg-surface-container-high rounded-full flex items-center justify-center mx-auto mb-6 border border-outline-variant group-hover:border-primary transition-all duration-300">
-              <span class="text-2xl font-headline font-bold text-primary">03</span>
-            </div>
-            <h4 class="text-xl font-headline font-bold mb-2">Connect Camera</h4>
-            <p class="text-sm text-on-surface-variant px-4">Use any standard 720p+ webcam for high-precision tracking.
-            </p>
-          </div>
-          <div class="relative z-10 text-center group">
-            <div
-              class="h-20 w-20 bg-surface-container-high rounded-full flex items-center justify-center mx-auto mb-6 border border-outline-variant group-hover:border-primary transition-all duration-300">
-              <span class="text-2xl font-headline font-bold text-primary">04</span>
-            </div>
-            <h4 class="text-xl font-headline font-bold mb-2">Start Controlling</h4>
-            <p class="text-sm text-on-surface-variant px-4">Wave hello to the future of computing interaction.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Gesture Guide -->
-    <section id="guide" class="py-24 px-8 max-w-screen-2xl mx-auto">
-      <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
-        <div>
-          <h2 class="text-4xl font-headline font-bold tracking-tighter uppercase mb-4">Command Dictionary</h2>
-          <p class="text-on-surface-variant">Master the standard library of kinetic commands.</p>
-        </div>
-        <div class="px-6 py-3 border border-outline-variant text-xs uppercase tracking-widest font-bold">8 Gestures
-          Integrated</div>
-      </div>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <div
-          class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
-          <span class="material-symbols-outlined text-5xl text-primary mb-4"
-            style="font-variation-settings:'FILL' 0;">front_hand</span>
-          <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">Open Palm</h5>
-          <div class="text-xs text-on-surface-variant">Enable System</div>
-        </div>
-        <div
-          class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
-          <span class="material-symbols-outlined text-5xl text-primary mb-4"
-            style="font-variation-settings:'FILL' 1;">back_hand</span>
-          <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">Fist</h5>
-          <div class="text-xs text-on-surface-variant">Disable System</div>
-        </div>
-        <div
-          class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
-          <span class="material-symbols-outlined text-5xl text-primary mb-4">ads_click</span>
-          <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">Point</h5>
-          <div class="text-xs text-on-surface-variant">Move Cursor</div>
-        </div>
-        <div
-          class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
-          <span class="material-symbols-outlined text-5xl text-primary mb-4">pinch</span>
-          <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">Pinch</h5>
-          <div class="text-xs text-on-surface-variant">Left Click</div>
-        </div>
-        <div
-          class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
-          <span class="material-symbols-outlined text-5xl text-primary mb-4">mobile_hand</span>
-          <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">Peace</h5>
-          <div class="text-xs text-on-surface-variant">Right Click</div>
-        </div>
-        <div
-          class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
-          <span class="material-symbols-outlined text-5xl text-primary mb-4">reorder</span>
-          <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">3-Finger Scroll</h5>
-          <div class="text-xs text-on-surface-variant">Navigate Lists</div>
-        </div>
-        <div
-          class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
-          <span class="material-symbols-outlined text-5xl text-primary mb-4">zoom_in</span>
-          <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">3-Finger Pinch</h5>
-          <div class="text-xs text-on-surface-variant">Zoom In/Out</div>
-        </div>
-        <div
-          class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
-          <span class="material-symbols-outlined text-5xl text-primary mb-4">screenshot</span>
-          <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">Hold Palm</h5>
-          <div class="text-xs text-on-surface-variant">Take Screenshot</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Games Teaser Section -->
-    <section id="games" class="py-24 px-8 max-w-screen-2xl mx-auto">
-      <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
-        <div>
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-secondary/20 bg-secondary/5 text-secondary text-[10px] font-bold tracking-widest uppercase mb-4">
-            <span class="material-symbols-outlined text-sm">sports_esports</span>
-            New · Gesture Games
-          </div>
-          <h2 class="text-4xl font-headline font-bold tracking-tighter uppercase mb-2">Games Hub</h2>
-          <p class="text-on-surface-variant">Play 8 hand-gesture controlled games. No controller required.</p>
-        </div>
-        <a href="/games" class="shrink-0 px-6 py-3 border border-secondary/40 text-secondary font-headline font-bold uppercase tracking-widest text-sm hover:bg-secondary/10 transition-all rounded flex items-center gap-2">
-          <span class="material-symbols-outlined text-base">sports_esports</span>
-          View All Games
-        </a>
-      </div>
-
-      <!-- Game cards teaser grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-5 mb-10">
-
-        <!-- Dino Run -->
-        <div class="glass-card rounded-2xl overflow-hidden group hover:border-secondary/30 transition-all">
-          <div class="h-28 bg-gradient-to-br from-green-400/10 to-green-400/5 flex items-center justify-center">
-            <span class="text-5xl group-hover:scale-110 transition-transform select-none">🦖</span>
-          </div>
-          <div class="p-4">
-            <h4 class="font-headline font-bold text-xs uppercase tracking-wider mb-1">Dino Run</h4>
-            <span class="text-[9px] bg-green-400/10 text-green-300 border border-green-400/30 px-2 py-0.5 rounded uppercase font-bold">Easy</span>
-            <a href="/login" class="mt-3 w-full py-2 bg-white/5 border border-white/10 text-slate-400 font-headline text-[9px] uppercase tracking-widest hover:border-secondary/30 hover:text-secondary transition-all flex items-center justify-center gap-1 rounded">
-              <span class="material-symbols-outlined text-xs">lock</span> Login to Play
-            </a>
-          </div>
-        </div>
-
-        <!-- Flappy Pulse -->
-        <div class="glass-card rounded-2xl overflow-hidden group hover:border-secondary/30 transition-all">
-          <div class="h-28 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-            <span class="text-5xl group-hover:scale-110 transition-transform select-none">🐦</span>
-          </div>
-          <div class="p-4">
-            <h4 class="font-headline font-bold text-xs uppercase tracking-wider mb-1">Flappy Pulse</h4>
-            <span class="text-[9px] bg-green-400/10 text-green-300 border border-green-400/30 px-2 py-0.5 rounded uppercase font-bold">Easy</span>
-            <a href="/login" class="mt-3 w-full py-2 bg-white/5 border border-white/10 text-slate-400 font-headline text-[9px] uppercase tracking-widest hover:border-secondary/30 hover:text-secondary transition-all flex items-center justify-center gap-1 rounded">
-              <span class="material-symbols-outlined text-xs">lock</span> Login to Play
-            </a>
-          </div>
-        </div>
-
-        <!-- Memory Match -->
-        <div class="glass-card rounded-2xl overflow-hidden group hover:border-secondary/30 transition-all">
-          <div class="h-28 bg-gradient-to-br from-secondary/10 to-secondary/5 flex items-center justify-center">
-            <span class="text-5xl group-hover:scale-110 transition-transform select-none">🧠</span>
-          </div>
-          <div class="p-4">
-            <h4 class="font-headline font-bold text-xs uppercase tracking-wider mb-1">Memory Match</h4>
-            <span class="text-[9px] bg-primary/10 text-primary border border-primary/30 px-2 py-0.5 rounded uppercase font-bold">Medium</span>
-            <a href="/login" class="mt-3 w-full py-2 bg-white/5 border border-white/10 text-slate-400 font-headline text-[9px] uppercase tracking-widest hover:border-secondary/30 hover:text-secondary transition-all flex items-center justify-center gap-1 rounded">
-              <span class="material-symbols-outlined text-xs">lock</span> Login to Play
-            </a>
-          </div>
-        </div>
-
-        <!-- Space Shooter -->
-        <div class="glass-card rounded-2xl overflow-hidden group hover:border-secondary/30 transition-all">
-          <div class="h-28 bg-gradient-to-br from-error/10 to-error/5 flex items-center justify-center">
-            <span class="text-5xl group-hover:scale-110 transition-transform select-none">🚀</span>
-          </div>
-          <div class="p-4">
-            <h4 class="font-headline font-bold text-xs uppercase tracking-wider mb-1">Space Shooter</h4>
-            <span class="text-[9px] bg-error/10 text-red-300 border border-error/30 px-2 py-0.5 rounded uppercase font-bold">Hard</span>
-            <a href="/login" class="mt-3 w-full py-2 bg-white/5 border border-white/10 text-slate-400 font-headline text-[9px] uppercase tracking-widest hover:border-secondary/30 hover:text-secondary transition-all flex items-center justify-center gap-1 rounded">
-              <span class="material-symbols-outlined text-xs">lock</span> Login to Play
-            </a>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Login CTA below cards -->
-      <div class="glass-card rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border border-secondary/10">
-        <p class="text-on-surface-variant text-sm text-center sm:text-left">
-          ⭐ <strong class="text-white">Login to play all 8 games</strong> and track your high scores!
-        </p>
-        <div class="flex gap-3 shrink-0">
-          <a href="/login" class="px-6 py-2.5 border border-outline-variant hover:border-white transition-all font-headline font-bold uppercase tracking-widest text-sm rounded">Login</a>
-          <a href="/register" class="px-6 py-2.5 bg-secondary text-on-secondary font-headline font-bold uppercase tracking-widest text-sm hover:brightness-110 transition-all rounded">Register Free</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA -->
-    <section class="py-32 px-8">
-      <div class="max-w-4xl mx-auto glass-card p-12 md:p-20 rounded-3xl text-center relative overflow-hidden">
-        <div class="absolute -top-24 -left-24 h-64 w-64 bg-primary/20 blur-[100px]"></div>
-        <div class="absolute -bottom-24 -right-24 h-64 w-64 bg-secondary/20 blur-[100px]"></div>
-        <div class="relative z-10">
-          <h2 class="text-4xl md:text-6xl font-headline font-bold tracking-tighter uppercase mb-6">Ready to Experience
-            the Future?</h2>
-          <p class="text-on-surface-variant text-lg mb-12 max-w-2xl mx-auto">Join pioneers using Kinetic Pulse to
-            redefine digital interaction. No special hardware needed.</p>
-          <div class="flex flex-col sm:flex-row justify-center gap-6">
-            <a href="/register"
-              class="px-10 py-5 bg-primary text-on-primary font-headline font-bold uppercase tracking-widest hover:scale-105 transition-all">Register
-              Now</a>
-            <a href="/login"
-              class="px-10 py-5 border border-outline-variant hover:border-white transition-all font-headline font-bold uppercase tracking-widest">Sign
-              In</a>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="w-full border-t border-neutral-800/30 bg-neutral-950">
-    <div
-      class="flex flex-col md:flex-row justify-between items-center px-12 py-10 w-full gap-6 max-w-screen-2xl mx-auto">
-      <div class="text-lg font-black text-cyan-400 font-headline uppercase tracking-tighter">KINETIC PULSE</div>
-      <div class="flex gap-8 font-body text-xs uppercase tracking-widest">
-        <a class="text-neutral-500 hover:text-cyan-200 transition-colors" href="#">Privacy</a>
-        <a class="text-neutral-500 hover:text-cyan-200 transition-colors" href="#">Terms</a>
-        <a class="text-neutral-500 hover:text-cyan-200 transition-colors" href="#">API Status</a>
-      </div>
-      <div class="text-neutral-500 font-body text-xs uppercase tracking-widest">© 2024 KINETIC PULSE. ALL RIGHTS
-        RESERVED.</div>
     </div>
-  </footer>
+
+    <!-- Decorative Corner Accents -->
+    <div class="fixed top-8 left-8 flex flex-col space-y-1 opacity-40">
+      <div class="w-16 h-[2px] bg-primary"></div>
+      <div class="w-8 h-[2px] bg-primary/50"></div>
+      <div class="font-headline text-[10px] text-primary-fixed mt-2">SYS_MOD_441</div>
+    </div>
+    <div class="fixed bottom-8 right-8 flex flex-col items-end space-y-1 opacity-40">
+      <div class="w-8 h-[2px] bg-secondary/50"></div>
+      <div class="w-16 h-[2px] bg-secondary"></div>
+      <div class="font-headline text-[10px] text-secondary mt-2">V2.4.0_STABLE</div>
+    </div>
+  </div>
+
+  <!-- MAIN WEBSITE CONTENT (Hidden until splash completes) -->
+  <div id="mainContent" class="main-content" style="opacity: 0;">
+    <!-- Nav -->
+    <nav class="fixed top-0 w-full z-50 bg-neutral-950/40 backdrop-blur-xl shadow-[0_0_20px_rgba(0,229,255,0.1)]">
+      <div class="flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto">
+        <div
+          class="text-2xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 font-headline">
+          KINETIC PULSE
+        </div>
+        <div class="hidden md:flex items-center gap-10 font-headline uppercase tracking-widest text-sm">
+          <a class="text-cyan-400 border-b-2 border-cyan-400 pb-1" href="#features">Features</a>
+          <a class="text-slate-400 hover:text-cyan-300 transition-colors" href="/about">About</a>
+          <a class="text-neutral-400 hover:text-white transition-colors" href="#guide">Guide</a>
+          <a class="text-slate-400 hover:text-cyan-300 transition-colors" href="/games">Games</a>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="/login"
+            class="px-6 py-2 text-neutral-400 hover:text-cyan-300 transition-all duration-200 font-headline uppercase tracking-widest text-sm">Login</a>
+          <a href="/register"
+            class="px-6 py-2 bg-primary/20 border border-primary text-primary hover:bg-primary hover:text-on-primary transition-all duration-300 rounded font-headline uppercase tracking-widest text-sm">Register</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="pt-24">
+      <!-- Hero Section -->
+      <section class="relative min-h-screen flex items-center px-8 max-w-screen-2xl mx-auto overflow-hidden">
+        <div class="grid lg:grid-cols-2 gap-12 items-center z-10">
+          <div class="space-y-8">
+            <div
+              class="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-bold tracking-widest uppercase">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              System v4.0 Active
+            </div>
+            <h1 class="text-6xl md:text-8xl font-headline font-bold leading-tight tracking-tighter">
+              Control Your <br />
+              <span class="text-transparent bg-clip-text kinetic-gradient">World With</span><br />
+              Hand Gestures
+            </h1>
+            <p class="text-on-surface-variant text-lg md:text-xl max-w-xl leading-relaxed">
+              Experience the ultimate in touchless interaction. Move your cursor, click, scroll, and manage devices with
+              precise hand tracking.
+            </p>
+            <div class="flex flex-wrap gap-4 pt-4">
+              <a href="/register"
+                class="px-8 py-4 bg-primary text-on-primary font-headline font-bold uppercase tracking-widest hover:brightness-110 transition-all active:scale-95 flex items-center gap-2">
+                Get Started Free
+                <span class="material-symbols-outlined">arrow_forward</span>
+              </a>
+              <a href="#features"
+                class="px-8 py-4 border border-outline-variant hover:border-primary text-on-surface font-headline font-bold uppercase tracking-widest transition-all glass-card">
+                Learn More
+              </a>
+            </div>
+            <div class="grid grid-cols-3 gap-8 pt-12 border-t border-outline-variant/20">
+              <div>
+                <div class="text-3xl font-headline font-bold text-primary">99%</div>
+                <div class="text-xs uppercase tracking-widest text-on-surface-variant">Accuracy</div>
+              </div>
+              <div>
+                <div class="text-3xl font-headline font-bold text-secondary">50ms</div>
+                <div class="text-xs uppercase tracking-widest text-on-surface-variant">Response</div>
+              </div>
+              <div>
+                <div class="text-3xl font-headline font-bold text-tertiary">10+</div>
+                <div class="text-xs uppercase tracking-widest text-on-surface-variant">Gestures</div>
+              </div>
+            </div>
+          </div>
+          <div class="relative group">
+            <div
+              class="absolute inset-0 bg-primary/20 blur-[120px] rounded-full group-hover:bg-secondary/20 transition-colors duration-1000">
+            </div>
+            <div
+              class="relative glass-card rounded-3xl p-8 overflow-hidden aspect-square flex flex-col items-center justify-center gap-6">
+              <div class="text-[8rem] animate-bounce select-none">✋</div>
+              <div class="flex gap-6 text-4xl">
+                <span class="opacity-60 hover:opacity-100 transition-opacity cursor-default"
+                  style="animation: bounce 1s infinite 0s">👉</span>
+                <span class="opacity-60 hover:opacity-100 transition-opacity cursor-default"
+                  style="animation: bounce 1s infinite 0.2s">🤏</span>
+                <span class="opacity-60 hover:opacity-100 transition-opacity cursor-default"
+                  style="animation: bounce 1s infinite 0.4s">✌️</span>
+                <span class="opacity-60 hover:opacity-100 transition-opacity cursor-default"
+                  style="animation: bounce 1s infinite 0.6s">✊</span>
+              </div>
+              <p class="text-on-surface-variant text-sm uppercase tracking-widest">Try these gestures!</p>
+              <div class="absolute bottom-6 left-6 right-6 p-4 glass-card rounded-xl border-l-4 border-primary">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <div class="text-xs text-on-surface-variant uppercase tracking-tighter">Live Tracking</div>
+                    <div class="font-mono text-primary text-sm">X: 142.4 Y: 89.2 Z: 12.0</div>
+                  </div>
+                  <span class="material-symbols-outlined text-primary"
+                    style="font-variation-settings:'FILL' 1;">pan_tool</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features Bento Grid -->
+      <section id="features" class="py-24 px-8 max-w-screen-2xl mx-auto">
+        <div class="mb-16">
+          <h2 class="text-4xl font-headline font-bold tracking-tighter mb-4 uppercase">Core Capabilities</h2>
+          <div class="h-1 w-24 kinetic-gradient"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div
+            class="md:col-span-2 glass-card p-8 rounded-2xl group hover:border-primary/40 transition-all flex items-end relative overflow-hidden h-[350px]">
+            <div
+              class="absolute top-8 right-8 h-24 w-24 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/30 transition-all">
+            </div>
+            <div class="relative z-10 w-full">
+              <span class="material-symbols-outlined text-4xl text-primary mb-6 block">mouse</span>
+              <h3 class="text-2xl font-headline font-bold mb-2">Cursor Control</h3>
+              <p class="text-on-surface-variant max-w-md">Precision navigation using your index finger. No mouse, no
+                trackpad, just pure spatial intent.</p>
+            </div>
+            <div class="absolute top-0 right-0 p-8"><span
+                class="text-xs font-headline text-outline tracking-widest uppercase">01 / Index Finger</span></div>
+          </div>
+          <div
+            class="glass-card p-8 rounded-2xl group hover:border-secondary/40 transition-all h-[350px] flex flex-col justify-between">
+            <span class="material-symbols-outlined text-4xl text-secondary">touch_app</span>
+            <div>
+              <h3 class="text-2xl font-headline font-bold mb-2">Click Gestures</h3>
+              <p class="text-on-surface-variant">Simple pinch or peace signs to trigger primary and secondary actions
+                instantly.</p>
+              <span class="text-xs font-headline text-outline tracking-widest uppercase mt-4 block">Pinch / Peace</span>
+            </div>
+          </div>
+          <div
+            class="glass-card p-8 rounded-2xl group hover:border-tertiary/40 transition-all h-[350px] flex flex-col justify-between">
+            <span class="material-symbols-outlined text-4xl text-tertiary">height</span>
+            <div>
+              <h3 class="text-2xl font-headline font-bold mb-2">Scroll Support</h3>
+              <p class="text-on-surface-variant">Multi-finger vertical and horizontal motion for fluid navigation
+                through long content.</p>
+            </div>
+          </div>
+          <div
+            class="md:col-span-2 glass-card p-8 rounded-2xl group hover:border-primary/40 transition-all flex items-end relative overflow-hidden h-[350px]">
+            <div class="relative z-10 grid md:grid-cols-2 gap-8 w-full items-center">
+              <div>
+                <span class="material-symbols-outlined text-4xl text-primary mb-6 block">devices</span>
+                <h3 class="text-2xl font-headline font-bold mb-2">Multi-Device Control</h3>
+                <p class="text-on-surface-variant">Seamlessly switch control between your laptop, tablet, and smart home
+                  system.</p>
+              </div>
+              <div class="flex justify-center">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="h-16 w-16 glass-card rounded-lg flex items-center justify-center text-primary"><span
+                      class="material-symbols-outlined">laptop</span></div>
+                  <div class="h-16 w-16 glass-card rounded-lg flex items-center justify-center text-secondary"><span
+                      class="material-symbols-outlined">smartphone</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="glass-card p-8 rounded-2xl group hover:border-white/20 transition-all">
+            <span class="material-symbols-outlined text-4xl text-on-surface mb-6 block">analytics</span>
+            <h3 class="text-2xl font-headline font-bold mb-2">Real-time Analytics</h3>
+            <p class="text-on-surface-variant">Monitor tracking health and gesture success rates with low-latency data
+              visualization.</p>
+          </div>
+          <div class="glass-card p-8 rounded-2xl group hover:border-error/40 transition-all">
+            <span class="material-symbols-outlined text-4xl text-error mb-6 block">enhanced_encryption</span>
+            <h3 class="text-2xl font-headline font-bold mb-2">Secure Encryption</h3>
+            <p class="text-on-surface-variant">All visual data is processed locally. We only transmit spatial
+              coordinates via end-to-end encryption.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- How It Works -->
+      <section class="py-24 bg-surface-container-low">
+        <div class="px-8 max-w-screen-2xl mx-auto">
+          <div class="text-center mb-20">
+            <h2 class="text-4xl font-headline font-bold tracking-tighter uppercase mb-4">Activation Sequence</h2>
+            <p class="text-on-surface-variant max-w-2xl mx-auto">Go from zero to touchless in under three minutes. No
+              specialized hardware required.</p>
+          </div>
+          <div class="grid md:grid-cols-4 gap-12 relative">
+            <div
+              class="hidden md:block absolute top-10 left-0 w-full h-[1px] bg-gradient-to-r from-primary/0 via-primary/30 to-primary/0 z-0">
+            </div>
+            <div class="relative z-10 text-center group">
+              <div
+                class="h-20 w-20 bg-surface-container-high rounded-full flex items-center justify-center mx-auto mb-6 border border-outline-variant group-hover:border-primary transition-all duration-300">
+                <span class="text-2xl font-headline font-bold text-primary">01</span>
+              </div>
+              <h4 class="text-xl font-headline font-bold mb-2">Register Account</h4>
+              <p class="text-sm text-on-surface-variant px-4">Create your unique Kinetic ID to sync preferences across
+                devices.</p>
+            </div>
+            <div class="relative z-10 text-center group">
+              <div
+                class="h-20 w-20 bg-surface-container-high rounded-full flex items-center justify-center mx-auto mb-6 border border-outline-variant group-hover:border-primary transition-all duration-300">
+                <span class="text-2xl font-headline font-bold text-primary">02</span>
+              </div>
+              <h4 class="text-xl font-headline font-bold mb-2">Install Client</h4>
+              <p class="text-sm text-on-surface-variant px-4">Run the lightweight Python gesture client on your machine.
+              </p>
+            </div>
+            <div class="relative z-10 text-center group">
+              <div
+                class="h-20 w-20 bg-surface-container-high rounded-full flex items-center justify-center mx-auto mb-6 border border-outline-variant group-hover:border-primary transition-all duration-300">
+                <span class="text-2xl font-headline font-bold text-primary">03</span>
+              </div>
+              <h4 class="text-xl font-headline font-bold mb-2">Connect Camera</h4>
+              <p class="text-sm text-on-surface-variant px-4">Use any standard 720p+ webcam for high-precision tracking.
+              </p>
+            </div>
+            <div class="relative z-10 text-center group">
+              <div
+                class="h-20 w-20 bg-surface-container-high rounded-full flex items-center justify-center mx-auto mb-6 border border-outline-variant group-hover:border-primary transition-all duration-300">
+                <span class="text-2xl font-headline font-bold text-primary">04</span>
+              </div>
+              <h4 class="text-xl font-headline font-bold mb-2">Start Controlling</h4>
+              <p class="text-sm text-on-surface-variant px-4">Wave hello to the future of computing interaction.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Gesture Guide -->
+      <section id="guide" class="py-24 px-8 max-w-screen-2xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
+          <div>
+            <h2 class="text-4xl font-headline font-bold tracking-tighter uppercase mb-4">Command Dictionary</h2>
+            <p class="text-on-surface-variant">Master the standard library of kinetic commands.</p>
+          </div>
+          <div class="px-6 py-3 border border-outline-variant text-xs uppercase tracking-widest font-bold">8 Gestures
+            Integrated</div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div
+            class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
+            <span class="material-symbols-outlined text-5xl text-primary mb-4">front_hand</span>
+            <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">Open Palm</h5>
+            <div class="text-xs text-on-surface-variant">Enable System</div>
+          </div>
+          <div
+            class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
+            <span class="material-symbols-outlined text-5xl text-primary mb-4"
+              style="font-variation-settings:'FILL' 1;">back_hand</span>
+            <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">Fist</h5>
+            <div class="text-xs text-on-surface-variant">Disable System</div>
+          </div>
+          <div
+            class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
+            <span class="material-symbols-outlined text-5xl text-primary mb-4">ads_click</span>
+            <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">Point</h5>
+            <div class="text-xs text-on-surface-variant">Move Cursor</div>
+          </div>
+          <div
+            class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
+            <span class="material-symbols-outlined text-5xl text-primary mb-4">pinch</span>
+            <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">Pinch</h5>
+            <div class="text-xs text-on-surface-variant">Left Click</div>
+          </div>
+          <div
+            class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
+            <span class="material-symbols-outlined text-5xl text-primary mb-4">mobile_hand</span>
+            <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">Peace</h5>
+            <div class="text-xs text-on-surface-variant">Right Click</div>
+          </div>
+          <div
+            class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
+            <span class="material-symbols-outlined text-5xl text-primary mb-4">reorder</span>
+            <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">3-Finger Scroll</h5>
+            <div class="text-xs text-on-surface-variant">Navigate Lists</div>
+          </div>
+          <div
+            class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
+            <span class="material-symbols-outlined text-5xl text-primary mb-4">zoom_in</span>
+            <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">3-Finger Pinch</h5>
+            <div class="text-xs text-on-surface-variant">Zoom In/Out</div>
+          </div>
+          <div
+            class="glass-card aspect-square p-6 flex flex-col items-center justify-center text-center group hover:bg-primary/5 transition-colors">
+            <span class="material-symbols-outlined text-5xl text-primary mb-4">screenshot</span>
+            <h5 class="font-headline font-bold uppercase tracking-widest text-sm mb-1">Hold Palm</h5>
+            <div class="text-xs text-on-surface-variant">Take Screenshot</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Games Teaser Section -->
+      <section id="games" class="py-24 px-8 max-w-screen-2xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+          <div>
+            <div
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-secondary/20 bg-secondary/5 text-secondary text-[10px] font-bold tracking-widest uppercase mb-4">
+              <span class="material-symbols-outlined text-sm">sports_esports</span>
+              New · Gesture Games
+            </div>
+            <h2 class="text-4xl font-headline font-bold tracking-tighter uppercase mb-2">Games Hub</h2>
+            <p class="text-on-surface-variant">Play 8 hand-gesture controlled games. No controller required.</p>
+          </div>
+          <a href="/games"
+            class="shrink-0 px-6 py-3 border border-secondary/40 text-secondary font-headline font-bold uppercase tracking-widest text-sm hover:bg-secondary/10 transition-all rounded flex items-center gap-2">
+            <span class="material-symbols-outlined text-base">sports_esports</span>
+            View All Games
+          </a>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-5 mb-10">
+          <div class="glass-card rounded-2xl overflow-hidden group hover:border-secondary/30 transition-all">
+            <div class="h-28 bg-gradient-to-br from-green-400/10 to-green-400/5 flex items-center justify-center">
+              <span class="text-5xl group-hover:scale-110 transition-transform select-none">🦖</span>
+            </div>
+            <div class="p-4">
+              <h4 class="font-headline font-bold text-xs uppercase tracking-wider mb-1">Dino Run</h4>
+              <span
+                class="text-[9px] bg-green-400/10 text-green-300 border border-green-400/30 px-2 py-0.5 rounded uppercase font-bold">Easy</span>
+              <a href="/login"
+                class="mt-3 w-full py-2 bg-white/5 border border-white/10 text-slate-400 font-headline text-[9px] uppercase tracking-widest hover:border-secondary/30 hover:text-secondary transition-all flex items-center justify-center gap-1 rounded">
+                <span class="material-symbols-outlined text-xs">lock</span> Login to Play
+              </a>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl overflow-hidden group hover:border-secondary/30 transition-all">
+            <div class="h-28 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+              <span class="text-5xl group-hover:scale-110 transition-transform select-none">🐦</span>
+            </div>
+            <div class="p-4">
+              <h4 class="font-headline font-bold text-xs uppercase tracking-wider mb-1">Flappy Pulse</h4>
+              <span
+                class="text-[9px] bg-green-400/10 text-green-300 border border-green-400/30 px-2 py-0.5 rounded uppercase font-bold">Easy</span>
+              <a href="/login"
+                class="mt-3 w-full py-2 bg-white/5 border border-white/10 text-slate-400 font-headline text-[9px] uppercase tracking-widest hover:border-secondary/30 hover:text-secondary transition-all flex items-center justify-center gap-1 rounded">
+                <span class="material-symbols-outlined text-xs">lock</span> Login to Play
+              </a>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl overflow-hidden group hover:border-secondary/30 transition-all">
+            <div class="h-28 bg-gradient-to-br from-secondary/10 to-secondary/5 flex items-center justify-center">
+              <span class="text-5xl group-hover:scale-110 transition-transform select-none">🧠</span>
+            </div>
+            <div class="p-4">
+              <h4 class="font-headline font-bold text-xs uppercase tracking-wider mb-1">Memory Match</h4>
+              <span
+                class="text-[9px] bg-primary/10 text-primary border border-primary/30 px-2 py-0.5 rounded uppercase font-bold">Medium</span>
+              <a href="/login"
+                class="mt-3 w-full py-2 bg-white/5 border border-white/10 text-slate-400 font-headline text-[9px] uppercase tracking-widest hover:border-secondary/30 hover:text-secondary transition-all flex items-center justify-center gap-1 rounded">
+                <span class="material-symbols-outlined text-xs">lock</span> Login to Play
+              </a>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl overflow-hidden group hover:border-secondary/30 transition-all">
+            <div class="h-28 bg-gradient-to-br from-error/10 to-error/5 flex items-center justify-center">
+              <span class="text-5xl group-hover:scale-110 transition-transform select-none">🚀</span>
+            </div>
+            <div class="p-4">
+              <h4 class="font-headline font-bold text-xs uppercase tracking-wider mb-1">Space Shooter</h4>
+              <span
+                class="text-[9px] bg-error/10 text-red-300 border border-error/30 px-2 py-0.5 rounded uppercase font-bold">Hard</span>
+              <a href="/login"
+                class="mt-3 w-full py-2 bg-white/5 border border-white/10 text-slate-400 font-headline text-[9px] uppercase tracking-widest hover:border-secondary/30 hover:text-secondary transition-all flex items-center justify-center gap-1 rounded">
+                <span class="material-symbols-outlined text-xs">lock</span> Login to Play
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="glass-card rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border border-secondary/10">
+          <p class="text-on-surface-variant text-sm text-center sm:text-left">
+            ⭐ <strong class="text-white">Login to play all 8 games</strong> and track your high scores!
+          </p>
+          <div class="flex gap-3 shrink-0">
+            <a href="/login"
+              class="px-6 py-2.5 border border-outline-variant hover:border-white transition-all font-headline font-bold uppercase tracking-widest text-sm rounded">Login</a>
+            <a href="/register"
+              class="px-6 py-2.5 bg-secondary text-on-secondary font-headline font-bold uppercase tracking-widest text-sm hover:brightness-110 transition-all rounded">Register
+              Free</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="py-32 px-8">
+        <div class="max-w-4xl mx-auto glass-card p-12 md:p-20 rounded-3xl text-center relative overflow-hidden">
+          <div class="absolute -top-24 -left-24 h-64 w-64 bg-primary/20 blur-[100px]"></div>
+          <div class="absolute -bottom-24 -right-24 h-64 w-64 bg-secondary/20 blur-[100px]"></div>
+          <div class="relative z-10">
+            <h2 class="text-4xl md:text-6xl font-headline font-bold tracking-tighter uppercase mb-6">Ready to Experience
+              the Future?</h2>
+            <p class="text-on-surface-variant text-lg mb-12 max-w-2xl mx-auto">Join pioneers using Kinetic Pulse to
+              redefine digital interaction. No special hardware needed.</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-6">
+              <a href="/register"
+                class="px-10 py-5 bg-primary text-on-primary font-headline font-bold uppercase tracking-widest hover:scale-105 transition-all">Register
+                Now</a>
+              <a href="/login"
+                class="px-10 py-5 border border-outline-variant hover:border-white transition-all font-headline font-bold uppercase tracking-widest">Sign
+                In</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="w-full border-t border-neutral-800/30 bg-neutral-950">
+      <div
+        class="flex flex-col md:flex-row justify-between items-center px-12 py-10 w-full gap-6 max-w-screen-2xl mx-auto">
+        <div class="text-lg font-black text-cyan-400 font-headline uppercase tracking-tighter">KINETIC PULSE</div>
+        <div class="flex gap-8 font-body text-xs uppercase tracking-widest">
+          <a class="text-neutral-500 hover:text-cyan-200 transition-colors" href="#">Privacy</a>
+          <a class="text-neutral-500 hover:text-cyan-200 transition-colors" href="#">Terms</a>
+          <a class="text-neutral-500 hover:text-cyan-200 transition-colors" href="#">API Status</a>
+        </div>
+        <div class="text-neutral-500 font-body text-xs uppercase tracking-widest">© 2024 KINETIC PULSE. ALL RIGHTS
+          RESERVED.</div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+      // Splash screen animation and auto-redirect
+      (function () {
+        const splashScreen = document.getElementById('splashScreen');
+        const mainContent = document.getElementById('mainContent');
+        const progressCircle = document.getElementById('progressCircle');
+        const loadBar = document.getElementById('loadBar');
+        const loadPercent = document.getElementById('loadPercent');
+        const typingText = document.getElementById('typingText');
+
+        let progress = 0;
+        const duration = 3000; // 3 seconds splash duration
+        const intervalTime = 30; // Update every 30ms
+        const steps = duration / intervalTime;
+        let currentStep = 0;
+
+        // Animate progress circle
+        const circleCircumference = 880;
+
+        const interval = setInterval(() => {
+          currentStep++;
+          progress = (currentStep / steps) * 100;
+
+          // Update progress circle
+          const dashoffset = circleCircumference - (circleCircumference * progress / 100);
+          if (progressCircle) {
+            progressCircle.style.strokeDashoffset = dashoffset;
+          }
+
+          // Update load bar
+          if (loadBar) {
+            loadBar.style.width = progress + '%';
+          }
+
+          // Update percentage text
+          if (loadPercent) {
+            loadPercent.textContent = Math.floor(progress) + '%';
+          }
+
+          // Update typing text animation completion
+          if (progress >= 50 && typingText) {
+            typingText.style.animation = 'none';
+            typingText.style.width = '100%';
+            typingText.style.borderRight = 'none';
+          }
+
+          if (progress >= 100) {
+            clearInterval(interval);
+
+            // Fade out splash screen
+            splashScreen.classList.add('fade-out');
+
+            // Show main content
+            setTimeout(() => {
+              mainContent.style.opacity = '1';
+              mainContent.classList.add('visible');
+
+              // Remove splash screen from DOM after transition
+              setTimeout(() => {
+                splashScreen.style.display = 'none';
+              }, 800);
+            }, 100);
+          }
+        }, intervalTime);
+
+        // Optional: Allow skipping splash with click
+        splashScreen.addEventListener('click', () => {
+          clearInterval(interval);
+          splashScreen.classList.add('fade-out');
+          setTimeout(() => {
+            mainContent.style.opacity = '1';
+            mainContent.classList.add('visible');
+            setTimeout(() => {
+              splashScreen.style.display = 'none';
+            }, 800);
+          }, 100);
+        });
+      })();
+  </script>
 </body>
 
 </html>
