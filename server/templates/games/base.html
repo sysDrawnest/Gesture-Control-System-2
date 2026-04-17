@@ -141,6 +141,14 @@
                 }).catch(err => console.log('Failed to auto-launch client:', err));
             }
         });
+        
+        // Auto-Kill game client when navigating away or closing tab
+        window.addEventListener('beforeunload', () => {
+            const gameId = "{{ game_id | default('final_gesture_client_fixed') }}";
+            if (gameId) {
+                navigator.sendBeacon(`/api/system/stop-client/${gameId}`);
+            }
+        });
 
         // Global Gesture Logic
         const gestureIcon = document.getElementById('gestureIcon');

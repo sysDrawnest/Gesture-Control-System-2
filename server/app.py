@@ -225,6 +225,9 @@ def api_info():
         }
     })
 
+# Track active client processes
+active_clients = {}
+
 # API system start client
 @app.route('/api/system/start-client/<client_name>', methods=['POST'])
 def start_client(client_name):
@@ -239,24 +242,48 @@ def start_client(client_name):
         
     try:
         import sys
+        
+        # Kill existing process for this client if it exists
+        if client_name in active_clients:
+            try:
+                active_clients[client_name].terminate()
+            except:
+                pass
+                
         if os.name == 'nt':
             # Windows: Opens in a new visible cmd window
-            subprocess.Popen(
+            process = subprocess.Popen(
                 [sys.executable, script_name],
                 cwd=client_dir,
                 creationflags=subprocess.CREATE_NEW_CONSOLE
             )
         else:
             # Others: Background process
-            subprocess.Popen(
+            process = subprocess.Popen(
                 [sys.executable, script_name],
                 cwd=client_dir
             )
+            
+        active_clients[client_name] = process
         logger.info(f"Started client script: {script_name}")
         return jsonify({'status': 'success', 'message': f'Started {script_name}'}), 200
     except Exception as e:
         logger.error(f"Failed to start client: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/system/stop-client/<client_name>', methods=['POST'])
+def stop_client(client_name):
+    """Stop an active gesture client process"""
+    if client_name in active_clients:
+        try:
+            active_clients[client_name].terminate()
+            del active_clients[client_name]
+            logger.info(f"Stopped client script for: {client_name}")
+            return jsonify({'status': 'success', 'message': f'Stopped {client_name}'}), 200
+        except Exception as e:
+            logger.error(f"Failed to stop client {client_name}: {e}")
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+    return jsonify({'status': 'not_found', 'message': 'No active client found'}), 404
 
 # Error handlers
 @app.errorhandler(404)
