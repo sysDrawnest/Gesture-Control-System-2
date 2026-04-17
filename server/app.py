@@ -158,6 +158,11 @@ def games_hub():
     """Dedicated Games Hub page"""
     return render_template('games.html')
 
+@app.route('/finalyear')
+def final_year():
+    """Final year project showcase page"""
+    return render_template('finalyear.html')
+
 @app.route('/games/<game_slug>')
 @login_required
 def individual_game(game_slug):
