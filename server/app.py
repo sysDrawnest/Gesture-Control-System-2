@@ -134,6 +134,11 @@ def tutorial():
     """Interactive tutorial page"""
     return render_template('tutorial.html')
 
+@app.route('/games')
+def games_hub():
+    """Dedicated Games Hub page"""
+    return render_template('games.html')
+
 # Static files
 @app.route('/static/<path:path>')
 def serve_static(path):
