@@ -58,6 +58,15 @@ def register_socket_events(socketio):
             join_room(f'user_{user_id}')
             emit('connected', {'message': 'Dashboard connected', 'type': 'dashboard'})
             print(f"[WS] Dashboard connected (sid={sid}, user={username})")
+            
+            # After joining rooms, log them
+            try:
+                rooms_dict = socketio.server.manager.rooms.get('/', {})
+                client_rooms = [room for room, sids in rooms_dict.items() if sid in sids]
+                print(f"[WS] Dashboard connected (sid={sid}). Rooms: {client_rooms}")
+            except:
+                pass
+                
             return True
 
         # --- Gesture client connection ------------------------------------
@@ -80,6 +89,15 @@ def register_socket_events(socketio):
                 join_room(f"user_{user_id}")
                 emit('connected', {'message': 'Authenticated successfully', 'type': 'gesture_client'})
                 print(f"[WS] Client authenticated: {username} (sid={sid})")
+                
+                # After joining rooms, log them
+                try:
+                    rooms_dict = socketio.server.manager.rooms.get('/', {})
+                    client_rooms = [room for room, sids in rooms_dict.items() if sid in sids]
+                    print(f"[WS] Client authenticated ({username}). Rooms: {client_rooms}")
+                except:
+                    pass
+                    
                 return True
             else:
                 # Log why auth failed
@@ -618,6 +636,22 @@ def register_socket_events(socketio):
                     'device_name': info.get('device_name', 'Unknown'),
                 }
         emit('online_users', online_users)
+
+    @socketio.on('debug_check_rooms')
+    def handle_debug_check_rooms():
+        """Debug event to check which rooms the client is in."""
+        sid = request.sid
+        try:
+            # Using the structure provided by user and common in python-socketio manager
+            rooms_dict = socketio.server.manager.rooms.get('/', {})
+            # A client is in a room if their sid is in the room's set/list
+            client_rooms = [room for room, sids in rooms_dict.items() if sid in sids]
+            
+            print(f"[DEBUG] Client {sid} requested room check. Result: {client_rooms}")
+            emit('debug_rooms_response', {'sid': sid, 'rooms': client_rooms})
+        except Exception as e:
+            print(f"[DEBUG] Error checking rooms for {sid}: {e}")
+            emit('debug_rooms_response', {'error': str(e)})
 
 
 # ======================================================================
