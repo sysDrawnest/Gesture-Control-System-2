@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>KINETIC_PULSE | Initializing</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#56007c",
+                        "primary-fixed": "#00e3fd",
+                        "on-tertiary-fixed-variant": "#006823",
+                        "tertiary-fixed-dim": "#54ee70",
+                        "on-surface": "#f6f6fc",
+                        "outline": "#74757a",
+                        "on-primary-fixed-variant": "#005762",
+                        "on-primary-fixed": "#003840",
+                        "secondary-container": "#7d01b1",
+                        "primary-container": "#00e3fd",
+                        "tertiary": "#b9ffb8",
+                        "primary": "#81ecff",
+                        "tertiary-dim": "#54ee70",
+                        "surface-container": "#171a1f",
+                        "secondary-fixed": "#eec2ff",
+                        "primary-dim": "#00d4ec",
+                        "on-primary": "#005762",
+                        "on-secondary": "#380052",
+                        "surface": "#0c0e12",
+                        "error-container": "#9f0519",
+                        "on-tertiary-container": "#005d1f",
+                        "tertiary-container": "#64fd7d",
+                        "surface-container-low": "#111318",
+                        "outline-variant": "#46484d",
+                        "on-surface-variant": "#aaabb0",
+                        "tertiary-fixed": "#64fd7d",
+                        "surface-container-high": "#1d2025",
+                        "secondary-dim": "#d277ff",
+                        "surface-container-highest": "#23262c",
+                        "on-secondary-fixed-variant": "#800ab4",
+                        "primary-fixed-dim": "#00d4ec",
+                        "error": "#ff716c",
+                        "surface-container-lowest": "#000000",
+                        "on-primary-container": "#004d57",
+                        "on-error": "#490006",
+                        "on-secondary-container": "#f3cfff",
+                        "surface-dim": "#0c0e12",
+                        "surface-bright": "#292c33",
+                        "secondary-fixed-dim": "#e7afff",
+                        "inverse-surface": "#f9f9ff",
+                        "error-dim": "#d7383b",
+                        "secondary": "#d277ff",
+                        "on-tertiary-fixed": "#004816",
+                        "inverse-primary": "#006976",
+                        "inverse-on-surface": "#53555a",
+                        "surface-variant": "#23262c",
+                        "on-tertiary": "#006723",
+                        "on-error-container": "#ffa8a3",
+                        "background": "#0c0e12",
+                        "on-background": "#f6f6fc",
+                        "surface-tint": "#81ecff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(35, 38, 44, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+
+        .kinetic-grid {
+            background-image:
+                linear-gradient(to right, rgba(129, 236, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(129, 236, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.6;
+            }
+
+            100% {
+                transform: scale(0.95);
+                opacity: 0.3;
+            }
+        }
+
+        .animate-pulse-ring {
+            animation: pulse-ring 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .text-glow {
+            text-shadow: 0 0 12px rgba(0, 227, 253, 0.6);
+        }
+
+        .orb {
+            filter: blur(80px);
+            opacity: 0.15;
+            position: absolute;
+            border-radius: 100%;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-surface-container-lowest text-on-surface font-body overflow-hidden min-h-screen relative flex items-center justify-center">
+    <!-- Background Elements (The Void) -->
+    <div class="absolute inset-0 kinetic-grid z-0"></div>
+    <div class="orb bg-primary w-[500px] h-[500px] top-[-100px] left-[-100px]"></div>
+    <div class="orb bg-secondary w-[400px] h-[400px] bottom-[-50px] right-[-50px]"></div>
+    <div class="orb bg-tertiary w-[300px] h-[300px] top-1/2 left-1/4"></div>
+    <!-- Main Splash Canvas -->
+    <main class="relative z-10 flex flex-col items-center justify-center w-full max-w-4xl px-6">
+        <!-- Top Visual Anchor -->
+        <div class="mb-12 text-center">
+            <h1
+                class="font-headline text-6xl md:text-8xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-primary via-primary-fixed to-secondary drop-shadow-[0_0_25px_rgba(129,236,255,0.4)]">
+                KINETIC PULSE
+            </h1>
+            <div class="mt-4 flex items-center justify-center space-x-3">
+                <span class="h-[1px] w-12 bg-primary/30"></span>
+                <span class="font-headline text-sm tracking-[0.4em] text-primary-dim uppercase font-medium">Neural
+                    Interface Active</span>
+                <span class="h-[1px] w-12 bg-primary/30"></span>
+            </div>
+        </div>
+        <!-- Kinetic Visualizer (Circular Progress & Icons) -->
+        <div class="relative w-80 h-80 flex items-center justify-center mb-16">
+            <!-- Pulsing Atmosphere -->
+            <div class="absolute inset-0 rounded-full bg-primary/5 animate-pulse-ring"></div>
+            <!-- Outer Ring -->
+            <div class="absolute inset-0 rounded-full border border-primary/20 scale-110"></div>
+            <!-- Progress Circle -->
+            <svg class="w-full h-full transform -rotate-90">
+                <circle class="text-surface-container-highest" cx="160" cy="160" fill="transparent" r="140"
+                    stroke="currentColor" stroke-width="2"></circle>
+                <circle class="text-primary drop-shadow-[0_0_8px_#81ecff]" cx="160" cy="160" fill="transparent" r="140"
+                    stroke="currentColor" stroke-dasharray="880" stroke-dashoffset="220" stroke-width="4"></circle>
+            </svg>
+            <!-- Floating Gesture Icons Orbit -->
+            <div class="absolute inset-0 flex items-center justify-center">
+                <!-- Point -->
+                <div
+                    class="absolute -top-4 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
+                    <span class="material-symbols-outlined text-primary text-3xl" data-icon="touch_app">touch_app</span>
+                </div>
+                <!-- Pinch -->
+                <div
+                    class="absolute top-1/4 -right-6 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
+                    <span class="material-symbols-outlined text-primary text-3xl" data-icon="pinch">pinch</span>
+                </div>
+                <!-- Peace -->
+                <div
+                    class="absolute bottom-4 right-8 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
+                    <span class="material-symbols-outlined text-primary text-3xl"
+                        data-icon="front_hand">front_hand</span>
+                </div>
+                <!-- Palm -->
+                <div
+                    class="absolute bottom-4 left-8 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
+                    <span class="material-symbols-outlined text-primary text-3xl" data-icon="pan_tool">pan_tool</span>
+                </div>
+                <!-- Fist -->
+                <div
+                    class="absolute top-1/4 -left-6 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
+                    <span class="material-symbols-outlined text-primary text-3xl" data-icon="back_hand">back_hand</span>
+                </div>
+            </div>
+            <!-- Core Hub -->
+            <div
+                class="relative w-48 h-48 rounded-full glass-panel border border-outline-variant/30 flex flex-col items-center justify-center shadow-2xl">
+                <div
+                    class="w-24 h-24 rounded-full bg-gradient-to-tr from-primary/20 to-secondary/20 flex items-center justify-center relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-[radial-gradient(circle,rgba(0,227,253,0.3)_0%,transparent_70%)]">
+                    </div>
+                    <span class="material-symbols-outlined text-5xl text-primary drop-shadow-md"
+                        data-icon="sensors">sensors</span>
+                </div>
+                <div class="mt-4 font-headline text-xs tracking-widest text-primary-fixed-dim">CORE_READY</div>
+            </div>
+        </div>
+        <!-- Status & HUD Elements -->
+        <div class="w-full max-w-md text-center space-y-6">
+            <div class="relative inline-block">
+                <p
+                    class="font-headline text-lg tracking-[0.2em] text-on-surface-variant overflow-hidden whitespace-nowrap border-r-2 border-primary animate-[typewriter_3s_steps(30)_infinite,blink_0.75s_step-end_infinite]">
+                    INITIALIZING NEURAL INTERFACE...
+                </p>
+                <style>
+                    @keyframes typewriter {
+                        from {
+                            width: 0;
+                        }
+
+                        to {
+                            width: 100%;
+                        }
+                    }
+
+                    @keyframes blink {
+
+                        from,
+                        to {
+                            border-color: transparent;
+                        }
+
+                        50% {
+                            border-color: #81ecff;
+                        }
+                    }
+                </style>
+            </div>
+            <!-- Telemetry Bar -->
+            <div class="grid grid-cols-3 gap-4">
+                <div class="glass-panel py-3 px-4 border-b border-primary/20 flex flex-col items-start">
+                    <span class="text-[10px] text-on-surface-variant/60 uppercase font-medium">Latency</span>
+                    <span class="font-headline text-sm text-primary">0.04ms</span>
+                </div>
+                <div class="glass-panel py-3 px-4 border-b border-secondary/20 flex flex-col items-start">
+                    <span class="text-[10px] text-on-surface-variant/60 uppercase font-medium">Confidence</span>
+                    <span class="font-headline text-sm text-secondary">99.8%</span>
+                </div>
+                <div class="glass-panel py-3 px-4 border-b border-tertiary/20 flex flex-col items-start">
+                    <span class="text-[10px] text-on-surface-variant/60 uppercase font-medium">Sync State</span>
+                    <span class="font-headline text-sm text-tertiary">Locked</span>
+                </div>
+            </div>
+            <!-- Bottom Action/Hint -->
+            <div class="pt-8">
+                <div class="flex items-center justify-center space-x-2 text-on-surface-variant/40">
+                    <span class="material-symbols-outlined text-sm" data-icon="info">info</span>
+                    <p class="text-xs tracking-tight">Perform <span class="text-primary font-medium">Open Palm</span>
+                        gesture to enter workspace</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Decorative Corner Accents -->
+    <div class="fixed top-8 left-8 flex flex-col space-y-1 opacity-40">
+        <div class="w-16 h-[2px] bg-primary"></div>
+        <div class="w-8 h-[2px] bg-primary/50"></div>
+        <div class="font-headline text-[10px] text-primary-fixed mt-2">SYS_MOD_441</div>
+    </div>
+    <div class="fixed bottom-8 right-8 flex flex-col items-end space-y-1 opacity-40">
+        <div class="w-8 h-[2px] bg-secondary/50"></div>
+        <div class="w-16 h-[2px] bg-secondary"></div>
+        <div class="font-headline text-[10px] text-secondary mt-2">V2.4.0_STABLE</div>
+    </div>
+    <!-- Hidden Map Anchor for data requirements -->
+    <div class="hidden" data-location="Neo Tokyo High-Tech District" style=""></div>
+</body>
+
+</html>
