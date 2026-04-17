@@ -131,6 +131,17 @@
             window.location.href = '/login';
         });
 
+        // Auto-Launch game client when opening a game
+        window.addEventListener('DOMContentLoaded', () => {
+            const gameId = "{{ game_id | default('final_gesture_client_fixed') }}";
+            if (gameId) {
+                fetch(`/api/system/start-client/${gameId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                }).catch(err => console.log('Failed to auto-launch client:', err));
+            }
+        });
+
         // Global Gesture Logic
         const gestureIcon = document.getElementById('gestureIcon');
         const gestureText = document.getElementById('gestureText');

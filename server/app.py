@@ -13,6 +13,7 @@ import logging
 import socket
 import sys
 import os
+import subprocess
 
 # Configure logging
 logging.basicConfig(
@@ -223,6 +224,39 @@ def api_info():
             }
         }
     })
+
+# API system start client
+@app.route('/api/system/start-client/<client_name>', methods=['POST'])
+def start_client(client_name):
+    """Start the gesture client process automatically"""
+    client_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'client'))
+    script_name = f"{client_name}.py"
+    script_path = os.path.join(client_dir, script_name)
+    
+    # Fallback to main gesture client if specific one doesn't exist
+    if not os.path.exists(script_path):
+        script_name = "final_gesture_client_fixed.py"
+        
+    try:
+        import sys
+        if os.name == 'nt':
+            # Windows: Opens in a new visible cmd window
+            subprocess.Popen(
+                [sys.executable, script_name],
+                cwd=client_dir,
+                creationflags=subprocess.CREATE_NEW_CONSOLE
+            )
+        else:
+            # Others: Background process
+            subprocess.Popen(
+                [sys.executable, script_name],
+                cwd=client_dir
+            )
+        logger.info(f"Started client script: {script_name}")
+        return jsonify({'status': 'success', 'message': f'Started {script_name}'}), 200
+    except Exception as e:
+        logger.error(f"Failed to start client: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # Error handlers
 @app.errorhandler(404)
