@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, session
 from flask_login import login_user, logout_user, login_required
 from models.user_model import UserModel
+from functools import wraps
 
 auth_bp = Blueprint('auth', __name__)
 

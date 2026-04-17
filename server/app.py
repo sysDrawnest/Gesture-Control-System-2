@@ -81,16 +81,16 @@ except Exception as e:
 
 # Import and register blueprints
 try:
-    from routes.auth_routes import auth_bp
-    from routes.device_routes import device_bp
-    from routes.control_routes import control_bp
-    from routes.canvas_routes import canvas_bp
+    from routes import auth_bp, device_bp, control_bp, canvas_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(device_bp, url_prefix='/api')
     app.register_blueprint(control_bp, url_prefix='/api')
     app.register_blueprint(canvas_bp, url_prefix='/api')
-    logger.info("Blueprints registered successfully")
+    
+    logger.info("All blueprints registered successfully")
+except ImportError as e:
+    logger.error(f"Blueprint import failed: {e}")
 except Exception as e:
     logger.error(f"Blueprint registration failed: {e}")
 
