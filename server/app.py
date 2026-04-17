@@ -139,6 +139,18 @@ def games_hub():
     """Dedicated Games Hub page"""
     return render_template('games.html')
 
+@app.route('/games/<game_slug>')
+def individual_game(game_slug):
+    """Dynamic route for individual games"""
+    # Map slugs to nice names or metadata if needed, but for now just render
+    try:
+        # Check if template exists to avoid 500
+        template_name = f'games/{game_slug}.html'
+        return render_template(template_name, game_id=game_slug)
+    except Exception as e:
+        logger.error(f"Error loading game {game_slug}: {e}")
+        return render_template('games.html'), 404
+
 # Static files
 @app.route('/static/<path:path>')
 def serve_static(path):

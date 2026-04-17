@@ -1,0 +1,269 @@
+{% extends "games/base.html" %}
+
+{% block title %}KINETIC PULSE | Whack-A-Mole{% endblock %}
+
+{% block extra_css %}
+<style>
+    .game-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 32px;
+        border-radius: 32px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .hole {
+        position: relative;
+        aspect-ratio: 1;
+        background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a1a 100%);
+        border-radius: 50%;
+        border: 4px solid #1e1e30;
+        box-shadow: inset 0 10px 20px rgba(0,0,0,0.8);
+        overflow: hidden;
+        cursor: crosshair;
+    }
+
+    .mole {
+        position: absolute;
+        bottom: -100%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        height: 80%;
+        font-size: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: bottom 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        user-select: none;
+        pointer-events: none;
+    }
+
+    .mole.up {
+        bottom: 10%;
+    }
+
+    .custom-cursor {
+        position: fixed;
+        width: 40px;
+        height: 40px;
+        border: 2px solid #00f3ff;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 1000;
+        transform: translate(-50%, -50%);
+        transition: width 0.1s, height 0.1s;
+        box-shadow: 0 0 15px #00f3ff;
+    }
+
+    .custom-cursor::after {
+        content: '';
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 4px; height: 4px;
+        background: #00f3ff;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .custom-cursor.active {
+        width: 30px;
+        height: 30px;
+        background: rgba(0, 243, 255, 0.3);
+    }
+
+    .hit-effect {
+        animation: hit 0.3s ease-out;
+    }
+
+    @keyframes hit {
+        0% { transform: scale(1); filter: brightness(1); }
+        50% { transform: scale(1.2); filter: brightness(2); }
+        100% { transform: scale(1); filter: brightness(1); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="cursor" class="custom-cursor hidden md:block"></div>
+
+<div class="max-w-4xl mx-auto py-12 px-6">
+    <div class="flex justify-between items-center mb-10">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <a href="/games" class="p-2 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-cyan-400 transition-all">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <h1 class="text-4xl font-space font-bold">Whack <span class="text-cyan-400">Pulse</span></h1>
+            </div>
+            <div class="flex gap-4">
+                <span class="text-[10px] text-slate-500 font-space tracking-widest uppercase bg-white/5 px-2 py-0.5 rounded">Point to Aim</span>
+                <span class="text-[10px] text-slate-500 font-space tracking-widest uppercase bg-white/5 px-2 py-0.5 rounded">Pinch to Whack</span>
+            </div>
+        </div>
+        
+        <div class="flex gap-6 items-center">
+            <div class="text-right">
+                <p class="text-[10px] text-slate-500 uppercase font-space">Time Left</p>
+                <p id="timer" class="text-3xl font-space font-bold text-amber-500">30s</p>
+            </div>
+            <div class="h-12 w-px bg-white/10"></div>
+            <div class="text-right">
+                <p class="text-[10px] text-slate-500 uppercase font-space">Score</p>
+                <p id="score" class="text-3xl font-space font-bold text-cyan-400">0</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div id="gameRegion" class="relative">
+        <div class="game-grid">
+            <div class="hole" data-idx="0"><div class="mole">👾</div></div>
+            <div class="hole" data-idx="1"><div class="mole">👾</div></div>
+            <div class="hole" data-idx="2"><div class="mole">👾</div></div>
+            <div class="hole" data-idx="3"><div class="mole">👾</div></div>
+            <div class="hole" data-idx="4"><div class="mole">👾</div></div>
+            <div class="hole" data-idx="5"><div class="mole">👾</div></div>
+            <div class="hole" data-idx="6"><div class="mole">👾</div></div>
+            <div class="hole" data-idx="7"><div class="mole">👾</div></div>
+            <div class="hole" data-idx="8"><div class="mole">👾</div></div>
+        </div>
+
+        <!-- Overlays -->
+        <div id="startOverlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md rounded-[32px]">
+            <div class="text-7xl mb-6">🔨</div>
+            <h2 class="text-3xl font-space font-bold mb-2">SYSTEM CLEANUP</h2>
+            <p class="text-slate-400 font-space tracking-[0.2em] mb-8">WHACK THE BUGS</p>
+            <button onclick="startGame()" class="btn-primary px-10 py-4 rounded-2xl font-space font-bold uppercase tracking-widest">
+                Initialize Search
+            </button>
+        </div>
+
+        <div id="endOverlay" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-cyan-950/40 backdrop-blur-lg rounded-[32px]">
+            <h2 class="text-4xl font-space font-bold text-white mb-2">SCAN COMPLETE</h2>
+            <p id="finalScore" class="text-2xl font-space text-cyan-400 mb-8 font-bold">BUGS REMOVED: 0</p>
+            <button onclick="startGame()" class="btn-primary px-10 py-4 rounded-2xl font-space font-bold uppercase tracking-widest">
+                Start New Scan
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const holes = document.querySelectorAll('.hole');
+    const scoreEl = document.getElementById('score');
+    const timerEl = document.getElementById('timer');
+    const cursor = document.getElementById('cursor');
+    const startOverlay = document.getElementById('startOverlay');
+    const endOverlay = document.getElementById('endOverlay');
+
+    let score = 0;
+    let timeLeft = 30;
+    let isGameOver = true;
+    let activeHole = null;
+    let timerId;
+    let peekId;
+
+    // Custom Cursor tracking
+    document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+    });
+
+    function randomHole() {
+        const idx = Math.floor(Math.random() * holes.length);
+        const hole = holes[idx];
+        if (hole === activeHole) return randomHole();
+        return hole;
+    }
+
+    function peek() {
+        if (isGameOver) return;
+        const hole = randomHole();
+        const mole = hole.querySelector('.mole');
+        mole.classList.add('up');
+        activeHole = hole;
+
+        const time = Math.random() * 800 + 400; // Moles stay up for 0.4 - 1.2s
+        setTimeout(() => {
+            mole.classList.remove('up');
+            if (activeHole === hole) activeHole = null;
+            if (!isGameOver) peek();
+        }, time);
+    }
+
+    function whack(e) {
+        if (!e.isTrusted && !isGameOver) { /* Gesture triggered */ }
+        
+        // Find if cursor is over a hole with a mole
+        const rect = cursor.getBoundingClientRect();
+        const hoveredHole = document.elementFromPoint(rect.left + rect.width/2, rect.top + rect.height/2)?.closest('.hole');
+        
+        cursor.classList.add('active');
+        setTimeout(() => cursor.classList.remove('active'), 150);
+
+        if (hoveredHole && hoveredHole.querySelector('.mole').classList.contains('up')) {
+            const mole = hoveredHole.querySelector('.mole');
+            mole.classList.remove('up');
+            hoveredHole.classList.add('hit-effect');
+            setTimeout(() => hoveredHole.classList.remove('hit-effect'), 300);
+            
+            score++;
+            scoreEl.textContent = score;
+            activeHole = null;
+            
+            // Pulse score
+            scoreEl.style.transform = 'scale(1.2)';
+            setTimeout(() => scoreEl.style.transform = '', 100);
+        }
+    }
+
+    window.handleGesture = function(gesture) {
+        if (gesture === 'POINT') {
+            // In a real implementation with coordinates, we'd update cursor position.
+            // For now, we assume the system mouse follows the POINT.
+        }
+        if (gesture === 'PINCH' || gesture === 'FIST') {
+            if (isGameOver) startGame();
+            else whack({ isTrusted: false });
+        }
+    }
+
+    document.addEventListener('click', whack);
+
+    function startGame() {
+        score = 0;
+        timeLeft = 30;
+        isGameOver = false;
+        scoreEl.textContent = '0';
+        timerEl.textContent = '30s';
+        
+        startOverlay.classList.add('hidden');
+        endOverlay.classList.add('hidden');
+        
+        clearInterval(timerId);
+        timerId = setInterval(() => {
+            timeLeft--;
+            timerEl.textContent = timeLeft + 's';
+            if (timeLeft <= 0) endGame();
+        }, 1000);
+
+        peek();
+    }
+
+    function endGame() {
+        isGameOver = true;
+        clearInterval(timerId);
+        endOverlay.classList.remove('hidden');
+        document.getElementById('finalScore').textContent = 'BUGS REMOVED: ' + score;
+        
+        // Save score if needed
+        const best = localStorage.getItem('whackHighScore') || 0;
+        if (score > best) localStorage.setItem('whackHighScore', score);
+    }
+</script>
+{% endblock %}

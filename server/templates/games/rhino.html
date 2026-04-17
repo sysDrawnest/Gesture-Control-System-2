@@ -1,0 +1,337 @@
+{% extends "games/base.html" %}
+
+{% block title %}KINETIC PULSE | Rhino Dino{% endblock %}
+
+{% block extra_css %}
+<style>
+    .game-canvas {
+        background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+    }
+
+    .score-panel {
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 10px 20px;
+    }
+
+    @keyframes shake {
+
+        0%,
+        100% {
+            transform: translateX(0);
+        }
+
+        25% {
+            transform: translateX(-5px);
+        }
+
+        75% {
+            transform: translateX(5px);
+        }
+    }
+
+    .shake {
+        animation: shake 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-4xl w-full">
+        <!-- Game Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-4">
+                <a href="/games"
+                    class="material-symbols-outlined text-slate-400 hover:text-cyan-400 transition-colors">arrow_back</a>
+                <h1 class="text-3xl font-space font-bold">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">🦏
+                        Rhino</span> Dino
+                </h1>
+            </div>
+            <div class="score-panel flex gap-6">
+                <div>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider">Score</p>
+                    <p id="score" class="text-2xl font-space font-bold text-amber-400">0</p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider">Best</p>
+                    <p id="bestScore" class="text-2xl font-space font-bold text-cyan-400">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Canvas -->
+        <div id="gameCanvas" class="game-canvas w-full h-[500px] relative overflow-hidden cursor-pointer">
+            <!-- Will be populated by JavaScript -->
+        </div>
+
+        <!-- Controls Info -->
+        <div class="flex justify-between items-center mt-6">
+            <div class="flex gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-amber-400 text-sm">hand_gesture</span>
+                    <span class="text-xs text-slate-400">🤏 Pinch = Jump</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-amber-400 text-sm">touch_app</span>
+                    <span class="text-xs text-slate-400">Click/Tap = Jump</span>
+                </div>
+            </div>
+            <button id="restartBtn"
+                class="px-4 py-2 bg-amber-500/20 border border-amber-500/40 text-amber-400 font-space text-xs uppercase tracking-widest rounded hover:bg-amber-500/30 transition-all">
+                Restart Game
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let gameRunning = true;
+    let score = 0;
+    let highScore = parseInt(localStorage.getItem('rhinoHighScore')) || 0;
+    let frame = 0;
+    let animationId = null;
+    let obstacles = [];
+    let groundY = 380;
+    let gameSpeed = 5;
+    let speedMultiplier = 1;
+
+    // Rhino properties
+    let rhino = {
+        x: 100,
+        y: groundY,
+        width: 50,
+        height: 50,
+        isJumping: false,
+        velocityY: 0,
+        gravity: 0.8,
+        jumpPower: -12
+    };
+
+    // Obstacle types
+    const obstacles_list = ['🌵', '🌵', '🌵', '🪨', '🪨', '🌵'];
+
+    // Global handleGesture hook from base.html
+    window.handleGesture = function(gesture) {
+        if (gesture === 'PINCH' || gesture === 'OPEN_PALM' || gesture === 'LEFT_CLICK') {
+            if (isGameOver) location.reload();
+            else jump();
+        }
+    }
+
+    function updateHighScore() {
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('rhinoHighScore', highScore);
+            document.getElementById('bestScore').textContent = highScore;
+
+            // Celebration effect
+            const bestEl = document.getElementById('bestScore');
+            bestEl.style.transform = 'scale(1.2)';
+            setTimeout(() => bestEl.style.transform = '', 300);
+        }
+    }
+
+    function updateScore() {
+        document.getElementById('score').textContent = score;
+        updateHighScore();
+    }
+
+    function jump() {
+        if (!gameRunning) return;
+        if (!rhino.isJumping) {
+            rhino.isJumping = true;
+            rhino.velocityY = rhino.jumpPower;
+
+            // Visual feedback
+            const rhinoEl = document.querySelector('#rhinoChar');
+            if (rhinoEl) {
+                rhinoEl.style.transform = 'scale(1.15)';
+                setTimeout(() => rhinoEl.style.transform = '', 200);
+            }
+
+            // Haptic feedback
+            if (window.uxSettings && window.uxSettings.settings.haptics.enabled) {
+                window.uxSettings.vibrate(30);
+            }
+        }
+    }
+
+    function createObstacle() {
+        if (!gameRunning) return;
+
+        const type = obstacles_list[Math.floor(Math.random() * obstacles_list.length)];
+        const isCactus = type === '🌵';
+
+        const obstacle = {
+            element: null,
+            x: 800,
+            width: isCactus ? 35 : 30,
+            type: type,
+            isCactus: isCactus
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const div = document.createElement('div');
+        div.className = 'absolute';
+        div.textContent = type;
+        div.style.fontSize = isCactus ? '45px' : '38px';
+        div.style.bottom = isCactus ? '35px' : '30px';
+        div.style.filter = 'drop-shadow(2px 2px 4px black)';
+        div.style.transition = 'none';
+
+        canvas.appendChild(div);
+        obstacle.element = div;
+        obstacles.push(obstacle);
+    }
+
+    function checkCollision(obs) {
+        const rhinoLeft = rhino.x + 10;
+        const rhinoRight = rhino.x + rhino.width - 10;
+        const rhinoBottom = rhino.y + rhino.height - 15;
+
+        const obsLeft = obs.x;
+        const obsRight = obs.x + obs.width;
+        const obsBottom = 35;
+
+        return (rhinoRight > obsLeft && rhinoLeft < obsRight && rhinoBottom > obsBottom - 15);
+    }
+
+    function gameOver() {
+        gameRunning = false;
+        if (animationId) cancelAnimationFrame(animationId);
+
+        const canvas = document.getElementById('gameCanvas');
+        canvas.innerHTML = `
+            <div class="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
+                <div class="text-center">
+                    <div class="text-7xl mb-4">💀</div>
+                    <h2 class="text-2xl font-space font-bold text-white mb-2">Game Over!</h2>
+                    <p class="text-slate-300 mb-4">Score: ${score}</p>
+                    <button id="gameOverRestart" class="px-6 py-2 bg-amber-500 text-black font-space text-sm uppercase tracking-widest rounded hover:bg-amber-400 transition-all">
+                        Play Again
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('gameOverRestart').addEventListener('click', () => location.reload());
+
+        // Haptic feedback
+        if (window.uxSettings && window.uxSettings.settings.haptics.enabled) {
+            window.uxSettings.vibrate(200);
+        }
+        if (window.uxSettings && window.uxSettings.settings.sound.enabled) {
+            window.uxSettings.playSound('error');
+        }
+    }
+
+    function updateGame() {
+        if (!gameRunning) return;
+
+        // Update rhino physics
+        if (rhino.isJumping) {
+            rhino.velocityY += rhino.gravity;
+            rhino.y += rhino.velocityY;
+
+            if (rhino.y >= groundY) {
+                rhino.y = groundY;
+                rhino.isJumping = false;
+                rhino.velocityY = 0;
+            }
+
+            const rhinoEl = document.querySelector('#rhinoChar');
+            if (rhinoEl) rhinoEl.style.bottom = `${rhino.y}px`;
+        }
+
+        // Update obstacles
+        for (let i = 0; i < obstacles.length; i++) {
+            const obs = obstacles[i];
+            obs.x -= gameSpeed * speedMultiplier;
+            obs.element.style.left = `${obs.x}px`;
+
+            if (obs.x + obs.width < 0) {
+                obs.element.remove();
+                obstacles.splice(i, 1);
+                i--;
+                score++;
+                updateScore();
+            }
+
+            if (checkCollision(obs)) {
+                gameOver();
+                return;
+            }
+        }
+
+        // Increase difficulty
+        if (frame % 300 === 0 && frame > 0) {
+            speedMultiplier = Math.min(2, speedMultiplier + 0.05);
+            if (gameSpeed < 12) gameSpeed += 0.3;
+        }
+
+        frame++;
+        animationId = requestAnimationFrame(updateGame);
+    }
+
+    function initGame() {
+        const canvas = document.getElementById('gameCanvas');
+        canvas.innerHTML = `
+            <!-- Sky -->
+            <div class="absolute inset-0 bg-gradient-to-b from-amber-900/30 to-transparent"></div>
+            
+            <!-- Sun -->
+            <div class="absolute top-5 right-5 text-5xl animate-float">☀️</div>
+            
+            <!-- Clouds -->
+            <div class="absolute top-10 left-10 text-3xl opacity-60 animate-float" style="animation-duration: 8s;">☁️</div>
+            <div class="absolute top-20 right-20 text-3xl opacity-40 animate-float" style="animation-duration: 12s;">☁️</div>
+            
+            <!-- Ground -->
+            <div class="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-r from-amber-700 to-amber-600"></div>
+            <div class="absolute bottom-4 left-0 right-0 h-1 bg-amber-800/50"></div>
+            
+            <!-- Rhino -->
+            <div id="rhinoChar" class="absolute text-6xl transition-all duration-100" style="bottom: ${groundY}px; left: ${rhino.x}px; filter: drop-shadow(2px 4px 6px black);">
+                🦏
+            </div>
+            
+            <!-- Instructions -->
+            <div class="absolute bottom-2 left-0 right-0 text-center text-xs text-slate-400 font-space uppercase tracking-wider">
+                🤏 Pinch to Jump | Click/Tap anywhere to jump
+            </div>
+        `;
+
+        // Score display
+        document.getElementById('bestScore').textContent = highScore;
+        updateScore();
+
+        // Start game loop
+        updateGame();
+
+        // Spawn obstacles
+        setInterval(() => {
+            if (gameRunning) createObstacle();
+        }, 1200);
+
+        // Click to jump
+        canvas.addEventListener('click', jump);
+
+        // Restart button
+        document.getElementById('restartBtn').addEventListener('click', () => location.reload());
+    }
+
+    // Initialize
+    initGame();
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        if (animationId) cancelAnimationFrame(animationId);
+    });
+</script>
+{% endblock %}

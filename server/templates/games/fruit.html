@@ -1,0 +1,372 @@
+{% extends "games/base.html" %}
+
+{% block title %}KINETIC PULSE | Fruit Slicer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .game-layer {
+        position: relative;
+        background: radial-gradient(circle at center, #1a2e1a 0%, #050a05 100%);
+        border-radius: 40px;
+        overflow: hidden;
+        border: 2px solid rgba(34, 197, 94, 0.1);
+        cursor: crosshair;
+    }
+
+    #sliceCanvas {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        pointer-events: none;
+    }
+
+    .fruit {
+        position: absolute;
+        font-size: 50px;
+        z-index: 10;
+        user-select: none;
+        pointer-events: none;
+        filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+    }
+
+    .fruit-part {
+        position: absolute;
+        font-size: 50px;
+        z-index: 5;
+        transition: transform 0.5s ease-out, opacity 0.5s;
+    }
+
+    .score-card {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        padding: 12px 24px;
+        border-radius: 20px;
+    }
+
+    .combo-text {
+        position: absolute;
+        color: #fbbf24;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 900;
+        font-size: 24px;
+        z-index: 30;
+        pointer-events: none;
+        animation: comboRise 1s ease-out forwards;
+    }
+
+    @keyframes comboRise {
+        0% { transform: translateY(0) scale(0.5); opacity: 0; }
+        20% { opacity: 1; transform: translateY(-20px) scale(1.2); }
+        100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-12 px-6">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-8">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <a href="/games" class="p-2 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-green-400 transition-all">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <h1 class="text-4xl font-space font-bold tracking-tight">Fruit <span class="text-green-400">Slicer</span></h1>
+            </div>
+            <p class="text-slate-500 text-xs uppercase tracking-[0.3em] font-space">Swipe to Slice | Avoid the Bombs 💣</p>
+        </div>
+        
+        <div class="flex gap-6">
+            <div class="score-card min-w-[120px]">
+                <p class="text-[10px] text-slate-500 font-space uppercase mb-1">Score</p>
+                <p id="score" class="text-3xl font-space font-bold text-white">0</p>
+            </div>
+            <div class="score-card min-w-[120px] border-red-500/20">
+                <p class="text-[10px] text-slate-500 font-space uppercase mb-1">Lives</p>
+                <div class="flex gap-2" id="livesContainer">
+                    <span class="text-red-500">❤️</span>
+                    <span class="text-red-500">❤️</span>
+                    <span class="text-red-500">❤️</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div id="gameContainer" class="game-layer w-full h-[600px]">
+        <canvas id="sliceCanvas"></canvas>
+        
+        <!-- Overlays -->
+        <div id="startOverlay" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md">
+            <div class="text-7xl mb-6">🍉</div>
+            <h2 class="text-3xl font-space font-bold mb-2 uppercase tracking-tighter">Blade Protocol</h2>
+            <p class="text-slate-400 font-space mb-8 tracking-[0.2em] uppercase text-sm">Synchronize movements</p>
+            <button onclick="startGame()" class="px-12 py-4 bg-green-600 hover:bg-green-500 text-white rounded-2xl font-space font-bold uppercase tracking-widest shadow-lg shadow-green-900/40 transition-all">
+                Initialize
+            </button>
+        </div>
+
+        <div id="gameOverOverlay" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center bg-red-950/20 backdrop-blur-xl border border-red-500/30">
+            <h2 class="text-5xl font-space font-bold text-white mb-2">CRITICAL FAILURE</h2>
+            <p id="finalScore" class="text-2xl font-space text-green-400 mb-8 font-bold uppercase">SCORE: 0</p>
+            <button onclick="startGame()" class="px-12 py-4 bg-white text-black hover:bg-green-100 rounded-2xl font-space font-bold uppercase tracking-widest transition-all">
+                Reset System
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const container = document.getElementById('gameContainer');
+    const canvas = document.getElementById('sliceCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const livesEl = document.getElementById('livesContainer');
+    const startOverlay = document.getElementById('startOverlay');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+
+    let score = 0;
+    let lives = 3;
+    let isGameOver = true;
+    let fruits = [];
+    let slicePoints = [];
+    let lastPoint = null;
+    let animationId;
+    let spawnTimer;
+
+    const fruitTypes = ['🍎', '🍊', '🍋', '🍉', '🍇', '🍓', '🥝', '🍍', '💣'];
+
+    function resizeCanvas() {
+        canvas.width = container.offsetWidth;
+        canvas.height = container.offsetHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Mouse/Touch Tracking
+    container.addEventListener('mousemove', (e) => {
+        if (isGameOver) return;
+        const rect = container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        handleSliceMove(x, y);
+    });
+
+    function handleSliceMove(x, y) {
+        slicePoints.push({ x, y, time: Date.now() });
+        if (slicePoints.length > 20) slicePoints.shift();
+        
+        checkSlices(x, y);
+    }
+
+    function checkSlices(x, y) {
+        if (!lastPoint) {
+            lastPoint = { x, y };
+            return;
+        }
+
+        fruits.forEach((fruit, idx) => {
+            if (fruit.isSliced) return;
+
+            const dx = fruit.x - x;
+            const dy = fruit.y - y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist < 40) {
+                sliceFruit(fruit, idx);
+            }
+        });
+
+        lastPoint = { x, y };
+    }
+
+    function sliceFruit(fruit, idx) {
+        fruit.isSliced = true;
+        if (fruit.type === '💣') {
+            explode();
+            return;
+        }
+
+        score += 10;
+        scoreEl.textContent = score;
+
+        // Splitting visual
+        fruit.element.style.opacity = '0';
+        createParticles(fruit.x, fruit.y, fruit.type);
+        
+        // Remove later
+        setTimeout(() => {
+            fruit.element.remove();
+            fruits.splice(fruits.indexOf(fruit), 1);
+        }, 100);
+    }
+
+    function createParticles(x, y, type) {
+        for(let i=0; i<2; i++) {
+            const p = document.createElement('div');
+            p.className = 'fruit-part';
+            p.textContent = type;
+            p.style.left = x + 'px';
+            p.style.top = y + 'px';
+            p.style.clipPath = i === 0 ? 'inset(0 50% 0 0)' : 'inset(0 0 0 50%)';
+            container.appendChild(p);
+
+            const angle = (i === 0 ? -1 : 1) * (Math.random() * 0.5 + 0.5);
+            const vx = (i === 0 ? -5 : 5);
+            const vy = -10;
+            
+            let px = x;
+            let py = y;
+            let pvy = vy;
+
+            const move = () => {
+                px += vx;
+                py += pvy;
+                pvy += 0.5;
+                p.style.left = px + 'px';
+                p.style.top = py + 'px';
+                p.style.transform = `rotate(${px/10}rad)`;
+                if (py < container.offsetHeight) requestAnimationFrame(move);
+                else p.remove();
+            };
+            requestAnimationFrame(move);
+        }
+    }
+
+    function explode() {
+        lives = 0;
+        updateLives();
+        endGame();
+    }
+
+    function updateLives() {
+        livesEl.innerHTML = '';
+        for(let i=0; i<3; i++) {
+            const s = document.createElement('span');
+            s.textContent = i < lives ? '❤️' : '🖤';
+            s.className = i < lives ? 'text-red-500' : 'text-slate-700';
+            livesEl.appendChild(s);
+        }
+    }
+
+    function spawnFruit() {
+        if (isGameOver) return;
+        const type = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
+        const el = document.createElement('div');
+        el.className = 'fruit';
+        el.textContent = type;
+        
+        const x = Math.random() * (container.offsetWidth - 100) + 50;
+        const vx = (Math.random() - 0.5) * 6;
+        const vy = -(Math.random() * 5 + 15);
+        
+        el.style.left = x + 'px';
+        el.style.top = container.offsetHeight + 'px';
+        container.appendChild(el);
+
+        fruits.push({
+            element: el,
+            type: type,
+            x: x,
+            y: container.offsetHeight,
+            vx: vx,
+            vy: vy,
+            isSliced: false
+        });
+
+        spawnTimer = setTimeout(spawnFruit, Math.random() * 1000 + 500);
+    }
+
+    function drawSlice() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (slicePoints.length < 2) return;
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#22c55e';
+
+        const now = Date.now();
+        for (let i = 1; i < slicePoints.length; i++) {
+            const p1 = slicePoints[i - 1];
+            const p2 = slicePoints[i];
+            
+            // Fade out old segments
+            const age = now - p2.time;
+            if (age > 150) continue;
+            
+            ctx.globalAlpha = 1 - (age / 150);
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+        }
+        ctx.stroke();
+
+        // Clear old points
+        slicePoints = slicePoints.filter(p => now - p.time < 150);
+    }
+
+    function update() {
+        if (isGameOver) return;
+
+        fruits.forEach((fruit, idx) => {
+            fruit.x += fruit.vx;
+            fruit.y += fruit.vy;
+            fruit.vy += 0.3; // gravity
+
+            fruit.element.style.left = fruit.x + 'px';
+            fruit.element.style.top = fruit.y + 'px';
+            fruit.element.style.transform = `rotate(${fruit.x/20}rad)`;
+
+            if (fruit.y > container.offsetHeight + 100) {
+                if (!fruit.isSliced && fruit.type !== '💣') {
+                    lives--;
+                    updateLives();
+                    if (lives <= 0) endGame();
+                }
+                fruit.element.remove();
+                fruits.splice(idx, 1);
+            }
+        });
+
+        drawSlice();
+        animationId = requestAnimationFrame(update);
+    }
+
+    function startGame() {
+        score = 0;
+        lives = 3;
+        isGameOver = false;
+        scoreEl.textContent = '0';
+        updateLives();
+        
+        fruits.forEach(f => f.element.remove());
+        fruits = [];
+        
+        startOverlay.classList.add('hidden');
+        gameOverOverlay.classList.add('hidden');
+        
+        clearTimeout(spawnTimer);
+        spawnFruit();
+        update();
+    }
+
+    function endGame() {
+        isGameOver = true;
+        gameOverOverlay.classList.remove('hidden');
+        document.getElementById('finalScore').textContent = 'SCORE: ' + score;
+        clearTimeout(spawnTimer);
+        cancelAnimationFrame(animationId);
+    }
+
+    window.handleGesture = function(gesture) {
+        // Similar to space shooter, we assume coordinates are coming through POINT
+        // or the system mouse is mapped. For standalone, we just listen to mouse.
+    }
+</script>
+{% endblock %}

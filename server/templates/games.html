@@ -600,35 +600,6 @@
         </div>
     </section>
 
-    <!-- ══════════════════ GAME MODAL ══════════════════ -->
-    <div id="gameModal" class="fixed inset-0 z-[100] items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-        <div class="glass border border-white/10 rounded-2xl p-6 md:p-8 max-w-lg w-full mx-4 animate-fade-in relative">
-            <button id="closeGameModal"
-                class="absolute top-4 right-4 text-slate-400 hover:text-white material-symbols-outlined text-xl transition-colors">close</button>
-            <h2 id="gameModalTitle"
-                class="text-xl md:text-2xl font-space font-bold text-white uppercase mb-2 tracking-tight">Game</h2>
-            <div class="flex items-center gap-2 mb-6">
-                <div class="w-1.5 h-1.5 rounded-full bg-tertiary shadow-[0_0_8px_#b9ffb8]"></div>
-                <span class="text-[10px] text-tertiary font-space uppercase tracking-widest"
-                    id="gameModalStatus">Ready</span>
-            </div>
-            <div id="gameModalCanvas"
-                class="bg-surface-container rounded-xl min-h-[260px] flex items-center justify-center mb-4 border border-white/5 overflow-hidden">
-            </div>
-            <div class="flex justify-between items-center mb-4">
-                <div id="gameModalScore" class="text-xl font-space font-bold text-primary">Score: 0</div>
-                <div id="gameModalGesture" class="text-xs text-on-surface-variant font-space uppercase tracking-wider">
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <button id="closeGameBtn"
-                    class="py-3 border border-white/10 text-slate-300 font-space text-xs uppercase tracking-widest hover:bg-white/5 transition-all rounded">←
-                    Back</button>
-                <button id="restartGameBtn"
-                    class="py-3 bg-primary text-on-primary font-space text-xs uppercase tracking-widest hover:brightness-110 transition-all rounded">Restart</button>
-            </div>
-        </div>
-    </div>
 
     <!-- ══════════════════ LOGIN REDIRECT MODAL ══════════════════ -->
     <div id="loginModal"
@@ -752,136 +723,10 @@
 
         function openGameModal(gameId) {
             if (!checkAuthAndPlay(gameId)) return;
-
-            currentGame = gameId;
-            gameScore = 0;
-            updateScore();
-            gameModal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            runGame(gameId);
+            // Redirect to standalone game page
+            window.location.href = `/games/${gameId}`;
         }
 
-        function closeGameModal() {
-            gameModal.classList.remove('active');
-            document.body.style.overflow = '';
-            if (gameInterval) { clearInterval(gameInterval); gameInterval = null; }
-        }
-
-        function updateScore() {
-            const scoreEl = document.getElementById('gameModalScore');
-            if (scoreEl) scoreEl.textContent = `Score: ${gameScore}`;
-        }
-
-        const gameNames = {
-            dino: 'Dino Runner', flappy: 'Flappy Pulse', piano: 'Gesture Piano',
-            whack: 'Whack-A-Mole', memory: 'Memory Match', fruit: 'Fruit Slicer',
-            space: 'Space Shooter', target: 'Target Blast'
-        };
-
-        function runGame(id) {
-            document.getElementById('gameModalTitle').textContent = gameNames[id] || id;
-            const canvas = document.getElementById('gameModalCanvas');
-            if (gameInterval) { clearInterval(gameInterval); gameInterval = null; }
-            const fns = { dino: startDino, flappy: startFlappy, piano: startPiano, whack: startWhack, memory: startMemory, fruit: startFruit, space: startSpace, target: startTarget };
-            if (fns[id]) fns[id](canvas);
-        }
-
-        // ── Individual game implementations ─────────────────────────────────────
-        function startDino(c) {
-            c.innerHTML = `<div class="text-center p-8 w-full"><div class="text-6xl mb-4 animate-bounce">🦖</div><p class="text-slate-400 text-xs mb-6 uppercase tracking-widest">Pinch gesture = Jump</p><button id="jumpBtn" class="px-8 py-3 bg-tertiary/20 border border-tertiary/40 text-tertiary font-space text-sm uppercase tracking-widest hover:bg-tertiary/30 transition-all rounded">Jump!</button><p class="mt-4 text-xs text-slate-500">Score: <span id="dinoS">0</span></p></div>`;
-            let s = 0;
-            const jumpBtn = c.querySelector('#jumpBtn');
-            if (jumpBtn) {
-                jumpBtn.addEventListener('click', () => { s++; gameScore = s; updateScore(); const scoreSpan = c.querySelector('#dinoS'); if (scoreSpan) scoreSpan.textContent = s; });
-            }
-        }
-
-        function startFlappy(c) {
-            c.innerHTML = `<div class="text-center p-8 w-full"><div class="text-6xl mb-4">🐦</div><p class="text-slate-400 text-xs mb-6 uppercase tracking-widest">Pinch gesture = Flap</p><button id="flapBtn" class="px-8 py-3 bg-primary/20 border border-primary/40 text-primary font-space text-sm uppercase tracking-widest hover:bg-primary/30 transition-all rounded">Flap!</button><p class="mt-4 text-xs text-slate-500">Score: <span id="flappyS">0</span></p></div>`;
-            let s = 0;
-            const flapBtn = c.querySelector('#flapBtn');
-            if (flapBtn) {
-                flapBtn.addEventListener('click', () => { s++; gameScore = s; updateScore(); const scoreSpan = c.querySelector('#flappyS'); if (scoreSpan) scoreSpan.textContent = s; });
-            }
-        }
-
-        function startPiano(c) {
-            const notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-            c.innerHTML = `<div class="p-4 w-full"><div class="flex justify-center gap-1 mb-4 flex-wrap">${notes.map(n => `<button class="piano-key px-3 py-8 bg-white text-gray-900 border-2 border-primary font-space font-bold text-xs hover:bg-primary hover:text-on-primary transition-all rounded" data-note="${n}">${n}</button>`).join('')}</div><p class="text-center text-xs text-on-surface-variant">Point at keys with your finger</p></div>`;
-            c.querySelectorAll('.piano-key').forEach(k => k.addEventListener('click', () => { gameScore++; updateScore(); k.style.transform = 'scale(0.9)'; setTimeout(() => k.style.transform = '', 120); }));
-        }
-
-        function startWhack(c) {
-            c.innerHTML = `<div class="p-4 w-full"><div class="grid grid-cols-3 gap-2 mb-3">${Array(9).fill().map((_, i) => `<button class="mole-hole px-0 py-6 bg-white/5 border border-white/10 rounded-lg text-2xl hover:border-primary/30 transition-all" data-hole="${i}">🕳️</button>`).join('')}</div><p class="text-center text-xs text-on-surface-variant">Score: <span id="whackS">0</span></p></div>`;
-            let s = 0;
-            const holes = c.querySelectorAll('.mole-hole');
-            holes.forEach(h => h.addEventListener('click', () => { if (h.textContent === '🐭') { s++; gameScore = s; updateScore(); const scoreSpan = c.querySelector('#whackS'); if (scoreSpan) scoreSpan.textContent = s; h.textContent = '🕳️'; } }));
-            if (gameInterval) clearInterval(gameInterval);
-            gameInterval = setInterval(() => { const r = holes[Math.floor(Math.random() * holes.length)]; if (r && r.textContent === '🕳️') { r.textContent = '🐭'; setTimeout(() => { if (r && r.textContent === '🐭') r.textContent = '🕳️'; }, 1000); } }, 1200);
-        }
-
-        function startMemory(c) {
-            const icons = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
-            const shuffled = [...icons, ...icons].sort(() => Math.random() - 0.5);
-            c.innerHTML = `<div class="p-4 w-full"><div class="grid grid-cols-4 gap-2">${shuffled.map((ic, i) => `<button class="mem-card py-3 bg-primary/20 border border-primary/30 rounded-lg text-xl font-space" data-icon="${ic}" data-idx="${i}">?</button>`).join('')}</div><p class="text-center text-xs text-on-surface-variant mt-3">Matches: <span id="memS">0</span></p></div>`;
-            let matches = 0, selected = null, lock = false;
-            c.querySelectorAll('.mem-card').forEach(btn => btn.addEventListener('click', () => { if (lock || btn.textContent !== '?') return; btn.textContent = btn.dataset.icon; if (!selected) { selected = btn; } else if (selected.dataset.icon === btn.dataset.icon && selected !== btn) { matches++; const scoreSpan = c.querySelector('#memS'); if (scoreSpan) scoreSpan.textContent = matches; gameScore = matches; updateScore(); selected = null; } else if (selected !== btn) { lock = true; setTimeout(() => { if (selected) selected.textContent = '?'; btn.textContent = '?'; selected = null; lock = false; }, 900); } }));
-        }
-
-        function startFruit(c) {
-            const fruits = ['🍎', '🍊', '🍋', '🍇', '🍓', '🍉', '🍑', '🥝'];
-            c.innerHTML = `<div class="p-4 w-full text-center"><p class="text-xs text-on-surface-variant mb-4 uppercase tracking-widest">Click fruits to slice them!</p><div id="fruitArea" class="min-h-[120px] flex items-center justify-center gap-4 mb-4 flex-wrap"></div><p class="text-xs text-slate-500">Score: <span id="fruitS">0</span></p></div>`;
-            let s = 0;
-            function spawnFruit() {
-                const fa = c.querySelector('#fruitArea');
-                if (!fa) return;
-                const span = document.createElement('span');
-                span.textContent = fruits[Math.floor(Math.random() * fruits.length)];
-                span.className = 'cursor-pointer hover:scale-125 transition-transform select-none text-3xl';
-                span.addEventListener('click', () => { s++; gameScore = s; updateScore(); const scoreSpan = c.querySelector('#fruitS'); if (scoreSpan) scoreSpan.textContent = s; span.remove(); });
-                fa.appendChild(span);
-                setTimeout(() => { if (span.parentElement) span.remove(); }, 2000);
-            }
-            if (gameInterval) clearInterval(gameInterval);
-            gameInterval = setInterval(spawnFruit, 900);
-        }
-
-        function startSpace(c) {
-            c.innerHTML = `<div class="text-center p-8 w-full"><div class="text-5xl mb-4">🚀</div><p class="text-xs text-on-surface-variant mb-6 uppercase tracking-widest">Pinch to Shoot!</p><div id="enemyRow" class="flex justify-center gap-3 text-2xl mb-4">👾 👾 👾 👾 👾</div><button id="shootBtn" class="px-8 py-3 bg-error/20 border border-error/40 text-error font-space text-sm uppercase tracking-widest hover:bg-error/30 transition-all rounded">Shoot!</button><p class="mt-4 text-xs text-slate-500">Hits: <span id="spaceS">0</span></p></div>`;
-            let s = 0;
-            const shootBtn = c.querySelector('#shootBtn');
-            if (shootBtn) {
-                shootBtn.addEventListener('click', () => {
-                    s++; gameScore = s; updateScore();
-                    const scoreSpan = c.querySelector('#spaceS');
-                    if (scoreSpan) scoreSpan.textContent = s;
-                    const row = c.querySelector('#enemyRow');
-                    if (row && row.firstChild) row.removeChild(row.firstChild);
-                    if (!row || !row.children.length) row.innerHTML = '👾 👾 👾 👾 👾';
-                });
-            }
-        }
-
-        function startTarget(c) {
-            c.innerHTML = `<div class="p-4 w-full text-center"><p class="text-xs text-on-surface-variant mb-3 uppercase tracking-widest">Click targets to destroy them!</p><div id="targetArea" class="relative min-h-[160px] mb-3 flex items-center justify-center" style="height:160px"></div><p class="text-xs text-slate-500">Hits: <span id="targetS">0</span></p></div>`;
-            let s = 0;
-            function spawnTarget() {
-                const area = c.querySelector('#targetArea');
-                if (!area) return;
-                const t = document.createElement('button');
-                t.textContent = '🎯';
-                t.className = 'absolute text-3xl cursor-pointer transition-all hover:scale-110';
-                const maxW = Math.max(area.clientWidth - 60, 60);
-                const maxH = Math.max(area.clientHeight - 60, 60);
-                t.style.left = `${Math.random() * maxW}px`;
-                t.style.top = `${Math.random() * maxH}px`;
-                t.addEventListener('click', () => { s++; gameScore = s; updateScore(); const scoreSpan = c.querySelector('#targetS'); if (scoreSpan) scoreSpan.textContent = s; t.remove(); });
-                area.appendChild(t);
-                setTimeout(() => { if (t.parentElement) t.remove(); }, 1500);
-            }
-            if (gameInterval) clearInterval(gameInterval);
-            gameInterval = setInterval(spawnTarget, 1100);
-        }
 
         // ── Event listeners ─────────────────────────────────────────────────────
         document.querySelectorAll('.play-btn').forEach(btn => {
@@ -891,60 +736,6 @@
             });
         });
 
-        document.querySelectorAll('#gameGrid [data-game]').forEach(card => {
-            card.addEventListener('click', () => openGameModal(card.dataset.game));
-        });
-
-        const closeGameModalBtn = document.getElementById('closeGameModal');
-        if (closeGameModalBtn) closeGameModalBtn.addEventListener('click', closeGameModal);
-
-        const closeGameBtn = document.getElementById('closeGameBtn');
-        if (closeGameBtn) closeGameBtn.addEventListener('click', closeGameModal);
-
-        const restartGameBtn = document.getElementById('restartGameBtn');
-        if (restartGameBtn) restartGameBtn.addEventListener('click', () => { if (currentGame) runGame(currentGame); });
-
-        const closeLoginModalBtn = document.getElementById('closeLoginModal');
-        if (closeLoginModalBtn) closeLoginModalBtn.addEventListener('click', () => {
-            loginModal.classList.add('hidden');
-            loginModal.classList.remove('flex');
-        });
-
-        // Close modals with Escape key
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') {
-                closeGameModal();
-                if (loginModal) {
-                    loginModal.classList.add('hidden');
-                    loginModal.classList.remove('flex');
-                }
-            }
-        });
-
-        // ── WebSocket for gesture events (only if logged in) ────────────────────
-        if (isLoggedIn && token) {
-            try {
-                const sock = io('/', { query: { token }, transports: ['websocket', 'polling'] });
-                sock.on('gesture_activity', data => {
-                    const g = (data.gesture || '').toUpperCase();
-                    const gEl = document.getElementById('gameModalGesture');
-                    if (gEl) gEl.textContent = g;
-                    if (!gameModal.classList.contains('active')) return;
-
-                    // Map gestures to game actions
-                    if (g === 'PINCH' || g === 'LEFT_CLICK') {
-                        const canvas = document.getElementById('gameModalCanvas');
-                        if (!canvas) return;
-                        const btns = { dino: '#jumpBtn', flappy: '#flapBtn', space: '#shootBtn' };
-                        const sel = btns[currentGame];
-                        if (sel) {
-                            const el = canvas.querySelector(sel);
-                            if (el) el.click();
-                        }
-                    }
-                });
-            } catch (_) { }
-        }
     </script>
 </body>
 

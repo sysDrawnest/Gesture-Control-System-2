@@ -1,0 +1,252 @@
+{% extends "games/base.html" %}
+
+{% block title %}KINETIC PULSE | Dino Run{% endblock %}
+
+{% block extra_css %}
+<style>
+    .game-screen {
+        background: linear-gradient(180deg, #111 0%, #000 100%);
+        border-radius: 24px;
+        box-shadow: 0 0 50px rgba(0, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ground {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: #1a1a1a;
+        border-top: 2px solid #333;
+    }
+
+    .dino {
+        position: absolute;
+        bottom: 60px;
+        left: 50px;
+        width: 44px;
+        height: 48px;
+        font-size: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: bottom 0.1s;
+    }
+
+    .obstacle {
+        position: absolute;
+        bottom: 60px;
+        right: -50px;
+        width: 40px;
+        height: 40px;
+        font-size: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .score-badge {
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 8px 16px;
+        border-radius: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-12 px-6">
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <a href="/games" class="p-2 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-cyan-400 transition-all">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <h1 class="text-4xl font-space font-bold tracking-tight">Dino <span class="text-cyan-400">Pulse</span></h1>
+            </div>
+            <p class="text-slate-400 text-sm uppercase tracking-widest font-space">Gesture: Pinch to Jump</p>
+        </div>
+        
+        <div class="flex gap-4">
+            <div class="score-badge">
+                <p class="text-[10px] text-slate-500 font-space uppercase">Score</p>
+                <p id="score" class="text-2xl font-space font-bold text-cyan-400">00000</p>
+            </div>
+            <div class="score-badge">
+                <p class="text-[10px] text-slate-500 font-space uppercase">Best</p>
+                <p id="highScore" class="text-2xl font-space font-bold text-purple-400">00000</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Area -->
+    <div id="gameContainer" class="game-screen w-full h-[400px] border border-white/10 cursor-pointer">
+        <div class="ground" id="ground"></div>
+        <div id="dino" class="dino">🦖</div>
+        
+        <!-- UI Overlay -->
+        <div id="startOverlay" class="absolute inset-0 z-10 flex flex-center flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div class="text-6xl mb-4 animate-float">🦖</div>
+            <h2 class="text-2xl font-space font-bold mb-6">READY TO RUN?</h2>
+            <button onclick="startGame()" class="btn-primary px-8 py-3 rounded-xl font-space font-bold uppercase tracking-widest">
+                Start Game
+            </button>
+        </div>
+
+        <div id="gameOverOverlay" class="hidden absolute inset-0 z-10 flex flex-col items-center justify-center bg-red-950/40 backdrop-blur-md">
+            <h2 class="text-5xl font-space font-bold mb-2 text-white">GAME OVER</h2>
+            <p id="finalScore" class="text-xl font-space text-cyan-400 mb-8">SCORE: 0</p>
+            <button onclick="startGame()" class="btn-primary px-8 py-3 rounded-xl font-space font-bold uppercase tracking-widest">
+                Try Again
+            </button>
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="glass p-5 rounded-2xl border border-white/5">
+            <h4 class="font-space font-bold text-cyan-400 mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">front_hand</span> GESTURE
+            </h4>
+            <p class="text-slate-400 text-sm">Pinch your index and thumb together to make the Dino jump. Alternatively, you can use Open Palm.</p>
+        </div>
+        <div class="glass p-5 rounded-2xl border border-white/5">
+            <h4 class="font-space font-bold text-purple-400 mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">bolt</span> SPEED
+            </h4>
+            <p class="text-slate-400 text-sm">The game speeds up every 10 obstacles. Keep your focus as the neon pulse intensifies!</p>
+        </div>
+        <div class="glass p-5 rounded-2xl border border-white/5">
+            <h4 class="font-space font-bold text-amber-400 mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">keyboard</span> FALLBACK
+            </h4>
+            <p class="text-slate-400 text-sm">No camera? Use the **Spacebar** or **Click** the game area to jump.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const dino = document.getElementById('dino');
+    const container = document.getElementById('gameContainer');
+    const scoreEl = document.getElementById('score');
+    const highScoreEl = document.getElementById('highScore');
+    const startOverlay = document.getElementById('startOverlay');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+
+    let isJumping = false;
+    let gravity = 0.9;
+    let isGameOver = true;
+    let score = 0;
+    let speed = 10;
+    
+    // High Score
+    let highScore = localStorage.getItem('dinoHighScore') || 0;
+    highScoreEl.textContent = String(highScore).padStart(5, '0');
+
+    function jump() {
+        if (isJumping || isGameOver) return;
+        isJumping = true;
+        let position = 60;
+        let upInterval = setInterval(() => {
+            if (position >= 220) {
+                clearInterval(upInterval);
+                let downInterval = setInterval(() => {
+                    if (position <= 60) {
+                        clearInterval(downInterval);
+                        isJumping = false;
+                    }
+                    position -= 5 * gravity;
+                    dino.style.bottom = position + 'px';
+                }, 20);
+            }
+            position += 15;
+            dino.style.bottom = position + 'px';
+        }, 20);
+    }
+
+    // Global handleGesture from base.html
+    window.handleGesture = function(gesture) {
+        if (gesture === 'PINCH' || gesture === 'OPEN_PALM' || gesture === 'LEFT_CLICK') {
+            if (isGameOver) {
+                startGame();
+            } else {
+                jump();
+            }
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') jump();
+    });
+    container.addEventListener('click', jump);
+
+    function spawnObstacle() {
+        if (isGameOver) return;
+        const obstacle = document.createElement('div');
+        obstacle.classList.add('obstacle');
+        obstacle.innerHTML = Math.random() > 0.5 ? '🌵' : '🧱';
+        container.appendChild(obstacle);
+
+        let obstaclePosition = container.offsetWidth;
+        let moveInterval = setInterval(() => {
+            if (isGameOver) {
+                clearInterval(moveInterval);
+                obstacle.remove();
+                return;
+            }
+            
+            if (obstaclePosition < 0) {
+                clearInterval(moveInterval);
+                obstacle.remove();
+                score++;
+                scoreEl.textContent = String(score).padStart(5, '0');
+                if (score % 10 === 0) speed += 0.5;
+            } else if (obstaclePosition > 50 && obstaclePosition < 90 && parseInt(dino.style.bottom) < 100) {
+                // Collision
+                endGame();
+                clearInterval(moveInterval);
+            } else {
+                obstaclePosition -= speed;
+                obstacle.style.left = obstaclePosition + 'px';
+            }
+        }, 20);
+
+        if (!isGameOver) {
+            setTimeout(spawnObstacle, Math.random() * 2000 + 1000 / (speed/10));
+        }
+    }
+
+    function startGame() {
+        score = 0;
+        speed = 10;
+        isGameOver = false;
+        isJumping = false;
+        dino.style.bottom = '60px';
+        scoreEl.textContent = '00000';
+        startOverlay.classList.add('hidden');
+        gameOverOverlay.classList.add('hidden');
+        
+        // Remove existing obstacles
+        document.querySelectorAll('.obstacle').forEach(o => o.remove());
+        
+        spawnObstacle();
+    }
+
+    function endGame() {
+        isGameOver = true;
+        gameOverOverlay.classList.remove('hidden');
+        document.getElementById('finalScore').textContent = 'SCORE: ' + score;
+        
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('dinoHighScore', highScore);
+            highScoreEl.textContent = String(highScore).padStart(5, '0');
+        }
+    }
+</script>
+{% endblock %}

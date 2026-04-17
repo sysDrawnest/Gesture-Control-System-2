@@ -1,0 +1,295 @@
+{% extends "games/base.html" %}
+
+{% block title %}KINETIC PULSE | Space Shooter{% endblock %}
+
+{% block extra_css %}
+<style>
+    .game-area {
+        background: radial-gradient(circle at center, #111 0%, #000 100%);
+        border-radius: 32px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    #starfield {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .star {
+        position: absolute;
+        background: white;
+        border-radius: 50%;
+        opacity: 0.5;
+    }
+
+    #ship {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        z-index: 10;
+        transition: transform 0.1s;
+        pointer-events: none;
+    }
+
+    .laser {
+        position: absolute;
+        width: 4px;
+        height: 20px;
+        background: #00f3ff;
+        box-shadow: 0 0 10px #00f3ff;
+        border-radius: 2px;
+        z-index: 5;
+    }
+
+    .enemy {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        font-size: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+    }
+
+    .stat-bar {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        padding: 8px 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-12 px-6">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <a href="/games" class="p-2 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-cyan-400 transition-all">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <h1 class="text-4xl font-space font-bold tracking-tight">Space <span class="text-cyan-400">Shooter</span></h1>
+            </div>
+            <div class="flex gap-4">
+                <span class="text-[10px] text-slate-500 font-space tracking-[0.2em] uppercase">Move: Point</span>
+                <span class="text-[10px] text-slate-500 font-space tracking-[0.2em] uppercase">Fire: Pinch</span>
+            </div>
+        </div>
+        
+        <div class="flex gap-4">
+            <div class="stat-bar min-w-[120px]">
+                <p class="text-[10px] text-slate-500 font-space uppercase">Score</p>
+                <p id="score" class="text-2xl font-space font-bold text-white">0</p>
+            </div>
+            <div class="stat-bar min-w-[120px]">
+                <p class="text-[10px] text-slate-500 font-space uppercase">Waves</p>
+                <p id="waves" class="text-2xl font-space font-bold text-cyan-400">1</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="game-area w-full h-[600px] cursor-none">
+        <canvas id="starfield"></canvas>
+        <div id="ship" style="bottom: 50px; left: 50%; transform: translateX(-50%);">
+            <div class="text-5xl">🚀</div>
+        </div>
+
+        <!-- Overlays -->
+        <div id="startOverlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md">
+            <div class="text-7xl mb-6 animate-float">🛸</div>
+            <h2 class="text-3xl font-space font-bold mb-2">INTRUDER ALERT</h2>
+            <p class="text-slate-400 font-space mb-8 tracking-[0.3em]">DEFEND THE HUB</p>
+            <button onclick="startGame()" class="btn-primary px-12 py-4 rounded-2xl font-space font-bold uppercase tracking-widest">
+                Engage
+            </button>
+        </div>
+
+        <div id="gameOverOverlay" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-red-950/20 backdrop-blur-xl border border-red-500/30">
+            <h2 class="text-4xl font-space font-bold text-white mb-2">COMMAND DESTROYED</h2>
+            <p id="finalScore" class="text-2xl font-space text-cyan-400 mb-8 font-bold">SCORE: 0</p>
+            <button onclick="startGame()" class="btn-primary px-12 py-4 rounded-2xl font-space font-bold uppercase tracking-widest">
+                Restart Fleet
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const screen = document.getElementById('gameScreen');
+    const ship = document.getElementById('ship');
+    const scoreEl = document.getElementById('score');
+    const wavesEl = document.getElementById('waves');
+    const startOverlay = document.getElementById('startOverlay');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+
+    let score = 0;
+    let wave = 1;
+    let isGameOver = true;
+    let enemies = [];
+    let lasers = [];
+    let animationId;
+    let spawnTimer;
+
+    // Starfield
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+    function initStarfield() {
+        canvas.width = screen.offsetWidth;
+        canvas.height = screen.offsetHeight;
+        ctx.fillStyle = 'white';
+        for(let i=0; i<100; i++) {
+            ctx.globalAlpha = Math.random();
+            ctx.beginPath();
+            ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, Math.random()*2, 0, Math.PI*2);
+            ctx.fill();
+        }
+    }
+    initStarfield();
+
+    function moveShip(e) {
+        if (isGameOver) return;
+        const rect = screen.getBoundingClientRect();
+        let x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+        let y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+
+        // Keep ship within bounds
+        x = Math.max(30, Math.min(screen.offsetWidth - 30, x));
+        y = Math.max(30, Math.min(screen.offsetHeight - 30, y));
+
+        ship.style.left = x + 'px';
+        ship.style.top = y + 'px';
+        ship.style.transform = 'translate(-50%, -50%)';
+    }
+
+    screen.addEventListener('mousemove', moveShip);
+
+    function fireLaser() {
+        if (isGameOver) return;
+        const laser = document.createElement('div');
+        laser.className = 'laser';
+        const rect = ship.getBoundingClientRect();
+        const screenRect = screen.getBoundingClientRect();
+        
+        laser.style.left = (rect.left - screenRect.left + rect.width/2 - 2) + 'px';
+        laser.style.top = (rect.top - screenRect.top) + 'px';
+        
+        screen.appendChild(laser);
+        lasers.push(laser);
+    }
+
+    window.handleGesture = function(gesture) {
+        if (gesture === 'PINCH' || gesture === 'FIST' || gesture === 'LEFT_CLICK') {
+            if (isGameOver) startGame();
+            else fireLaser();
+        }
+    }
+
+    screen.addEventListener('click', fireLaser);
+
+    function spawnEnemy() {
+        if (isGameOver) return;
+        const enemy = document.createElement('div');
+        enemy.className = 'enemy';
+        enemy.innerHTML = '👾';
+        enemy.style.left = (Math.random() * (screen.offsetWidth - 40)) + 'px';
+        enemy.style.top = '-50px';
+        screen.appendChild(enemy);
+        enemies.push(enemy);
+
+        const timeout = Math.max(500, 2000 - (wave * 100));
+        spawnTimer = setTimeout(spawnEnemy, timeout);
+    }
+
+    function update() {
+        if (isGameOver) return;
+
+        // Update Lasers
+        lasers.forEach((laser, lIdx) => {
+            const top = parseInt(laser.style.top) - 10;
+            if (top < -20) {
+                laser.remove();
+                lasers.splice(lIdx, 1);
+            } else {
+                laser.style.top = top + 'px';
+            }
+
+            // Hit Detect
+            enemies.forEach((enemy, eIdx) => {
+                const lRect = laser.getBoundingClientRect();
+                const eRect = enemy.getBoundingClientRect();
+                if (lRect.left < eRect.right && lRect.right > eRect.left &&
+                    lRect.top < eRect.bottom && lRect.bottom > eRect.top) {
+                    
+                    enemy.remove();
+                    enemies.splice(eIdx, 1);
+                    laser.remove();
+                    lasers.splice(lIdx, 1);
+                    
+                    score += 10;
+                    scoreEl.textContent = score;
+                    if (score % 100 === 0) {
+                        wave++;
+                        wavesEl.textContent = wave;
+                    }
+                }
+            });
+        });
+
+        // Update Enemies
+        enemies.forEach((enemy, eIdx) => {
+            const top = parseInt(enemy.style.top) + (2 + wave*0.2);
+            if (top > screen.offsetHeight) {
+                endGame();
+            } else {
+                enemy.style.top = top + 'px';
+            }
+
+            // Ship Collision
+            const sRect = ship.getBoundingClientRect();
+            const eRect = enemy.getBoundingClientRect();
+            if (sRect.left < eRect.right && sRect.right > eRect.left &&
+                sRect.top < eRect.bottom && sRect.bottom > eRect.top) {
+                endGame();
+            }
+        });
+
+        animationId = requestAnimationFrame(update);
+    }
+
+    function startGame() {
+        score = 0;
+        wave = 1;
+        isGameOver = false;
+        scoreEl.textContent = '0';
+        wavesEl.textContent = '1';
+        
+        enemies.forEach(e => e.remove());
+        lasers.forEach(l => l.remove());
+        enemies = [];
+        lasers = [];
+        
+        startOverlay.classList.add('hidden');
+        gameOverOverlay.classList.add('hidden');
+        
+        clearTimeout(spawnTimer);
+        spawnEnemy();
+        update();
+    }
+
+    function endGame() {
+        isGameOver = true;
+        gameOverOverlay.classList.remove('hidden');
+        document.getElementById('finalScore').textContent = 'SCORE: ' + score;
+        clearTimeout(spawnTimer);
+        cancelAnimationFrame(animationId);
+    }
+</script>
+{% endblock %}

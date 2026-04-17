@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>{% block title %}KINETIC PULSE | Game{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+        }
+
+        .glass {
+            backdrop-filter: blur(24px);
+            background: rgba(35, 38, 44, 0.4);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #81ecff, #d277ff);
+            color: #1a1a2e;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(129, 236, 255, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(129, 236, 255, 0.5);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .game-container {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="text-white">
+
+    <!-- Top Navigation -->
+    <header
+        class="w-full sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/10 flex justify-between items-center px-6 py-4">
+        <div class="flex items-center gap-8">
+            <a href="/" class="text-2xl font-bold tracking-tighter text-cyan-400 uppercase font-space">KINETIC_PULSE</a>
+            <nav class="hidden md:flex gap-6">
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors" href="/dashboard">Dashboard</a>
+                <a class="text-cyan-400 font-space tracking-tight text-sm uppercase" href="/games">Games</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors" href="/air_canvas">Air Canvas</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors" href="/air_keyboard">Air Keyboard</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="userInfo" class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-cyan-400">person</span>
+                <span id="userName" class="text-sm text-cyan-400 font-space">Loading...</span>
+            </div>
+            <button id="logoutBtn" class="text-slate-400 hover:text-cyan-300 text-sm">Logout</button>
+        </div>
+    </header>
+
+    <!-- Main Game Content -->
+    <main class="game-container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="/static/js/ux_settings.js"></script>
+    <script>
+        // Check authentication
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        // Load user info
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/auth/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const user = await response.json();
+                document.getElementById('userName').textContent = user.username || 'User';
+            } catch (e) {
+                console.error('Error loading user:', e);
+            }
+        }
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } catch (e) { }
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        });
+
+        loadUserInfo();
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

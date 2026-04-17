@@ -1,0 +1,279 @@
+{% extends "games/base.html" %}
+
+{% block title %}KINETIC PULSE | Target Blast{% endblock %}
+
+{% block extra_css %}
+<style>
+    .game-field {
+        background: radial-gradient(circle at center, #111 0%, #000 100%);
+        border-radius: 40px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        cursor: crosshair;
+    }
+
+    .reticle {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        border: 2px solid #ef4444;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 100;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+    }
+
+    .reticle::before, .reticle::after {
+        content: '';
+        position: absolute;
+        background: #ef4444;
+    }
+
+    .reticle::before { width: 100%; height: 2px; top: 50%; left: 0; transform: translateY(-50%); }
+    .reticle::after { height: 100%; width: 2px; left: 50%; top: 0; transform: translateX(-50%); }
+
+    .target {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        animation: targetPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .target-ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 2px solid;
+    }
+
+    .ring-1 { width: 100%; height: 100%; border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); }
+    .ring-2 { width: 66%; height: 66%; border-color: rgba(255, 255, 255, 0.4); }
+    .ring-3 { width: 33%; height: 33%; border-color: #ef4444; background: #ef4444; }
+
+    @keyframes targetPop {
+        0% { transform: scale(0); }
+        100% { transform: scale(1); }
+    }
+
+    .hit-value {
+        position: absolute;
+        color: #ef4444;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 800;
+        pointer-events: none;
+        animation: valRise 0.6s ease-out forwards;
+    }
+
+    @keyframes valRise {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(-40px); opacity: 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-12 px-6">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-8">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <a href="/games" class="p-2 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-red-400 transition-all">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <h1 class="text-4xl font-space font-bold tracking-tight">Target <span class="text-red-400">Blast</span></h1>
+            </div>
+            <p class="text-slate-500 text-xs uppercase tracking-[0.3em] font-space">Calibrate focus | Point to shoot</p>
+        </div>
+        
+        <div class="flex gap-4">
+            <div class="glass px-6 py-3 rounded-2xl min-w-[120px]">
+                <p class="text-[10px] text-slate-500 font-space uppercase mb-1">Time</p>
+                <p id="timer" class="text-3xl font-space font-bold text-white">45s</p>
+            </div>
+            <div class="glass px-6 py-3 rounded-2xl min-w-[120px] border-red-500/20">
+                <p class="text-[10px] text-slate-500 font-space uppercase mb-1">Accuracy</p>
+                <p id="accuracy" class="text-3xl font-space font-bold text-red-500">100%</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Area -->
+    <div id="gameRegion" class="game-field w-full h-[550px]">
+        <div id="reticle" class="reticle"></div>
+        
+        <!-- Overlays -->
+        <div id="startOverlay" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md">
+            <div class="text-7xl mb-6">🎯</div>
+            <h2 class="text-3xl font-space font-bold mb-2 uppercase tracking-tighter">Focus Routine</h2>
+            <p class="text-slate-400 font-space mb-8 tracking-[0.2em] uppercase text-sm">Align sensor paths</p>
+            <button onclick="startGame()" class="px-12 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-space font-bold uppercase tracking-widest shadow-lg shadow-red-900/40 transition-all">
+                Initialize
+            </button>
+        </div>
+
+        <div id="gameOverOverlay" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center bg-zinc-950/40 backdrop-blur-xl border border-red-500/30">
+            <h2 class="text-5xl font-space font-bold text-white mb-2">CALIBRATION END</h2>
+            <p id="finalScore" class="text-2xl font-space text-red-400 mb-8 font-bold uppercase">SCORE: 0</p>
+            <button onclick="startGame()" class="px-12 py-4 bg-white text-black hover:bg-red-100 rounded-2xl font-space font-bold uppercase tracking-widest transition-all">
+                Restart Session
+            </button>
+        </div>
+    </div>
+
+    <div class="mt-8 text-center">
+        <p id="score" class="text-6xl font-space font-bold text-white/5 pointer-events-none uppercase tracking-[0.5em]">000</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const region = document.getElementById('gameRegion');
+    const reticle = document.getElementById('reticle');
+    const timerEl = document.getElementById('timer');
+    const scoreEl = document.getElementById('score');
+    const accEl = document.getElementById('accuracy');
+    const startOverlay = document.getElementById('startOverlay');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+
+    let score = 0;
+    let timeLeft = 45;
+    let shots = 0;
+    let hits = 0;
+    let isGameOver = true;
+    let timerId;
+    let spawnId;
+
+    region.addEventListener('mousemove', (e) => {
+        const rect = region.getBoundingClientRect();
+        reticle.style.left = (e.clientX - rect.left) + 'px';
+        reticle.style.top = (e.clientY - rect.top) + 'px';
+    });
+
+    function spawnTarget() {
+        if (isGameOver) return;
+        const target = document.createElement('div');
+        target.className = 'target';
+        target.innerHTML = `
+            <div class="target-ring ring-1"></div>
+            <div class="target-ring ring-2"></div>
+            <div class="target-ring ring-3"></div>
+        `;
+        
+        const x = Math.random() * (region.offsetWidth - 100) + 50;
+        const y = Math.random() * (region.offsetHeight - 100) + 50;
+        
+        target.style.left = x + 'px';
+        target.style.top = y + 'px';
+        
+        target.onclick = (e) => handleShot(e, target);
+        
+        region.appendChild(target);
+
+        const duration = Math.max(800, 2000 - (hits * 20));
+        setTimeout(() => {
+            if (target.parentElement) {
+                target.remove();
+                if (!isGameOver) spawnTarget();
+            }
+        }, duration);
+    }
+
+    function handleShot(e, targetEl) {
+        if (isGameOver) return;
+        hits++;
+        shots++;
+        
+        // Precision detection
+        const rect = targetEl.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const dist = Math.sqrt(Math.pow(e.clientX - centerX, 2) + Math.pow(e.clientY - centerY, 2));
+        
+        let points = 10;
+        if (dist < 15) points = 50; // Bullseye
+        else if (dist < 30) points = 25;
+
+        score += points;
+        scoreEl.textContent = String(score).padStart(3, '0');
+        
+        const val = document.createElement('div');
+        val.className = 'hit-value';
+        val.textContent = '+' + points;
+        val.style.left = (parseInt(targetEl.style.left) + 40) + 'px';
+        val.style.top = targetEl.style.top;
+        region.appendChild(val);
+        setTimeout(() => val.remove(), 600);
+
+        targetEl.remove();
+        updateAccuracy();
+        spawnTarget();
+    }
+
+    function updateAccuracy() {
+        const acc = shots === 0 ? 100 : Math.round((hits / shots) * 100);
+        accEl.textContent = acc + '%';
+    }
+
+    region.addEventListener('click', (e) => {
+        if (isGameOver) return;
+        if (e.target === region) {
+            shots++;
+            updateAccuracy();
+        }
+    });
+
+    window.handleGesture = function(gesture) {
+        if (gesture === 'PINCH' || gesture === 'FIST' || gesture === 'LEFT_CLICK') {
+            if (isGameOver) startGame();
+            else {
+                // Find if target is hovered
+                const hovered = document.querySelector('.target:hover');
+                if (hovered) handleShot({ clientX: parseInt(reticle.style.left) + region.getBoundingClientRect().left, clientY: parseInt(reticle.style.top) + region.getBoundingClientRect().top }, hovered);
+                else {
+                    shots++;
+                    updateAccuracy();
+                }
+            }
+        }
+    }
+
+    function startGame() {
+        score = 0;
+        timeLeft = 45;
+        shots = 0;
+        hits = 0;
+        isGameOver = false;
+        scoreEl.textContent = '000';
+        timerEl.textContent = '45s';
+        updateAccuracy();
+        
+        document.querySelectorAll('.target').forEach(t => t.remove());
+        
+        startOverlay.classList.add('hidden');
+        gameOverOverlay.classList.add('hidden');
+        
+        clearInterval(timerId);
+        timerId = setInterval(() => {
+            timeLeft--;
+            timerEl.textContent = timeLeft + 's';
+            if (timeLeft <= 0) endGame();
+        }, 1000);
+
+        spawnTarget();
+        spawnTarget(); // Start with 2
+    }
+
+    function endGame() {
+        isGameOver = true;
+        clearInterval(timerId);
+        gameOverOverlay.classList.remove('hidden');
+        document.getElementById('finalScore').textContent = 'SCORE: ' + score;
+    }
+</script>
+{% endblock %}
