@@ -199,16 +199,29 @@
                 margin-left: 0 !important;
                 padding: 1rem !important;
             }
+        }
 
-            .menu-toggle {
-                display: block !important;
+        /* Desktop Collapsible Sidebar Styles */
+        @media (min-width: 769px) {
+            .sidebar {
+                transition: transform 0.3s ease, width 0.3s ease;
+            }
+
+            .sidebar.sidebar-collapsed {
+                transform: translateX(-100%);
+            }
+
+            #mainContent {
+                transition: margin-left 0.3s ease, padding 0.3s ease;
+            }
+
+            #mainContent.sidebar-collapsed {
+                margin-left: 0;
             }
         }
 
-        @media (min-width: 769px) {
-            .menu-toggle {
-                display: none !important;
-            }
+        .menu-toggle {
+            display: block !important;
         }
     </style>
 </head>
@@ -219,7 +232,7 @@
     <header
         class="w-full sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/10 shadow-[0_0_30px_rgba(0,229,255,0.1)] flex justify-between items-center px-4 md:px-6 py-3 md:py-4">
         <div class="flex items-center gap-4 md:gap-8">
-            <button id="menuToggle" class="menu-toggle text-cyan-400 md:hidden">
+            <button id="menuToggle" class="menu-toggle text-cyan-400">
                 <span class="material-symbols-outlined">menu</span>
             </button>
             <span
@@ -259,7 +272,20 @@
 
         <!-- Sidebar -->
         <aside id="sidebar"
-            class="sidebar fixed top-0 left-0 w-64 h-screen border-r border-white/5 flex flex-col pt-20 pb-6 z-50 bg-gradient-to-b from-slate-950 to-black transition-transform duration-300 -translate-x-full md:translate-x-0">
+            class="sidebar sidebar-collapsed fixed top-0 left-0 w-64 h-screen border-r border-white/5 flex flex-col pt-20 pb-6 z-50 bg-gradient-to-b from-slate-950 to-black transition-transform duration-300 -translate-x-full md:translate-x-0">
+
+            <!-- Close Button for Mobile -->
+            <button id="closeSidebarBtn"
+                class="absolute top-4 right-4 p-2 text-slate-400 hover:text-cyan-400 transition-colors md:hidden">
+                <span class="material-symbols-outlined text-xl">close</span>
+            </button>
+
+            <!-- Collapse Button for Desktop -->
+            <button id="collapseSidebarBtn"
+                class="absolute top-4 right-4 p-2 text-slate-400 hover:text-cyan-400 transition-colors hidden md:block">
+                <span class="material-symbols-outlined text-xl">chevron_left</span>
+            </button>
+
             <div class="px-6 mb-8">
                 <div class="flex items-center gap-3 mb-2">
                     <span class="material-symbols-outlined text-cyan-400 text-3xl">gesture</span>
@@ -317,7 +343,8 @@
         </aside>
 
         <!-- Main Canvas -->
-        <main id="mainContent" class="flex-1 ml-0 md:ml-64 p-4 md:p-8 w-full min-h-screen transition-all">
+        <main id="mainContent"
+            class="main-content sidebar-collapsed flex-1 ml-0 md:ml-64 p-4 md:p-8 w-full min-h-screen transition-all">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
 
                 <!-- CENTER: Active Tracking + Gesture Guide -->
@@ -387,7 +414,6 @@
                         <h3 class="font-space text-xs md:text-sm uppercase tracking-widest text-slate-400 mb-4 md:mb-6">
                             Gesture Library &amp; Mapping</h3>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4">
-                            <!-- Gesture items (same as before) -->
                             <div
                                 class="p-2 md:p-4 bg-white/5 border border-white/5 rounded-lg hover:border-primary/30 transition-all cursor-pointer group text-center">
                                 <span
@@ -843,34 +869,98 @@
 
     <script src="/static/js/ux_settings.js"></script>
     <script>
-        // Mobile menu toggle
+        // ============================================
+        // SIDEBAR CONTROLS - Fully Functional
+        // ============================================
         const menuToggle = document.getElementById('menuToggle');
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const collapseSidebarBtn = document.getElementById('collapseSidebarBtn');
 
         function openSidebar() {
             sidebar.classList.remove('-translate-x-full');
-            sidebarOverlay.classList.remove('hidden');
+            if (window.innerWidth >= 769) {
+                sidebar.classList.remove('sidebar-collapsed');
+                document.getElementById('mainContent').classList.remove('sidebar-collapsed');
+            } else {
+                sidebarOverlay.classList.remove('hidden');
+                sidebar.classList.add('open');
+            }
+            updateSidebarButtons();
         }
+
         function closeSidebar() {
-            sidebar.classList.add('-translate-x-full');
-            sidebarOverlay.classList.add('hidden');
+            if (window.innerWidth >= 769) {
+                sidebar.classList.add('sidebar-collapsed');
+                document.getElementById('mainContent').classList.add('sidebar-collapsed');
+                sidebar.classList.add('-translate-x-full');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.add('hidden');
+            }
+            updateSidebarButtons();
         }
-        if (menuToggle) {
-            menuToggle.addEventListener('click', () => {
-                sidebar.classList.contains('-translate-x-full') ? openSidebar() : closeSidebar();
-            });
+
+        function toggleSidebar() {
+            const isDesktop = window.innerWidth >= 769;
+            if (isDesktop) {
+                const isCollapsed = sidebar.classList.contains('sidebar-collapsed');
+                isCollapsed ? openSidebar() : closeSidebar();
+            } else {
+                const isHidden = sidebar.classList.contains('-translate-x-full');
+                isHidden ? openSidebar() : closeSidebar();
+            }
         }
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', closeSidebar);
+
+        function updateSidebarButtons() {
+            const isDesktop = window.innerWidth >= 769;
+            const isCollapsed = sidebar.classList.contains('sidebar-collapsed');
+            if (collapseSidebarBtn) {
+                collapseSidebarBtn.innerHTML = `<span class="material-symbols-outlined text-xl">${isCollapsed ? 'chevron_right' : 'chevron_left'}</span>`;
+            }
         }
+
+        // Event Listeners
+        if (menuToggle) menuToggle.addEventListener('click', toggleSidebar);
+        if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
+        if (collapseSidebarBtn) collapseSidebarBtn.addEventListener('click', closeSidebar);
+        if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
 
         // Close sidebar on nav link click (mobile)
         sidebar.querySelectorAll('a, [id$="Btn"], #openUxSettingsBtn').forEach(el => {
             el.addEventListener('click', () => { if (window.innerWidth < 768) closeSidebar(); });
         });
 
-        // UX Settings toggle function (wired to ux_settings.js)
+        // Listen for sidebar class changes to update button icons
+        const observer = new MutationObserver(() => updateSidebarButtons());
+        observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 769) {
+                sidebarOverlay.classList.add('hidden');
+                sidebar.classList.remove('open');
+                if (sidebar.classList.contains('sidebar-collapsed')) {
+                    sidebar.classList.add('-translate-x-full');
+                } else {
+                    sidebar.classList.remove('-translate-x-full');
+                }
+            } else {
+                if (!sidebar.classList.contains('open')) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            }
+            updateSidebarButtons();
+        });
+
+        // Initial button state
+        updateSidebarButtons();
+
+        // ============================================
+        // UX Settings toggle function
+        // ============================================
         function toggleUXSetting(type) {
             const manager = window.uxSettings;
             if (!manager) return;
@@ -970,7 +1060,7 @@
             }
         }
 
-        // Game Logic (simplified - keep existing)
+        // Game Logic
         const games = {
             dino: { name: "Dino Runner", init: function () { gameScore = 0; updateGameScore(); startDinoGame(); } },
             flappy: { name: "Flappy Pulse", init: function () { gameScore = 0; updateGameScore(); startFlappyGame(); } },
@@ -1220,59 +1310,12 @@
         document.getElementById('closeGameBtn').addEventListener('click', () => { hideModal('gameModal'); if (gameInterval) clearInterval(gameInterval); });
         document.getElementById('restartGameBtn').addEventListener('click', () => { if (currentGame && games[currentGame]) games[currentGame].init(); });
 
-        // Tutorial - Fixed with proper step display
-        let currentTutorialStep = 1;
-        const totalTutorialSteps = 5;
-
-        function showTutorialStep(step) {
-            document.querySelectorAll('.tutorial-step').forEach(s => {
-                s.classList.add('hidden');
-                s.classList.remove('active');
-            });
-            const t = document.querySelector(`.tutorial-step[data-step="${step}"]`);
-            if (t) {
-                t.classList.remove('hidden');
-                t.classList.add('active');
-            }
-            const prevBtn = document.getElementById('prevStepBtn');
-            const nextBtn = document.getElementById('nextStepBtn');
-            if (prevBtn) prevBtn.classList.toggle('hidden', step === 1);
-            if (nextBtn) nextBtn.textContent = step === totalTutorialSteps ? 'Finish' : 'Next';
-            currentTutorialStep = step;
-        }
-
+        // Tutorial - Redirect to standalone page
         function openTutorial() {
-            window.location.href = '/tutorial'; // Open the standalone tutorial page in a modal-like window
+            window.location.href = '/tutorial';
         }
 
         document.getElementById('startTutorialBtn').addEventListener('click', openTutorial);
-
-        const nextBtn = document.getElementById('nextStepBtn');
-        const prevBtn = document.getElementById('prevStepBtn');
-        const closeBtn = document.getElementById('closeTutorialBtn');
-
-        if (nextBtn) {
-            nextBtn.addEventListener('click', () => {
-                if (currentTutorialStep < totalTutorialSteps) {
-                    showTutorialStep(currentTutorialStep + 1);
-                    playClickSound();
-                } else {
-                    hideModal('tutorialOverlay');
-                    addActivity('Tutorial completed!', '★');
-                    announce('Tutorial completed.');
-                }
-            });
-        }
-
-        if (prevBtn) {
-            prevBtn.addEventListener('click', () => {
-                if (currentTutorialStep > 1) showTutorialStep(currentTutorialStep - 1);
-            });
-        }
-
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => hideModal('tutorialOverlay'));
-        }
 
         // Calibration
         let calibrationInterval = null;
