@@ -134,16 +134,38 @@ class UserModel:
     
     @staticmethod
     def get_user_by_id(user_id):
-        """Get user information by ID"""
+        """Get user information by ID and return a UserModel instance"""
         db = get_db()
-        user = db.execute(
+        user_data = db.execute(
             'SELECT id, username, email, created_at, last_login FROM users WHERE id = ?',
             (user_id,)
         ).fetchone()
         
-        if user:
-            return dict(user), None
+        if user_data:
+            user = UserModel()
+            user.id = str(user_data['id'])
+            user.username = user_data['username']
+            user.email = user_data['email']
+            user.created_at = user_data['created_at']
+            user.last_login = user_data['last_login']
+            return user, None
         return None, "User not found"
+
+    # Flask-Login required methods
+    def get_id(self):
+        return str(self.id)
+    
+    @property
+    def is_authenticated(self):
+        return True
+    
+    @property
+    def is_active(self):
+        return True
+    
+    @property
+    def is_anonymous(self):
+        return False
     
     @staticmethod
     def update_user_profile(user_id, email=None, password=None):

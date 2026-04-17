@@ -4,7 +4,7 @@ gevent.monkey.patch_all()
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from flask_socketio import SocketIO
 from flask_cors import CORS
-from flask_login import LoginManager
+from flask_login import LoginManager, login_required
 from config import config
 from utils.db import init_app
 from utils.websocket_handler import register_socket_events
@@ -55,7 +55,8 @@ def load_user(user_id):
     """Load user for Flask-Login"""
     try:
         from models.user_model import UserModel
-        return UserModel.get_by_id(user_id)
+        user, _ = UserModel.get_user_by_id(user_id)
+        return user
     except Exception as e:
         logger.error(f"Error loading user {user_id}: {e}")
         return None
@@ -100,11 +101,13 @@ def index():
     return render_template('index.html')
 
 @app.route('/air_canvas')
+@login_required
 def air_canvas():
     """Air Canvas drawing page"""
     return render_template('air_canvas.html')
 
 @app.route('/air_keyboard')
+@login_required
 def air_keyboard():
     """Air Keyboard notes page"""
     return render_template('air_keyboard.html')
@@ -125,21 +128,25 @@ def register_page():
     return render_template('register.html')
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
     """Main control dashboard"""
     return render_template('dashboard.html')
 
 @app.route('/tutorial')
+@login_required
 def tutorial():
     """Interactive tutorial page"""
     return render_template('tutorial.html')
 
 @app.route('/games')
+@login_required
 def games_hub():
     """Dedicated Games Hub page"""
     return render_template('games.html')
 
 @app.route('/games/<game_slug>')
+@login_required
 def individual_game(game_slug):
     """Dynamic route for individual games"""
     # Map slugs to nice names or metadata if needed, but for now just render

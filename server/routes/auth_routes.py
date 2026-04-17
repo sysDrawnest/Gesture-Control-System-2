@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
+from flask_login import login_user, logout_user, login_required
 from models.user_model import UserModel
-from functools import wraps
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -65,6 +65,11 @@ def login():
     result, message = UserModel.authenticate_user(username, password)
     
     if result:
+        # Create Flask-Login session
+        user, _ = UserModel.get_user_by_id(result['user_id'])
+        if user:
+            login_user(user)
+            
         return jsonify({
             'success': True,
             'message': message,
@@ -80,6 +85,9 @@ def login():
 @token_required
 def logout():
     """User logout endpoint"""
+    # Clear Flask-Login session
+    logout_user()
+    
     success, message = UserModel.logout_user(request.token)
     
     return jsonify({
