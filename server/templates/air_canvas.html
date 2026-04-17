@@ -15,6 +15,7 @@
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -117,6 +118,7 @@
         #drawingCanvas {
             cursor: crosshair;
             box-shadow: 0 0 40px rgba(0, 229, 255, 0.1);
+            background: #ffffff;
         }
 
         .gesture-hint-animate {
@@ -311,7 +313,7 @@
                 <div class="space-y-3">
                     <div class="flex items-center justify-between group">
                         <span class="text-xs font-headline text-on-surface-variant uppercase">Index Finger</span>
-                        <div class="w-3 h-3 rounded-full bg-error shadow-[0_0_8px_#ff716c]"></div>
+                        <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_#ff4444]"></div>
                     </div>
                     <div class="flex items-center justify-between group">
                         <span class="text-xs font-headline text-on-surface-variant uppercase">Middle Finger</span>
@@ -474,17 +476,18 @@
         </div>
     </div>
 
-    <!-- Font Awesome for backward compatibility -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <script>
-        // ========== ALL ORIGINAL LOGIC FROM AIR_CANVAS.JS ==========
+        // ========== TOKEN AND AUTH ==========
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+        }
 
-        // DOM Elements
+        // ========== DOM Elements ==========
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Drawing state
+        // ========== Drawing state ==========
         let drawing = false;
         let lastX = 0;
         let lastY = 0;
@@ -493,50 +496,40 @@
         let history = [];
         let historyIndex = -1;
 
-        // Socket.io for sharing
+        // ========== WebSocket for gesture client communication ==========
         let socket = null;
+        let isConnected = false;
+        let gestureActive = true; // Always active for drawing
         let shareSessionActive = false;
         let sessionId = null;
 
-        // Gesture tracking variables
-        let gestureActive = false;
-        let currentGesture = 'none';
-        let fingerPositions = {
-            index: { x: 0, y: 0 },
-            middle: { x: 0, y: 0 },
-            ring: { x: 0, y: 0 },
-            pinky: { x: 0, y: 0 },
-            thumb: { x: 0, y: 0 }
-        };
-
-        // Initialize canvas
+        // ========== Initialize Canvas ==========
         function initCanvas() {
             canvas.width = 1200;
             canvas.height = 700;
-            ctx.fillStyle = '#0c0e12';
+            // White background for drawing
+            ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000000';
             saveToHistory();
             updateStatus(true, 'Ready');
         }
 
-        // Save current state to history
+        // ========== Save to history ==========
         function saveToHistory() {
-            // Remove any future history if we're not at the end
             if (historyIndex < history.length - 1) {
                 history = history.slice(0, historyIndex + 1);
             }
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             history.push(imageData);
             historyIndex = history.length - 1;
-
-            // Limit history size to 50
             if (history.length > 50) {
                 history.shift();
                 historyIndex--;
             }
         }
 
-        // Undo last action
+        // ========== Undo ==========
         function undo() {
             if (historyIndex > 0) {
                 historyIndex--;
@@ -547,17 +540,22 @@
             }
         }
 
-        // Clear canvas
+        // ========== Clear canvas ==========
         function clearCanvas() {
-            ctx.fillStyle = '#0c0e12';
+            ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             saveToHistory();
             updateStatus(true, 'Canvas cleared');
+
+            // Send clear to gesture client if connected
+            if (socket && isConnected) {
+                socket.emit('drawing_clear', {});
+            }
         }
 
-        // Drawing function
+        // ========== Drawing function ==========
         function draw(e) {
-            if (!drawing || !gestureActive) return;
+            if (!drawing) return;
 
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
@@ -573,7 +571,6 @@
                 currentY = (e.clientY - rect.top) * scaleY;
             }
 
-            // Constrain to canvas bounds
             currentX = Math.max(0, Math.min(canvas.width, currentX));
             currentY = Math.max(0, Math.min(canvas.height, currentY));
 
@@ -586,12 +583,11 @@
             ctx.lineJoin = 'round';
             ctx.stroke();
 
-            // Send drawing data to connected devices if sharing
-            if (shareSessionActive && socket) {
-                socket.emit('draw', {
-                    sessionId: sessionId,
-                    from: lastX, fromY: lastY,
-                    to: currentX, toY: currentY,
+            // Send drawing data to gesture client for real-time collaboration
+            if (socket && isConnected) {
+                socket.emit('drawing_stroke', {
+                    x1: lastX, y1: lastY,
+                    x2: currentX, y2: currentY,
                     color: currentColor,
                     size: currentBrushSize
                 });
@@ -600,14 +596,11 @@
             lastX = currentX;
             lastY = currentY;
 
-            // Update coordinates display
             document.getElementById('coordDisplay').innerHTML = `COORD: X=${Math.round(currentX)} Y=${Math.round(currentY)}`;
         }
 
-        // Start drawing
+        // ========== Start drawing ==========
         function startDrawing(e) {
-            if (!gestureActive) return;
-
             drawing = true;
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
@@ -627,7 +620,7 @@
             updateStatus(true, 'Drawing active');
         }
 
-        // Stop drawing
+        // ========== Stop drawing ==========
         function stopDrawing() {
             if (drawing) {
                 drawing = false;
@@ -636,7 +629,7 @@
             }
         }
 
-        // Update connection status
+        // ========== Update connection status ==========
         function updateStatus(connected, message) {
             const statusDot = document.getElementById('statusDot');
             const statusText = document.getElementById('statusText');
@@ -650,63 +643,126 @@
             }
         }
 
-        // Update gesture hint
-        function updateGestureHint(gesture, confidence = 100) {
+        // ========== Update gesture hint from client ==========
+        function updateGestureHint(gesture, confidence = 100, finger = null, color = null, size = null) {
             const gestureHint = document.getElementById('gestureHint');
-            if (gesture === 'none') {
-                gestureHint.innerHTML = `
-                <span class="material-symbols-outlined text-primary text-sm">pan_tool</span>
-                <span class="font-headline text-xs tracking-widest uppercase text-primary">Waiting for gesture...</span>
-            `;
-                gestureActive = false;
-            } else {
-                gestureHint.innerHTML = `
-                <span class="material-symbols-outlined text-tertiary text-sm gesture-hint-animate">gesture</span>
-                <span class="font-headline text-xs tracking-widest uppercase text-tertiary">${gesture} detected (${confidence}%)</span>
-            `;
-                gestureActive = true;
 
-                // Handle gesture commands
+            if (gesture === 'none' || !gesture) {
+                gestureHint.innerHTML = `
+                    <span class="material-symbols-outlined text-primary text-sm">pan_tool</span>
+                    <span class="font-headline text-xs tracking-widest uppercase text-primary">Waiting for gesture...</span>
+                `;
+            } else {
+                let icon = 'gesture';
+                if (gesture === 'index') icon = 'pan_tool_alt';
+                else if (gesture === 'peace') icon = 'hand_gesture';
+                else if (gesture === 'fist') icon = 'back_hand';
+                else if (gesture === 'pinch') icon = 'pinch';
+
+                gestureHint.innerHTML = `
+                    <span class="material-symbols-outlined text-tertiary text-sm gesture-hint-animate">${icon}</span>
+                    <span class="font-headline text-xs tracking-widest uppercase text-tertiary">${gesture} detected (${confidence}%)</span>
+                `;
+
+                // Update brush color based on finger
+                if (color) {
+                    currentColor = color;
+                    document.getElementById('activeColorDisplay').innerText = gesture;
+                    document.getElementById('activeColorSwatch').style.background = color;
+                }
+
+                // Update brush size
+                if (size) {
+                    currentBrushSize = Math.max(2, Math.min(30, size));
+                    document.getElementById('brushSizeDisplay').innerText = currentBrushSize + 'px';
+                    const percent = (currentBrushSize - 2) / 28 * 100;
+                    document.getElementById('brushSizeBar').style.width = percent + '%';
+                }
+
+                // Handle special gestures
                 if (gesture === 'fist') {
+                    clearCanvas();
+                } else if (gesture === 'open_palm') {
                     undo();
-                    setTimeout(() => updateGestureHint('open palm', 100), 500);
                 }
             }
         }
 
-        // Simulate gesture data (in real app, this comes from WebSocket/MediaPipe)
-        function simulateGestureData() {
-            // Randomly simulate gestures for demo
-            const gestures = ['none', 'open palm', 'index up', 'peace', 'fist', 'pinch'];
-            const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
-            const confidence = Math.floor(Math.random() * 30) + 70;
+        // ========== WebSocket Connection ==========
+        function initWebSocket() {
+            socket = io('/', {
+                query: { token },
+                transports: ['websocket', 'polling']
+            });
 
-            if (randomGesture !== 'none') {
-                updateGestureHint(randomGesture, confidence);
-            }
+            socket.on('connect', () => {
+                console.log('[WS] Connected to server');
+                isConnected = true;
+                updateStatus(true, 'Connected');
 
-            // Simulate finger positions for brush size
-            const handDistance = Math.random() * 100 + 50;
-            const newSize = Math.floor(handDistance / 10);
-            if (newSize !== currentBrushSize && newSize >= 2 && newSize <= 20) {
-                currentBrushSize = newSize;
-                document.getElementById('brushSizeDisplay').innerText = currentBrushSize + 'px';
-                const percent = (currentBrushSize - 2) / 18 * 100;
-                document.getElementById('brushSizeBar').style.width = percent + '%';
-                updateStatus(true, `Brush size: ${currentBrushSize}px`);
-            }
+                // Register as drawing client
+                socket.emit('register_drawing_client', {
+                    device_name: 'AirCanvasWeb'
+                });
+            });
 
-            // Simulate latency
-            const latency = Math.floor(Math.random() * 20) + 5;
-            document.getElementById('latencyDisplay').innerText = latency;
+            socket.on('disconnect', () => {
+                console.log('[WS] Disconnected');
+                isConnected = false;
+                updateStatus(false, 'Disconnected');
+            });
+
+            socket.on('drawing_ready', (data) => {
+                console.log('[Canvas] Ready:', data);
+                updateStatus(true, 'Ready for drawing');
+            });
+
+            // Receive drawing data from gesture client
+            socket.on('drawing_data', (data) => {
+                console.log('[Canvas] Received drawing:', data.type);
+
+                if (data.type === 'draw') {
+                    ctx.beginPath();
+                    ctx.moveTo(data.x1, data.y1);
+                    ctx.lineTo(data.x2, data.y2);
+                    ctx.strokeStyle = data.color;
+                    ctx.lineWidth = data.size;
+                    ctx.stroke();
+                } else if (data.type === 'clear') {
+                    clearCanvas();
+                } else if (data.type === 'undo') {
+                    undo();
+                }
+            });
+
+            // Receive gesture updates from gesture client
+            socket.on('gesture_update', (data) => {
+                console.log('[Canvas] Gesture:', data.gesture);
+
+                // Map gesture to finger color
+                let color = null;
+                if (data.gesture === 'index') color = '#ff4444';
+                else if (data.gesture === 'middle') color = '#4444ff';
+                else if (data.gesture === 'ring') color = '#44ff44';
+                else if (data.gesture === 'pinky') color = '#ffaa44';
+                else if (data.gesture === 'thumb') color = '#aa44ff';
+
+                // Calculate brush size from confidence
+                const size = Math.floor(data.confidence * 15) + 3;
+
+                updateGestureHint(data.gesture, Math.floor(data.confidence * 100), data.gesture, color, size);
+            });
+
+            socket.on('connect_error', (error) => {
+                console.error('[WS] Connection error:', error);
+                updateStatus(false, 'Connection error');
+            });
         }
 
-        // Save drawing to server/gallery
+        // ========== Save drawing to gallery ==========
         async function saveDrawing() {
             try {
                 const imageData = canvas.toDataURL('image/png');
-
-                // Simulate save to backend
                 const drawings = JSON.parse(localStorage.getItem('kinetic_drawings') || '[]');
                 const newDrawing = {
                     id: Date.now(),
@@ -715,28 +771,16 @@
                     thumbnail: imageData
                 };
                 drawings.unshift(newDrawing);
-                // Keep only last 20 drawings
                 if (drawings.length > 20) drawings.pop();
                 localStorage.setItem('kinetic_drawings', JSON.stringify(drawings));
-
                 updateStatus(true, 'Drawing saved to gallery!');
-
-                // Show success message
-                const originalHint = document.getElementById('gestureHint').innerHTML;
-                document.getElementById('gestureHint').innerHTML = `
-                <span class="material-symbols-outlined text-tertiary text-sm">check_circle</span>
-                <span class="font-headline text-xs tracking-widest uppercase text-tertiary">Saved to Gallery!</span>
-            `;
-                setTimeout(() => {
-                    document.getElementById('gestureHint').innerHTML = originalHint;
-                }, 2000);
             } catch (error) {
                 console.error('Save error:', error);
                 updateStatus(false, 'Save failed');
             }
         }
 
-        // Export as image
+        // ========== Export as image ==========
         function exportAsImage() {
             const link = document.createElement('a');
             link.download = `kinetic-canvas-${Date.now()}.png`;
@@ -745,7 +789,7 @@
             updateStatus(true, 'Image exported');
         }
 
-        // Export as PDF
+        // ========== Export as PDF ==========
         async function exportAsPDF() {
             const { jsPDF } = window.jspdf;
             const imageData = canvas.toDataURL('image/png');
@@ -759,7 +803,7 @@
             updateStatus(true, 'PDF exported');
         }
 
-        // Show gallery
+        // ========== Show gallery ==========
         function showGallery() {
             const galleryList = document.getElementById('galleryList');
             const drawings = JSON.parse(localStorage.getItem('kinetic_drawings') || '[]');
@@ -768,21 +812,20 @@
                 galleryList.innerHTML = '<p class="text-on-surface-variant col-span-full text-center">No drawings saved yet. Start drawing and save your masterpieces!</p>';
             } else {
                 galleryList.innerHTML = drawings.map(drawing => `
-                <div class="gallery-item">
-                    <img src="${drawing.thumbnail}" alt="Drawing ${drawing.id}">
-                    <p class="text-[10px] text-on-surface-variant mt-2">${new Date(drawing.timestamp).toLocaleString()}</p>
-                    <div class="flex gap-2 mt-2">
-                        <button onclick="loadDrawing(${drawing.id})" class="text-primary text-[10px] uppercase tracking-wider">Load</button>
-                        <button onclick="deleteDrawing(${drawing.id})" class="text-error text-[10px] uppercase tracking-wider">Delete</button>
+                    <div class="gallery-item">
+                        <img src="${drawing.thumbnail}" alt="Drawing ${drawing.id}">
+                        <p class="text-[10px] text-on-surface-variant mt-2">${new Date(drawing.timestamp).toLocaleString()}</p>
+                        <div class="flex gap-2 mt-2">
+                            <button onclick="loadDrawing(${drawing.id})" class="text-primary text-[10px] uppercase tracking-wider">Load</button>
+                            <button onclick="deleteDrawing(${drawing.id})" class="text-error text-[10px] uppercase tracking-wider">Delete</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
             }
-
             document.getElementById('galleryModal').style.display = 'block';
         }
 
-        // Load drawing from gallery
+        // ========== Load drawing ==========
         window.loadDrawing = function (id) {
             const drawings = JSON.parse(localStorage.getItem('kinetic_drawings') || '[]');
             const drawing = drawings.find(d => d.id === id);
@@ -799,68 +842,34 @@
             }
         };
 
-        // Delete drawing from gallery
+        // ========== Delete drawing ==========
         window.deleteDrawing = function (id) {
             let drawings = JSON.parse(localStorage.getItem('kinetic_drawings') || '[]');
             drawings = drawings.filter(d => d.id !== id);
             localStorage.setItem('kinetic_drawings', JSON.stringify(drawings));
-            showGallery(); // Refresh gallery
+            showGallery();
             updateStatus(true, 'Drawing deleted');
         };
 
-        // Initialize sharing
-        function initSharing() {
-            socket = io({
-                transports: ['websocket', 'polling'],
-                reconnection: true
-            });
-
-            socket.on('connect', () => {
-                console.log('Socket connected');
-                updateStatus(true, 'Share ready');
-            });
-
-            socket.on('drawing_data', (data) => {
-                // Draw received data on canvas
-                ctx.beginPath();
-                ctx.moveTo(data.from, data.fromY);
-                ctx.lineTo(data.to, data.toY);
-                ctx.strokeStyle = data.color;
-                ctx.lineWidth = data.size;
-                ctx.stroke();
-            });
-
-            socket.on('device_joined', (data) => {
-                const devicesDiv = document.getElementById('connectedDevices');
-                devicesDiv.innerHTML += `<p class="text-tertiary text-xs">✓ ${data.deviceId} joined the session</p>`;
-            });
-
-            socket.on('device_left', (data) => {
-                const devicesDiv = document.getElementById('connectedDevices');
-                devicesDiv.innerHTML += `<p class="text-error text-xs">✗ ${data.deviceId} left</p>`;
-            });
-        }
-
-        // Share canvas
+        // ========== Share canvas ==========
         function shareCanvas() {
-            if (!socket) {
-                initSharing();
+            if (!socket || !isConnected) {
+                updateStatus(false, 'Not connected to server');
+                return;
             }
 
             if (!shareSessionActive) {
                 sessionId = 'session_' + Date.now();
                 shareSessionActive = true;
-                socket.emit('create_session', { sessionId: sessionId });
-
+                socket.emit('share_drawing', { room_id: sessionId });
                 const shareUrl = `${window.location.origin}/share/${sessionId}`;
                 document.getElementById('shareUrl').value = shareUrl;
                 updateStatus(true, 'Share session created');
             }
-
             document.getElementById('shareModal').style.display = 'block';
         }
 
-        // Copy URL to clipboard
+        // ========== Copy URL to clipboard ==========
         function copyShareUrl() {
             const urlInput = document.getElementById('shareUrl');
             urlInput.select();
@@ -868,14 +877,16 @@
             updateStatus(true, 'URL copied to clipboard');
         }
 
-        // Logout function
+        // ========== Logout ==========
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
                 window.location.href = '/login';
             }
         }
 
-        // Color selection
+        // ========== Color selection ==========
         function setColor(color, colorName) {
             currentColor = color;
             document.getElementById('activeColorDisplay').innerText = colorName;
@@ -883,16 +894,16 @@
             updateStatus(true, `Color changed to ${colorName}`);
         }
 
-        // Brush size selection
+        // ========== Brush size selection ==========
         function setBrushSize(size) {
             currentBrushSize = size;
             document.getElementById('brushSizeDisplay').innerText = size + 'px';
-            const percent = (size - 2) / 18 * 100;
+            const percent = (size - 2) / 28 * 100;
             document.getElementById('brushSizeBar').style.width = percent + '%';
             updateStatus(true, `Brush size: ${size}px`);
         }
 
-        // Event Listeners
+        // ========== Event Listeners ==========
         function bindEvents() {
             // Mouse events
             canvas.addEventListener('mousedown', startDrawing);
@@ -905,26 +916,30 @@
             canvas.addEventListener('touchmove', draw);
             canvas.addEventListener('touchend', stopDrawing);
 
-            // Tool buttons
+            // Color buttons
             document.getElementById('colorRed').addEventListener('click', () => setColor('#ff4444', 'Red'));
             document.getElementById('colorBlue').addEventListener('click', () => setColor('#4444ff', 'Blue'));
             document.getElementById('colorGreen').addEventListener('click', () => setColor('#44ff44', 'Green'));
             document.getElementById('colorYellow').addEventListener('click', () => setColor('#ffaa44', 'Yellow'));
             document.getElementById('colorPurple').addEventListener('click', () => setColor('#aa44ff', 'Purple'));
 
+            // Brush size buttons
             document.getElementById('brushSmall').addEventListener('click', () => setBrushSize(3));
             document.getElementById('brushMedium').addEventListener('click', () => setBrushSize(8));
             document.getElementById('brushLarge').addEventListener('click', () => setBrushSize(15));
 
+            // Action buttons
             document.getElementById('undoBtn').addEventListener('click', undo);
             document.getElementById('clearBtn').addEventListener('click', clearCanvas);
             document.getElementById('saveDrawingBtn').addEventListener('click', saveDrawing);
             document.getElementById('exportImageBtn').addEventListener('click', exportAsImage);
             document.getElementById('exportPdfBtn').addEventListener('click', exportAsPDF);
 
+            // Sidebar buttons
             document.getElementById('galleryBtnSide').addEventListener('click', showGallery);
             document.getElementById('shareCanvasBtnSide').addEventListener('click', shareCanvas);
 
+            // Logout
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) logoutBtn.addEventListener('click', logout);
 
@@ -936,16 +951,31 @@
                 });
             });
 
+            // Copy URL button
             document.getElementById('copyUrlBtn')?.addEventListener('click', copyShareUrl);
-
-            // Simulate gesture data every 2 seconds (for demo - replace with actual WebSocket)
-            setInterval(simulateGestureData, 2000);
         }
 
-        // Initialize everything
+        // ========== Load user info ==========
+        async function loadUserInfo() {
+            try {
+                const res = await fetch('/api/auth/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const user = await res.json();
+                    console.log('User:', user.username);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // ========== Initialize everything ==========
         function init() {
             initCanvas();
             bindEvents();
+            initWebSocket();
+            loadUserInfo();
             updateStatus(true, 'System ready');
         }
 
