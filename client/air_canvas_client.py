@@ -33,12 +33,12 @@ def login_and_get_token():
             data = response.json()
             if data.get('success'):
                 token = data['data']['token']
-                print(f"[✓] Logged in as {USERNAME}")
+                print(f"[OK] Logged in as {USERNAME}")
                 return token
-        print(f"[✗] Login failed")
+        print(f"[FAIL] Login failed")
         return None
     except Exception as e:
-        print(f"[✗] Login error: {e}")
+        print(f"[ERROR] Login error: {e}")
         return None
 
 # Get token
@@ -56,7 +56,7 @@ connected = False
 def connect():
     global connected
     connected = True
-    print("[✓] WebSocket connected!")
+    print("[OK] WebSocket connected!")
     # Register as drawing client
     sio.emit('register_drawing_client', {
         'device_name': 'AirCanvasGesture'
@@ -66,7 +66,7 @@ def connect():
 def disconnect():
     global connected
     connected = False
-    print("[✗] WebSocket disconnected - Attempting to reconnect...")
+    print("[WARN] WebSocket disconnected - Attempting to reconnect...")
 
 @sio.on("*")
 def catch_all(event, data):
@@ -76,15 +76,15 @@ def catch_all(event, data):
 
 @sio.event
 def connect_error(data):
-    print(f"[✗] Connection error: {data}")
+    print(f"[ERROR] Connection error: {data}")
 
 @sio.event
 def drawing_ready(data):
-    print(f"[✓] {data.get('message')} - {data.get('device')}")
+    print(f"[OK] {data.get('message')} - {data.get('device')}")
 
 @sio.event
 def drawing_shared(data):
-    print(f"[✓] Drawing session shared! Room: {data.get('room_id')}")
+    print(f"[OK] Drawing session shared! Room: {data.get('room_id')}")
 
 @sio.event
 def error(data):
@@ -96,11 +96,11 @@ try:
     sio.connect(f"{SERVER_URL}?token={TOKEN}", transports=['websocket', 'polling'])
     time.sleep(2)
 except Exception as e:
-    print(f"[✗] Connection failed: {e}")
+    print(f"[ERROR] Connection failed: {e}")
     sys.exit(1)
 
 if not connected:
-    print("[✗] Could not establish connection")
+    print("[ERROR] Could not establish connection")
     sys.exit(1)
 
 # Initialize MediaPipe
@@ -120,10 +120,10 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 if not cap.isOpened():
-    print("[✗] Camera not found!")
+    print("[ERROR] Camera not found!")
     sys.exit(1)
 
-print("[✓] Camera initialized")
+print("[OK] Camera initialized")
 
 # Drawing state
 prev_x, prev_y = None, None
@@ -219,19 +219,19 @@ def detect_special_gestures(hand_landmarks):
     return "DRAW"
 
 print("\n" + "="*60)
-print("🎨 AIR CANVAS GESTURE CLIENT")
+print("AIR CANVAS GESTURE CLIENT")
 print("="*60)
 print("Drawing Mode Controls:")
-print("  ✌️ Peace Sign = Toggle Drawing ON/OFF")
-print("  ✊ Fist = Clear Canvas")
-print("  ✋ Open Palm = Undo Last Stroke")
+print("  Peace Sign = Toggle Drawing ON/OFF")
+print("  Fist       = Clear Canvas")
+print("  Open Palm  = Undo Last Stroke")
 print("")
 print("Colors by Finger:")
-print("  👆 Index Finger = Red")
-print("  🖕 Middle Finger = Blue")
-print("  💍 Ring Finger = Green")
-print("  🤙 Pinky Finger = Yellow")
-print("  👍 Thumb = Purple")
+print("  Index Finger  = Red")
+print("  Middle Finger = Blue")
+print("  Ring Finger   = Green")
+print("  Pinky Finger  = Yellow")
+print("  Thumb         = Purple")
 print("")
 print("Brush size = Hand distance from camera")
 print("")
@@ -287,7 +287,7 @@ while True:
                 if current_time - last_toggle_time > 1.5:  # Increased cooldown
                     drawing_mode = not drawing_mode
                     status = "ON" if drawing_mode else "OFF"
-                    print(f"[✌️] Drawing mode: {status}")
+                    print(f"[MODE] Drawing mode: {status}")
                     if connected:
                         try:
                             sio.emit('drawing_toggle', {'enabled': drawing_mode})
@@ -299,7 +299,7 @@ while True:
             
             elif active_gesture == "CLEAR" and gesture_counters["CLEAR"] >= GESTURE_CONFIRM_FRAMES:
                 if current_time - last_clear_time > 1.0:
-                    print("[✊] Clearing canvas...")
+                    print("[ACTION] Clearing canvas...")
                     if connected:
                         try:
                             sio.emit('drawing_clear', {})
@@ -311,7 +311,7 @@ while True:
             
             elif active_gesture == "UNDO" and gesture_counters["UNDO"] >= GESTURE_CONFIRM_FRAMES:
                 if current_time - last_undo_time > 1.0:
-                    print("[✋] Undo last stroke...")
+                    print("[ACTION] Undo last stroke...")
                     if connected:
                         try:
                             sio.emit('drawing_undo', {})
@@ -394,4 +394,4 @@ cap.release()
 cv2.destroyAllWindows()
 if connected:
     sio.disconnect()
-print("\n[✓] Air Canvas gesture client stopped!")
+print("\n[OK] Air Canvas gesture client stopped!")
