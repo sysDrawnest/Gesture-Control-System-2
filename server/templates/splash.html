@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html class="dark" lang="en">
 
 <head>
@@ -283,6 +282,28 @@
     </div>
     <!-- Hidden Map Anchor for data requirements -->
     <div class="hidden" data-location="Neo Tokyo High-Tech District" style=""></div>
+
+    <script>
+        // Automatic redirection after animation completes
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                // Fade out effect
+                document.body.style.transition = 'opacity 0.8s ease-out';
+                document.body.style.opacity = '0';
+                
+                setTimeout(() => {
+                    window.location.href = '/home';
+                }, 800);
+            }, 4500); // 4.5 seconds for animation + 0.8s fade
+        });
+
+        // Skip splash on click/space
+        const skipSplash = () => window.location.href = '/home';
+        document.body.addEventListener('click', skipSplash);
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'Enter') skipSplash();
+        });
+    </script>
 </body>
 
 </html>

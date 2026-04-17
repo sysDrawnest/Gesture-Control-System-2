@@ -97,8 +97,13 @@ except Exception as e:
 
 # Frontend routes
 @app.route('/')
+def splash():
+    """Splash screen entry page"""
+    return render_template('splash.html')
+
+@app.route('/home')
 def index():
-    """Landing page"""
+    """Main landing page"""
     return render_template('index.html')
 
 @app.route('/air_canvas')

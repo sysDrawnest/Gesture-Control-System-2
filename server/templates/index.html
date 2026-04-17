@@ -144,13 +144,8 @@
       width: 0;
     }
 
-    /* Main content initial state */
+    /* Main content state */
     .main-content {
-      opacity: 0;
-      transition: opacity 0.5s ease-in;
-    }
-
-    .main-content.visible {
       opacity: 1;
     }
   </style>
@@ -158,150 +153,16 @@
 
 <body class="bg-surface-container-lowest text-on-surface font-body selection:bg-primary selection:text-on-primary">
 
-  <!-- SPLASH SCREEN -->
-  <div id="splashScreen"
-    class="splash-screen bg-surface-container-lowest overflow-hidden relative flex items-center justify-center">
-    <!-- Background Elements -->
-    <div class="absolute inset-0 kinetic-grid z-0"></div>
-    <div class="orb bg-primary w-[500px] h-[500px] top-[-100px] left-[-100px]"></div>
-    <div class="orb bg-secondary w-[400px] h-[400px] bottom-[-50px] right-[-50px]"></div>
-    <div class="orb bg-tertiary w-[300px] h-[300px] top-1/2 left-1/4"></div>
-
-    <!-- Main Splash Content -->
-    <div class="relative z-10 flex flex-col items-center justify-center w-full max-w-4xl px-6">
-      <!-- Top Visual Anchor -->
-      <div class="mb-12 text-center">
-        <h1
-          class="font-headline text-6xl md:text-8xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-primary via-primary-fixed to-secondary drop-shadow-[0_0_25px_rgba(129,236,255,0.4)]">
-          KINETIC_PULSE
-        </h1>
-        <div class="mt-4 flex items-center justify-center space-x-3">
-          <span class="h-[1px] w-12 bg-primary/30"></span>
-          <span class="font-headline text-sm tracking-[0.4em] text-primary-dim uppercase font-medium">Neural Interface
-            Active</span>
-          <span class="h-[1px] w-12 bg-primary/30"></span>
-        </div>
-      </div>
-
-      <!-- Kinetic Visualizer -->
-      <div class="relative w-80 h-80 flex items-center justify-center mb-16">
-        <div class="absolute inset-0 rounded-full bg-primary/5 animate-pulse-ring"></div>
-        <div class="absolute inset-0 rounded-full border border-primary/20 scale-110"></div>
-
-        <!-- Progress Circle -->
-        <svg class="w-full h-full transform -rotate-90">
-          <circle class="text-surface-container-highest" cx="160" cy="160" fill="transparent" r="140"
-            stroke="currentColor" stroke-width="2"></circle>
-          <circle id="progressCircle" class="text-primary drop-shadow-[0_0_8px_#81ecff]" cx="160" cy="160"
-            fill="transparent" r="140" stroke="currentColor" stroke-dasharray="880" stroke-dashoffset="880"
-            stroke-width="4"></circle>
-        </svg>
-
-        <!-- Floating Gesture Icons -->
-        <div class="absolute inset-0 flex items-center justify-center">
-          <div
-            class="absolute -top-4 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
-            <span class="material-symbols-outlined text-primary text-3xl">touch_app</span>
-          </div>
-          <div
-            class="absolute top-1/4 -right-6 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
-            <span class="material-symbols-outlined text-primary text-3xl">pinch</span>
-          </div>
-          <div
-            class="absolute bottom-4 right-8 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
-            <span class="material-symbols-outlined text-primary text-3xl">front_hand</span>
-          </div>
-          <div
-            class="absolute bottom-4 left-8 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
-            <span class="material-symbols-outlined text-primary text-3xl">pan_tool</span>
-          </div>
-          <div
-            class="absolute top-1/4 -left-6 glass-panel p-3 rounded-full border border-primary/20 shadow-lg shadow-primary/10">
-            <span class="material-symbols-outlined text-primary text-3xl">back_hand</span>
-          </div>
-        </div>
-
-        <!-- Core Hub -->
-        <div
-          class="relative w-48 h-48 rounded-full glass-panel border border-outline-variant/30 flex flex-col items-center justify-center shadow-2xl">
-          <div
-            class="w-24 h-24 rounded-full bg-gradient-to-tr from-primary/20 to-secondary/20 flex items-center justify-center relative overflow-hidden group">
-            <div class="absolute inset-0 bg-[radial-gradient(circle,rgba(0,227,253,0.3)_0%,transparent_70%)]"></div>
-            <span class="material-symbols-outlined text-5xl text-primary drop-shadow-md">sensors</span>
-          </div>
-          <div class="mt-4 font-headline text-xs tracking-widest text-primary-fixed-dim">CORE_READY</div>
-        </div>
-      </div>
-
-      <!-- Status & HUD Elements -->
-      <div class="w-full max-w-md text-center space-y-6">
-        <div class="relative inline-block">
-          <p id="typingText" class="font-headline text-lg tracking-[0.2em] text-on-surface-variant typing-text">
-            INITIALIZING NEURAL INTERFACE...
-          </p>
-        </div>
-
-        <!-- Telemetry Bar -->
-        <div class="grid grid-cols-3 gap-4">
-          <div class="glass-panel py-3 px-4 border-b border-primary/20 flex flex-col items-start">
-            <span class="text-[10px] text-on-surface-variant/60 uppercase font-medium">Latency</span>
-            <span class="font-headline text-sm text-primary">0.04ms</span>
-          </div>
-          <div class="glass-panel py-3 px-4 border-b border-secondary/20 flex flex-col items-start">
-            <span class="text-[10px] text-on-surface-variant/60 uppercase font-medium">Confidence</span>
-            <span class="font-headline text-sm text-secondary">99.8%</span>
-          </div>
-          <div class="glass-panel py-3 px-4 border-b border-tertiary/20 flex flex-col items-start">
-            <span class="text-[10px] text-on-surface-variant/60 uppercase font-medium">Sync State</span>
-            <span class="font-headline text-sm text-tertiary">Locked</span>
-          </div>
-        </div>
-
-        <!-- Loading Progress -->
-        <div class="w-full mt-4">
-          <div class="flex justify-between text-[10px] text-on-surface-variant/60 mb-1">
-            <span>System Load</span>
-            <span id="loadPercent">0%</span>
-          </div>
-          <div class="w-full h-1 bg-surface-container-high rounded-full overflow-hidden">
-            <div id="loadBar"
-              class="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-100"
-              style="width: 0%"></div>
-          </div>
-        </div>
-
-        <!-- Bottom Hint -->
-        <div class="pt-4">
-          <div class="flex items-center justify-center space-x-2 text-on-surface-variant/40">
-            <span class="material-symbols-outlined text-sm">info</span>
-            <p class="text-xs tracking-tight">Loading immersive workspace...</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Decorative Corner Accents -->
-    <div class="fixed top-8 left-8 flex flex-col space-y-1 opacity-40">
-      <div class="w-16 h-[2px] bg-primary"></div>
-      <div class="w-8 h-[2px] bg-primary/50"></div>
-      <div class="font-headline text-[10px] text-primary-fixed mt-2">SYS_MOD_441</div>
-    </div>
-    <div class="fixed bottom-8 right-8 flex flex-col items-end space-y-1 opacity-40">
-      <div class="w-8 h-[2px] bg-secondary/50"></div>
-      <div class="w-16 h-[2px] bg-secondary"></div>
-      <div class="font-headline text-[10px] text-secondary mt-2">V2.4.0_STABLE</div>
-    </div>
-  </div>
 
   <!-- MAIN WEBSITE CONTENT (Hidden until splash completes) -->
-  <div id="mainContent" class="main-content" style="opacity: 0;">
+  <div id="mainContent" class="main-content">
     <!-- Nav -->
     <nav class="fixed top-0 w-full z-50 bg-neutral-950/40 backdrop-blur-xl shadow-[0_0_20px_rgba(0,229,255,0.1)]">
       <div class="flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto">
-        <div
+        <a href="/home"
           class="text-2xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 font-headline">
           KINETIC PULSE
-        </div>
+        </a>
         <div class="hidden md:flex items-center gap-10 font-headline uppercase tracking-widest text-sm">
           <a class="text-cyan-400 border-b-2 border-cyan-400 pb-1" href="#features">Features</a>
           <a class="text-slate-400 hover:text-cyan-300 transition-colors" href="/about">About</a>
@@ -720,84 +581,7 @@
     </footer>
   </div>
 
-  <script>
-      // Splash screen animation and auto-redirect
-      (function () {
-        const splashScreen = document.getElementById('splashScreen');
-        const mainContent = document.getElementById('mainContent');
-        const progressCircle = document.getElementById('progressCircle');
-        const loadBar = document.getElementById('loadBar');
-        const loadPercent = document.getElementById('loadPercent');
-        const typingText = document.getElementById('typingText');
-
-        let progress = 0;
-        const duration = 3000; // 3 seconds splash duration
-        const intervalTime = 30; // Update every 30ms
-        const steps = duration / intervalTime;
-        let currentStep = 0;
-
-        // Animate progress circle
-        const circleCircumference = 880;
-
-        const interval = setInterval(() => {
-          currentStep++;
-          progress = (currentStep / steps) * 100;
-
-          // Update progress circle
-          const dashoffset = circleCircumference - (circleCircumference * progress / 100);
-          if (progressCircle) {
-            progressCircle.style.strokeDashoffset = dashoffset;
-          }
-
-          // Update load bar
-          if (loadBar) {
-            loadBar.style.width = progress + '%';
-          }
-
-          // Update percentage text
-          if (loadPercent) {
-            loadPercent.textContent = Math.floor(progress) + '%';
-          }
-
-          // Update typing text animation completion
-          if (progress >= 50 && typingText) {
-            typingText.style.animation = 'none';
-            typingText.style.width = '100%';
-            typingText.style.borderRight = 'none';
-          }
-
-          if (progress >= 100) {
-            clearInterval(interval);
-
-            // Fade out splash screen
-            splashScreen.classList.add('fade-out');
-
-            // Show main content
-            setTimeout(() => {
-              mainContent.style.opacity = '1';
-              mainContent.classList.add('visible');
-
-              // Remove splash screen from DOM after transition
-              setTimeout(() => {
-                splashScreen.style.display = 'none';
-              }, 800);
-            }, 100);
-          }
-        }, intervalTime);
-
-        // Optional: Allow skipping splash with click
-        splashScreen.addEventListener('click', () => {
-          clearInterval(interval);
-          splashScreen.classList.add('fade-out');
-          setTimeout(() => {
-            mainContent.style.opacity = '1';
-            mainContent.classList.add('visible');
-            setTimeout(() => {
-              splashScreen.style.display = 'none';
-            }, 800);
-          }, 100);
-        });
-      })();
+    // Cinematic entry managed via splash.html redirection
   </script>
 </body>
 
