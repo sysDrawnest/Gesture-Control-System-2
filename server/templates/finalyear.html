@@ -1,199 +1,262 @@
 <!DOCTYPE html>
+<html class="dark" lang="en">
 
-<html class="dark" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>University Project Announcement | Utkal MCA</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
-                    "colors": {
-                        "error": "#ff716c",
-                        "surface-bright": "#292c33",
-                        "primary-fixed": "#00e3fd",
-                        "on-secondary-container": "#f3cfff",
-                        "on-primary-container": "#004d57",
-                        "inverse-primary": "#006976",
-                        "surface-container-low": "#111318",
-                        "on-tertiary": "#006723",
-                        "surface-tint": "#81ecff",
-                        "inverse-on-surface": "#53555a",
-                        "on-secondary-fixed": "#56007c",
-                        "surface-dim": "#0c0e12",
-                        "secondary-container": "#7d01b1",
-                        "secondary-fixed": "#eec2ff",
-                        "primary-container": "#00e3fd",
-                        "tertiary": "#b9ffb8",
-                        "surface-container-highest": "#23262c",
-                        "surface-variant": "#23262c",
-                        "error-container": "#9f0519",
-                        "tertiary-dim": "#54ee70",
-                        "primary-fixed-dim": "#00d4ec",
-                        "secondary-fixed-dim": "#e7afff",
-                        "surface-container": "#171a1f",
-                        "tertiary-fixed": "#64fd7d",
-                        "on-error-container": "#ffa8a3",
-                        "on-background": "#f6f6fc",
-                        "surface-container-lowest": "#000000",
-                        "error-dim": "#d7383b",
-                        "surface-container-high": "#1d2025",
-                        "on-error": "#490006",
-                        "on-tertiary-fixed": "#004816",
-                        "primary-dim": "#00d4ec",
-                        "background": "#0c0e12",
-                        "on-tertiary-container": "#005d1f",
-                        "surface": "#0c0e12",
-                        "on-surface": "#f6f6fc",
-                        "on-secondary": "#380052",
-                        "inverse-surface": "#f9f9ff",
-                        "tertiary-container": "#64fd7d",
+                    colors: {
                         "primary": "#81ecff",
-                        "outline-variant": "#46484d",
-                        "on-primary-fixed-variant": "#005762",
-                        "outline": "#74757a",
-                        "secondary-dim": "#d277ff",
-                        "tertiary-fixed-dim": "#54ee70",
-                        "on-secondary-fixed-variant": "#800ab4",
-                        "on-primary": "#005762",
-                        "on-surface-variant": "#aaabb0",
+                        "on-secondary": "#380052",
                         "on-tertiary-fixed-variant": "#006823",
+                        "on-primary": "#005762",
+                        "inverse-on-surface": "#53555a",
+                        "on-error-container": "#ffa8a3",
+                        "secondary-container": "#7d01b1",
+                        "error-container": "#9f0519",
+                        "secondary-dim": "#d277ff",
+                        "surface-container-lowest": "#000000",
+                        "outline": "#74757a",
+                        "on-tertiary": "#006723",
+                        "on-tertiary-container": "#005d1f",
+                        "inverse-primary": "#006976",
+                        "on-background": "#f6f6fc",
+                        "tertiary": "#b9ffb8",
+                        "on-surface-variant": "#aaabb0",
+                        "surface-container-highest": "#23262c",
+                        "surface-container": "#171a1f",
+                        "tertiary-dim": "#54ee70",
+                        "on-error": "#490006",
+                        "primary-container": "#00e3fd",
+                        "surface-bright": "#292c33",
+                        "secondary-fixed": "#eec2ff",
+                        "on-secondary-container": "#f3cfff",
+                        "on-primary-fixed-variant": "#005762",
+                        "secondary-fixed-dim": "#e7afff",
+                        "inverse-surface": "#f9f9ff",
+                        "outline-variant": "#46484d",
+                        "on-surface": "#f6f6fc",
+                        "surface-container-low": "#111318",
+                        "on-tertiary-fixed": "#004816",
+                        "error-dim": "#d7383b",
+                        "on-secondary-fixed": "#56007c",
+                        "surface-variant": "#23262c",
+                        "surface-dim": "#0c0e12",
                         "on-primary-fixed": "#003840",
-                        "secondary": "#d277ff"
+                        "surface-tint": "#81ecff",
+                        "error": "#ff716c",
+                        "tertiary-container": "#64fd7d",
+                        "surface": "#0c0e12",
+                        "primary-fixed-dim": "#00d4ec",
+                        "tertiary-fixed-dim": "#54ee70",
+                        "surface-container-high": "#1d2025",
+                        "tertiary-fixed": "#64fd7d",
+                        "primary-dim": "#00d4ec",
+                        "secondary": "#d277ff",
+                        "primary-fixed": "#00e3fd",
+                        "background": "#0c0e12",
+                        "on-secondary-fixed-variant": "#800ab4",
+                        "on-primary-container": "#004d57"
                     },
-                    "borderRadius": {
-                        "DEFAULT": "0.125rem",
-                        "lg": "0.25rem",
-                        "xl": "0.5rem",
-                        "full": "0.75rem"
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
                     },
-                    "spacing": {},
-                    "fontFamily": {
-                        "headline": ["Space Grotesk"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
+                    fontFamily: {
+                        headline: ["Space Grotesk"],
+                        body: ["Inter"],
+                        label: ["Inter"]
                     }
-                },
-            },
+                }
+            }
         }
     </script>
-<style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
+    <style>
         .glass-panel {
             background: rgba(23, 26, 31, 0.4);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
         }
-        .academic-gradient {
-            background: radial-gradient(circle at top left, #2e1065 0%, #1e1b4b 50%, #000000 100%);
+
+        .floating-container {
+            perspective: 1000px;
         }
-        .gold-highlight {
-            color: #fbbf24;
-            text-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+
+        .kinetic-float {
+            animation: float 6s ease-in-out infinite;
         }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px) rotateX(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotateX(2deg);
+            }
+        }
+
+        .text-glow {
+            text-shadow: 0 0 15px rgba(129, 236, 255, 0.3);
+        }
+
+        .gold-accent {
+            background: linear-gradient(90deg, #FFD700, #FDB931);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: underline;
+            text-decoration-color: rgba(253, 185, 49, 0.5);
+            text-underline-offset: 4px;
+        }
+
+        .royal-gradient {
+            background: radial-gradient(circle at top right, #380052 0%, #0c0e12 40%, #001a33 100%);
+        }
+
+        /* no navbar styles - completely removed */
     </style>
 </head>
-<body class="bg-surface-container-lowest font-body text-on-surface min-h-screen flex items-center justify-center p-4">
-<!-- TopAppBar -->
-<header class="fixed top-0 w-full z-50 flex justify-between items-center px-8 py-4 bg-black/40 backdrop-blur-3xl shadow-[0_8px_32px_rgba(0,229,255,0.08)]">
-<div class="text-2xl font-black tracking-tighter text-[#00E5FF]">Utkal MCA</div>
-<nav class="hidden md:flex items-center gap-8">
-<a class="font-['Space_Grotesk'] tracking-tight text-sm uppercase font-bold text-white/60 hover:text-white transition-colors" href="/home">Dashboard</a>
-<a class="font-['Space_Grotesk'] tracking-tight text-sm uppercase font-bold text-[#00E5FF] border-b-2 border-[#00E5FF] pb-1" href="/finalyear">Projects</a>
-<a class="font-['Space_Grotesk'] tracking-tight text-sm uppercase font-bold text-white/60 hover:text-white transition-colors" href="#">Faculty</a>
-<a class="font-['Space_Grotesk'] tracking-tight text-sm uppercase font-bold text-white/60 hover:text-white transition-colors" href="#">Resources</a>
-</nav>
-<div class="flex items-center gap-4">
-<button class="material-symbols-outlined text-white/60 hover:text-white transition-all active:scale-95" data-icon="notifications">notifications</button>
-<button class="material-symbols-outlined text-white/60 hover:text-white transition-all active:scale-95" data-icon="account_circle">account_circle</button>
-</div>
-<div class="absolute bottom-0 left-0 w-full bg-gradient-to-b from-[#00E5FF]/10 to-transparent h-[1px]"></div>
-</header>
-<!-- SideNavBar (Suppressed for focused Modal view, but structure included for context) -->
-<aside class="hidden lg:flex flex-col h-screen w-64 fixed left-0 border-r border-white/5 bg-[#000000]/60 backdrop-blur-2xl py-8 gap-4 shadow-2xl">
-<div class="px-6 mb-8">
-<h1 class="text-xl font-bold text-white">MCA Portal</h1>
-<p class="text-xs text-white/40">Utkal University</p>
-</div>
-<nav class="flex flex-col gap-2">
-<div class="px-4">
-<a class="flex items-center gap-3 px-4 py-3 bg-[#00E5FF]/10 text-[#00E5FF] border-r-4 border-[#00E5FF] transition-all scale-102 font-['Space_Grotesk'] text-sm font-medium" href="/home">
-<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
-                    Overview
-                </a>
-</div>
-<div class="px-4">
-<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/80 transition-all font-['Space_Grotesk'] text-sm font-medium" href="#">
-<span class="material-symbols-outlined" data-icon="upload_file">upload_file</span>
-                    Submissions
-                </a>
-</div>
-</nav>
-</aside>
-<!-- Background Decoration -->
-<div class="fixed inset-0 academic-gradient -z-10 overflow-hidden">
-<div class="absolute top-1/4 -left-20 w-96 h-96 bg-primary/10 rounded-full blur-[120px]"></div>
-<div class="absolute bottom-1/4 -right-20 w-96 h-96 bg-secondary/10 rounded-full blur-[120px]"></div>
-</div>
-<!-- Main Content Canvas -->
-<main class="relative z-10 w-full max-w-2xl">
-<!-- Celebratory Modal -->
-<div class="glass-panel border border-white/10 rounded-[24px] overflow-hidden shadow-2xl relative">
-<!-- Decorative Gold Edge -->
-<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#fbbf24]/40 to-transparent"></div>
-<div class="p-10 md:p-14 flex flex-col items-center text-center">
-<!-- Floating Gold Icon -->
-<div class="mb-10 relative">
-<div class="w-24 h-24 rounded-full bg-[#fbbf24]/10 flex items-center justify-center animate-pulse">
-<span class="material-symbols-outlined text-6xl gold-highlight" data-icon="school" data-weight="fill" style="font-variation-settings: 'FILL' 1;">school</span>
-</div>
-<!-- Orbital Rings -->
-<div class="absolute inset-0 border border-[#fbbf24]/20 rounded-full scale-125"></div>
-<div class="absolute inset-0 border border-[#fbbf24]/10 rounded-full scale-150 opacity-30"></div>
-</div>
-<!-- Headline -->
-<h2 class="font-headline text-3xl md:text-4xl font-bold tracking-tight text-on-surface mb-6 leading-tight">
-                    This is our final year project in my university — <span class="gold-highlight">Utkal University</span>, <span class="gold-highlight">MCA Department</span>.
-                </h2>
-<!-- Description Metadata (Kinetic Pulse Style) -->
-<div class="flex flex-wrap justify-center gap-3 mb-10">
-<span class="px-4 py-1 rounded-full bg-surface-container-high border border-outline-variant/30 text-xs font-mono tracking-widest text-on-surface-variant uppercase">Academic Excellence</span>
-<span class="px-4 py-1 rounded-full bg-surface-container-high border border-outline-variant/30 text-xs font-mono tracking-widest text-on-surface-variant uppercase">Batch 2024</span>
-<span class="px-4 py-1 rounded-full bg-surface-container-high border border-outline-variant/30 text-xs font-mono tracking-widest text-on-surface-variant uppercase">Research Driven</span>
-</div>
-<!-- Actions -->
-<div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-<button onclick="window.location.href='/home'" class="px-8 py-4 bg-transparent border border-primary text-on-surface rounded-xl font-headline font-bold uppercase tracking-widest text-sm hover:bg-primary hover:text-on-primary transition-all duration-300 shadow-[0_0_20px_rgba(129,236,255,0.2)]">
+
+<body
+    class="bg-background text-on-surface font-body min-h-screen flex items-center justify-center p-4 md:p-6 royal-gradient overflow-hidden">
+    <!-- 
+        ============================================
+        COMPLETE REPLACEMENT: 
+        - NO TopBar, NO Sidebar, NO Navigation bar
+        - NO routing buttons, NO header/footer menus
+        - ONLY the centered announcement card (kinetic pulse design)
+        ============================================
+    -->
+
+    <!-- Main Content: PURE Announcement Card - centered, no extra chrome -->
+    <main class="w-full max-w-4xl mx-auto floating-container">
+        <!-- Background Ambient Glows (preserved from new code for atmosphere) -->
+        <div class="absolute -top-24 -left-24 w-96 h-96 bg-secondary-container/20 rounded-full blur-[120px]"></div>
+        <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-[120px]"></div>
+
+        <!-- The Kinetic Pulse Card - fully intact from your new design -->
+        <div
+            class="kinetic-float glass-panel relative z-10 p-8 md:p-16 rounded-xl border border-white/5 shadow-2xl flex flex-col items-center text-center">
+            <!-- Close Button - provides dismiss functionality without nav -->
+            <button onclick="window.history.back()"
+                class="absolute top-6 right-6 text-on-surface-variant hover:text-white transition-colors duration-200 group">
+                <span class="material-symbols-outlined text-2xl group-active:scale-90 transition-transform">close</span>
+            </button>
+
+            <!-- Graduation Cap Icon with glowing effect -->
+            <div class="mb-8 relative">
+                <div class="absolute inset-0 bg-primary/20 blur-2xl rounded-full"></div>
+                <div
+                    class="relative bg-surface-container-highest p-5 rounded-full border border-primary/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-5xl text-primary"
+                        style="font-variation-settings: 'FILL' 1;">school</span>
+                </div>
+            </div>
+
+            <!-- Content Section -->
+            <header class="space-y-6 max-w-2xl">
+                <p class="font-headline font-medium tracking-[0.2em] text-primary uppercase text-sm mb-4">Announcement
+                </p>
+                <h1 class="font-headline text-3xl md:text-5xl font-bold leading-tight tracking-tight">
+                    This is our final year project in my university —
+                    <span class="gold-accent">Utkal University</span>,
+                    <span class="gold-accent">MCA Department</span>.
+                </h1>
+                <p class="text-on-surface-variant text-lg md:text-xl font-light leading-relaxed">
+                    A synthesis of rigorous research, architectural innovation, and technological mastery, marking our
+                    transition from academia to professional excellence.
+                </p>
+            </header>
+
+            <!-- Action Buttons (clean interactions, no routing sidebar) -->
+            <div class="mt-12 flex flex-col sm:flex-row items-center gap-6">
+                <!-- Primary Action: Explore Project -->
+                <button onclick="alert('Project explorer — immersive details coming soon. Stay tuned!')"
+                    class="group relative px-10 py-4 font-headline font-bold text-on-primary tracking-wide transition-all duration-300 cursor-pointer">
+                    <div
+                        class="absolute inset-0 bg-primary-container rounded-lg shadow-[0_0_20px_rgba(0,227,253,0.3)] group-hover:shadow-[0_0_35px_rgba(0,227,253,0.5)] transition-all">
+                    </div>
+                    <span class="relative flex items-center gap-2">
                         Explore Project
-                    </button>
-<button onclick="window.history.back()" class="px-8 py-4 bg-surface-container-highest/40 backdrop-blur-md text-on-surface-variant rounded-xl font-headline font-bold uppercase tracking-widest text-sm hover:bg-surface-container-highest transition-all duration-300">
-                        Dismiss
-                    </button>
-</div>
-</div>
-<!-- Footer Details -->
-<div class="bg-black/40 border-t border-white/5 p-6 flex justify-between items-center px-10">
-<div class="flex items-center gap-3">
-<div class="w-8 h-8 rounded-full bg-surface-container-low overflow-hidden">
-<img class="w-full h-full object-cover" alt="University crest" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCm2OAYmwAYIEMuV-G7PRqOkzOnaoL6KpA_nePUWJ0S_5IqfKLMqNNuI5rCPiQHAZQbDOMMgE1lqBcAzxf4gIAvZ5VF5PddS5GUH9CmRvamCM9qjwzuh3mEwGuhqNTLFFng1Peyl1BxuP44m7vokeG_8iCbN1AQwge5LTJEuF4RkxVsjGVHOPdldb8IbPW9ubJhjdH2P7F-eiCF0ICbgKAx7_IS-QvBHXrhXjV0CG2edEkNy6Hlx51yfA0viU53iyH8ggmSkNbkJJY"/>
-</div>
-<span class="text-[10px] font-mono text-on-surface-variant uppercase tracking-tighter">Verified Institutional Submission</span>
-</div>
-<div class="flex gap-2">
-<span class="material-symbols-outlined text-sm text-tertiary" data-icon="verified">verified</span>
-<span class="material-symbols-outlined text-sm text-primary" data-icon="share">share</span>
-</div>
-</div>
-</div>
-<!-- Background Kinetic Visualizer -->
-<div class="absolute -top-24 -right-24 w-64 h-64 border border-[#fbbf24]/5 rounded-full pointer-events-none"></div>
-<div class="absolute -bottom-24 -left-24 w-80 h-80 border border-primary/5 rounded-full pointer-events-none"></div>
-</main>
-<!-- FAB (Suppressed for focused Modal) -->
-</body></html>
+                        <span
+                            class="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </span>
+                </button>
+                <!-- Secondary Action: Visit College (opens official site in new tab) -->
+                <button onclick="window.open('https://utkaluniversity.ac.in', '_blank')"
+                    class="px-6 py-2 font-label text-sm font-semibold text-on-surface-variant hover:text-white border-b border-transparent hover:border-primary transition-all duration-200 flex items-center gap-2 cursor-pointer">
+                    Visit College
+                    <span class="material-symbols-outlined text-base">open_in_new</span>
+                </button>
+            </div>
+
+            <!-- Subtle Metadata Footer -->
+            <footer class="mt-12 pt-8 border-t border-white/5 w-full flex justify-center gap-8">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary/60 text-sm">verified</span>
+                    <span class="text-xs uppercase tracking-widest text-on-surface-variant font-label">Official
+                        Release</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary/60 text-sm">calendar_today</span>
+                    <span class="text-xs uppercase tracking-widest text-on-surface-variant font-label">Session
+                        2024</span>
+                </div>
+            </footer>
+        </div>
+
+        <!-- Decorative Elements (artistic imagery, preserved from new code) -->
+        <div class="absolute top-0 left-0 -mt-8 -ml-8 opacity-20 pointer-events-none">
+            <img alt="University crest artistic" class="w-32 h-32 rounded-full object-cover grayscale"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBo-LYNGyrqVLSASUJlBM1cVpdOCTT_0pH8-rvKYg_JEJy6Kl6zYFqpNVAoGm4v8xHCijdlQB-ZkZmnW8MJ6TaNL_lKjTUW5D0wZIlo9gzabRknaeH-zyOZMFL9erZBvz2VTdl5sSQfj8f0kV_8QAzwa0xDkiOkNIg-vRO44qNkGbuvxjR7r1LiZtMmb-jjyFqUG4w-NC173y0WUlO6GQf3sCWqgAG8ekAXl7MZxiiHzs39JEf4FsFYzQ0PC2emADIAViVYlPHuqvI" />
+        </div>
+        <div class="absolute bottom-0 right-0 -mb-8 -mr-8 opacity-20 pointer-events-none">
+            <img alt="Campus silhouette" class="w-40 h-40 rounded-full object-cover grayscale"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAllrbRLBJn8_XhEoEhSoNv3CItSySJ-jD5NkCiH27mosljCEt8JkigLRwJouXSrhqBQuziNJCOQoWoO0zYkUzDcKr2EDRH3WAUkorK8invxQQcnctgyIMuJiD6bqwNjOl9MBvRB8VHRfcHOmMBv3sICjGCF3wpUIjO8WMTVRKghD1jN_9G9XKm-BeWkNm7ebxwFe608HmbZliIo44hY5hAnYcn9f2VtPYlPqD8Z2rOUZzMVJ7-EboIHc8--Qn3psw0yTpXbUG2h68" />
+        </div>
+    </main>
+
+    <!-- 
+        Absolutely NO navbar, NO TopBar, NO Sidebar, NO routing buttons.
+        Only the announcement card with full immersive design.
+        Optional: tiny script for graceful close behavior (if no history)
+    -->
+    <script>
+            (function () {
+                // ensure close button works gracefully without breaking if no history exists
+                const closeBtn = document.querySelector('.kinetic-float button');
+                if (closeBtn && !closeBtn.hasAttribute('data-handled')) {
+                    closeBtn.setAttribute('data-handled', 'true');
+                    const originalClick = closeBtn.onclick;
+                    closeBtn.onclick = function (e) {
+                        if (window.history.length > 1) {
+                            window.history.back();
+                        } else {
+                            // gentle fallback: just reload the same page (no navigation menu appears)
+                            window.location.href = window.location.pathname;
+                        }
+                        e.preventDefault();
+                    };
+                }
+                // ensure no residual navigation elements are added dynamically
+                console.log(' Full replacement: No TopBar, No Sidebar, No Navbar — only centered announcement card.');
+            })();
+    </script>
+</body>
+
+</html>
