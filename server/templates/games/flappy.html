@@ -35,13 +35,13 @@
     .pipe-top {
         border-bottom-left-radius: 8px;
         border-bottom-right-radius: 8px;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
     }
 
     .pipe-bottom {
         border-top-left-radius: 8px;
         border-top-right-radius: 8px;
-        box-shadow: 0 -10px 20px rgba(0,0,0,0.5);
+        box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.5);
     }
 
     .score-panel {
@@ -57,14 +57,16 @@
     <div class="flex justify-between items-center mb-8">
         <div>
             <div class="flex items-center gap-3 mb-1">
-                <a href="/games" class="p-2 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-purple-400 transition-all">
+                <a href="/games"
+                    class="p-2 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-purple-400 transition-all">
                     <span class="material-symbols-outlined">arrow_back</span>
                 </a>
-                <h1 class="text-3xl font-space font-bold tracking-tight">Flappy <span class="text-purple-400">Pulse</span></h1>
+                <h1 class="text-3xl font-space font-bold tracking-tight">Flappy <span
+                        class="text-purple-400">Pulse</span></h1>
             </div>
             <p class="text-slate-500 text-[10px] uppercase tracking-[0.3em] font-space ml-12">Pinch to Flap</p>
         </div>
-        
+
         <div class="flex gap-4">
             <div class="score-panel px-4 py-2 rounded-xl text-center min-w-[80px]">
                 <p class="text-[9px] text-slate-500 uppercase font-space">Score</p>
@@ -80,27 +82,34 @@
     <!-- Game Container -->
     <div id="gameArea" class="game-screen w-full h-[500px] border border-white/5">
         <div id="bird" style="top: 250px; left: 80px;">👾</div>
-        
+
         <!-- Score HUD -->
-        <div id="scoreHUD" class="absolute top-10 left-1/2 -translate-x-1/2 text-8xl font-space font-bold text-white/10 pointer-events-none">0</div>
+        <div id="scoreHUD"
+            class="absolute top-10 left-1/2 -translate-x-1/2 text-8xl font-space font-bold text-white/10 pointer-events-none">
+            0</div>
 
         <!-- Overlays -->
-        <div id="startScreen" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm transition-all duration-500">
-            <div class="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center border border-purple-500/40 mb-4 animate-float">
+        <div id="startScreen"
+            class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm transition-all duration-500">
+            <div
+                class="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center border border-purple-500/40 mb-4 animate-float">
                 <span class="text-4xl text-purple-400">👾</span>
             </div>
             <h2 class="text-2xl font-space font-bold tracking-widest mb-2 text-white">FLAPPY PULSE</h2>
             <p class="text-slate-400 text-sm mb-6 uppercase tracking-widest font-space">Ready to flap?</p>
-            <button onclick="startGame()" class="px-10 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-space font-bold uppercase tracking-[0.2em] shadow-lg shadow-purple-950/50 transition-all">
+            <button onclick="startGame()"
+                class="px-10 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-space font-bold uppercase tracking-[0.2em] shadow-lg shadow-purple-950/50 transition-all">
                 Launch
             </button>
         </div>
 
-        <div id="deathScreen" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-red-950/20 backdrop-blur-md">
+        <div id="deathScreen"
+            class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-red-950/20 backdrop-blur-md">
             <span class="text-6xl mb-4">💥</span>
             <h2 class="text-3xl font-space font-bold text-white mb-2">SYSTEM CRASH</h2>
             <p id="finalScore" class="text-purple-300 font-space mb-8 tracking-widest uppercase">SCORE: 0</p>
-            <button onclick="startGame()" class="px-10 py-3 bg-white text-black hover:bg-purple-200 rounded-full font-space font-bold uppercase tracking-[0.2em] transition-all">
+            <button onclick="startGame()"
+                class="px-10 py-3 bg-white text-black hover:bg-purple-200 rounded-full font-space font-bold uppercase tracking-[0.2em] transition-all">
                 Reboot
             </button>
         </div>
@@ -138,7 +147,7 @@
     }
 
     // Global handleGesture
-    window.handleGesture = function(gesture) {
+    window.handleGesture = function (gesture) {
         if (gesture === 'PINCH' || gesture === 'OPEN_PALM' || gesture === 'LEFT_CLICK') {
             if (isGameOver) startGame();
             else flap();
@@ -181,7 +190,7 @@
         velocity += gravity;
         birdY += velocity;
         bird.style.top = birdY + 'px';
-        
+
         // Rotation based on velocity
         const rotation = Math.min(Math.max(velocity * 4, -25), 90);
         bird.style.transform = `rotate(${rotation}deg)`;
@@ -237,13 +246,13 @@
         scoreHUD.textContent = '0';
         pipes.forEach(p => { p.top.remove(); p.bottom.remove(); });
         pipes = [];
-        
+
         startScreen.classList.add('hidden');
         deathScreen.classList.add('hidden');
-        
+
         cancelAnimationFrame(animationId);
         update();
-        
+
         clearInterval(pipeInterval);
         pipeInterval = setInterval(createPipe, 1500);
     }
@@ -253,7 +262,7 @@
         clearInterval(pipeInterval);
         deathScreen.classList.remove('hidden');
         document.getElementById('finalScore').textContent = 'SCORE: ' + score;
-        
+
         if (score > highScore) {
             highScore = score;
             localStorage.setItem('flappyHighScore', highScore);
