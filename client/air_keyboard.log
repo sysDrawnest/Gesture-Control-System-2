@@ -46,3 +46,12 @@
 2026-04-18 08:47:15,842 - __main__ - INFO - Quit signal received
 2026-04-18 08:47:15,842 - __main__ - INFO - Cleaning up resources...
 2026-04-18 08:47:16,216 - __main__ - INFO - Cleanup complete
+2026-04-18 08:54:15,100 - __main__ - INFO - MediaPipe Hands initialized
+2026-04-18 08:54:36,258 - __main__ - INFO - Camera initialized: 1280.0x720.0
+2026-04-18 08:54:36,284 - __main__ - INFO - Stroke recognizer initialized with 36 templates
+2026-04-18 08:54:36,285 - key_predictor - INFO - Predictor initialized with 116 words
+2026-04-18 08:54:36,287 - __main__ - INFO - Air Keyboard Notes initialized successfully
+2026-04-18 08:54:51,730 - __main__ - INFO - Notes mode activated
+2026-04-18 08:55:52,572 - __main__ - INFO - Quit signal received
+2026-04-18 08:55:52,577 - __main__ - INFO - Cleaning up resources...
+2026-04-18 08:55:52,995 - __main__ - INFO - Cleanup complete
