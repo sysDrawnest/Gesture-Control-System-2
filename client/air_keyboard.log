@@ -29,3 +29,20 @@
 2026-04-15 13:00:08,045 - __main__ - INFO - Quit signal received
 2026-04-15 13:00:08,046 - __main__ - INFO - Cleaning up resources...
 2026-04-15 13:00:08,435 - __main__ - INFO - Cleanup complete
+2026-04-18 08:46:14,996 - __main__ - INFO - MediaPipe Hands initialized
+2026-04-18 08:46:27,821 - __main__ - INFO - MediaPipe Hands initialized
+2026-04-18 08:46:38,885 - __main__ - INFO - Camera initialized: 1280.0x720.0
+2026-04-18 08:46:38,934 - __main__ - INFO - Stroke recognizer initialized with 36 templates
+2026-04-18 08:46:38,936 - key_predictor - INFO - Predictor initialized with 116 words
+2026-04-18 08:46:38,937 - __main__ - INFO - Air Keyboard Notes initialized successfully
+2026-04-18 08:46:51,755 - __main__ - INFO - Camera initialized: 1280.0x720.0
+2026-04-18 08:46:51,766 - __main__ - INFO - Stroke recognizer initialized with 36 templates
+2026-04-18 08:46:51,767 - key_predictor - INFO - Predictor initialized with 116 words
+2026-04-18 08:46:51,768 - __main__ - INFO - Air Keyboard Notes initialized successfully
+2026-04-18 08:46:51,827 - __main__ - ERROR - Failed to capture frame
+2026-04-18 08:46:51,827 - __main__ - INFO - Cleaning up resources...
+2026-04-18 08:46:51,858 - __main__ - INFO - Cleanup complete
+2026-04-18 08:46:53,144 - __main__ - INFO - Notes mode activated
+2026-04-18 08:47:15,842 - __main__ - INFO - Quit signal received
+2026-04-18 08:47:15,842 - __main__ - INFO - Cleaning up resources...
+2026-04-18 08:47:16,216 - __main__ - INFO - Cleanup complete

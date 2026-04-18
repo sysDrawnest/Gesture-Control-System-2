@@ -1,6 +1,6 @@
 """
-AIR KEYBOARD NOTES - Standalone Application
-============================================
+AIR KEYBOARD NOTES - Enhanced Edition with Better Recognition
+============================================================
 A gesture-based air writing keyboard that works independently from the main gesture control system.
 """
 
@@ -38,7 +38,7 @@ except ImportError:
 CONFIG = {
     "server": {
         "url": "http://localhost:5000",
-        "enable": False,  # Set to True to enable server connection
+        "enable": False,
         "namespace": "/keyboard",
         "reconnect_attempts": 3,
         "reconnect_delay": 2
@@ -53,15 +53,15 @@ CONFIG = {
         "thumb_hold_time": 2.0,
         "fist_hold_time": 2.0,
         "shaka_hold_time": 2.0,
-        "stroke_timeout": 1.2,
+        "stroke_timeout": 1.5,
         "swipe_threshold": 150,
         "swipe_cooldown": 0.3
     },
     "drawing": {
-        "line_thickness": 8,
-        "gray_thickness": 15,
+        "line_thickness": 12,
+        "gray_thickness": 20,
         "template_size": 64,
-        "recognition_threshold": 0.3
+        "recognition_threshold": 0.4
     },
     "ui": {
         "panel_height": 120,
@@ -90,12 +90,14 @@ logger = logging.getLogger(__name__)
 
 
 class ImprovedStrokeRecognizer:
-    """Enhanced character recognizer with multiple recognition methods."""
+    """Enhanced character recognizer with feature extraction and multiple recognition methods."""
     
     def __init__(self):
         self.templates = {}
         self.stroke_history = deque(maxlen=5)
+        self.svm_model = None  # Placeholder for ML model
         self._generate_templates()
+        self._generate_feature_templates()
         logger.info("Stroke recognizer initialized with {} templates".format(len(self.templates)))
     
     def _generate_templates(self):
@@ -130,6 +132,46 @@ class ImprovedStrokeRecognizer:
             
             self.templates[char] = img
     
+    def _generate_feature_templates(self):
+        """Generate feature vectors for better matching"""
+        self.feature_templates = {}
+        for char, template in self.templates.items():
+            # Extract HOG-like features
+            features = self._extract_features(template)
+            self.feature_templates[char] = features
+    
+    def _extract_features(self, img):
+        """Extract features from image for better matching"""
+        # Resize to standard size
+        img_resized = cv2.resize(img, (32, 32))
+        
+        # Calculate moments (shape descriptors)
+        moments = cv2.moments(img_resized)
+        features = []
+        
+        # Add Hu moments (rotation/scale invariant)
+        hu_moments = cv2.HuMoments(moments)
+        features.extend([-np.sign(m) * np.log10(np.abs(m) + 1e-10) for m in hu_moments.flatten()])
+        
+        # Add contour features
+        contours, _ = cv2.findContours(img_resized, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if contours:
+            contour = max(contours, key=cv2.contourArea)
+            area = cv2.contourArea(contour)
+            perimeter = cv2.arcLength(contour, True)
+            if perimeter > 0:
+                features.append(area / (perimeter * perimeter))  # Compactness
+            else:
+                features.append(0)
+            
+            # Bounding box aspect ratio
+            x, y, w, h = cv2.boundingRect(contour)
+            features.append(w / max(h, 1))
+        else:
+            features.extend([0, 0])
+        
+        return np.array(features)
+    
     def preprocess_stroke(self, stroke_img):
         """Preprocess stroke image for better recognition."""
         if stroke_img is None or stroke_img.size == 0:
@@ -142,10 +184,45 @@ class ImprovedStrokeRecognizer:
         # Apply Gaussian blur for smoothing
         blurred = cv2.GaussianBlur(closed, (5,5), 0)
         
-        # Threshold to binary
-        _, binary = cv2.threshold(blurred, 50, 255, cv2.THRESH_BINARY)
+        # Adaptive threshold for better binary image
+        binary = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                       cv2.THRESH_BINARY, 11, 2)
         
-        return binary
+        # Skeletonize the stroke (thin it to 1 pixel width)
+        skeleton = self._skeletonize(binary)
+        
+        return skeleton
+    
+    def _skeletonize(self, img):
+        """Thin the stroke to 1-pixel width for better matching"""
+        size = np.size(img)
+        skel = np.zeros(img.shape, np.uint8)
+        element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
+        
+        while True:
+            eroded = cv2.erode(img, element)
+            temp = cv2.dilate(eroded, element)
+            temp = cv2.subtract(img, temp)
+            skel = cv2.bitwise_or(skel, temp)
+            img = eroded.copy()
+            if cv2.countNonZero(img) == 0:
+                break
+        
+        return skel
+    
+    def _calculate_similarity(self, img1, img2):
+        """Calculate similarity between two images using multiple metrics"""
+        # Template matching
+        result = cv2.matchTemplate(img1, img2, cv2.TM_CCOEFF_NORMED)
+        _, template_score, _, _ = cv2.minMaxLoc(result)
+        
+        # Histogram comparison
+        hist1 = cv2.calcHist([img1], [0], None, [256], [0, 256])
+        hist2 = cv2.calcHist([img2], [0], None, [256], [0, 256])
+        hist_score = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
+        
+        # Combined score
+        return 0.7 * template_score + 0.3 * hist_score
     
     def recognize(self, stroke_image):
         """Matches the preprocessed stroke image to a character template."""
@@ -153,34 +230,44 @@ class ImprovedStrokeRecognizer:
             return None, 0.0
         
         processed = self.preprocess_stroke(stroke_image)
-        if processed is None:
+        if processed is None or cv2.countNonZero(processed) < 50:
             return None, 0.0
+        
+        # Resize to template size
+        resized = cv2.resize(processed, (CONFIG["drawing"]["template_size"], 
+                                        CONFIG["drawing"]["template_size"]))
         
         best_match = None
         best_score = -1.0
         
         for char, template in self.templates.items():
-            # Resize processed image to template size
-            resized = cv2.resize(processed, (CONFIG["drawing"]["template_size"], 
-                                            CONFIG["drawing"]["template_size"]))
+            # Calculate similarity
+            score = self._calculate_similarity(resized, template)
             
-            # Template matching
-            result = cv2.matchTemplate(resized, template, cv2.TM_CCOEFF_NORMED)
-            _, max_val, _, _ = cv2.minMaxLoc(result)
-            
-            if max_val > best_score:
-                best_score = max_val
+            if score > best_score:
+                best_score = score
                 best_match = char
         
         threshold = CONFIG["drawing"]["recognition_threshold"]
         if best_score > threshold:
             self.stroke_history.append(best_match)
+            
             # Use history to improve accuracy
             if len(self.stroke_history) >= 3:
                 from collections import Counter
                 most_common = Counter(self.stroke_history).most_common(1)[0]
                 if most_common[1] >= 2:
                     return most_common[0], best_score
+            
+            # Additional check for similar looking letters
+            if best_match == 'O' and best_score < 0.6:
+                # Could be '0' or 'Q'
+                for alt in ['0', 'Q']:
+                    alt_score = self._calculate_similarity(resized, self.templates[alt])
+                    if alt_score > best_score:
+                        best_match = alt
+                        best_score = alt_score
+            
             return best_match, best_score
         
         return None, best_score
@@ -224,12 +311,13 @@ class AirKeyboardNotes:
         self.current_holding_gesture = None
         self.last_gesture = None
         
-        # Drawing Tracking
+        # Drawing Tracking - IMPROVED
         self.drawing_canvas = np.zeros((self.cam_height, self.cam_width, 3), dtype=np.uint8)
         self.drawing_gray = np.zeros((self.cam_height, self.cam_width), dtype=np.uint8)
         self.prev_x, self.prev_y = None, None
         self.stroke_pts = []
         self.last_draw_time = 0
+        self.stroke_buffer = []  # Buffer for continuous stroke
         
         # Text Storage
         self.text_lines = [""]
@@ -265,7 +353,6 @@ class AirKeyboardNotes:
             try:
                 with open(config_path, 'r') as f:
                     saved_config = json.load(f)
-                    # Merge with default config
                     for key, value in saved_config.items():
                         if key in CONFIG:
                             if isinstance(value, dict):
@@ -306,7 +393,6 @@ class AirKeyboardNotes:
             def connect():
                 self.connected = True
                 logger.info("WebSocket connected to server")
-                # Register with server
                 try:
                     self.sio.emit('register_keyboard_client', {
                         'device_name': 'AirKeyboard',
@@ -326,7 +412,6 @@ class AirKeyboardNotes:
                 logger.warning(f"WebSocket connection error: {error}")
                 self.connected = False
             
-            # Try to connect (non-blocking)
             def connect_thread():
                 try:
                     self.sio.connect(
@@ -338,11 +423,8 @@ class AirKeyboardNotes:
                     logger.warning(f"Server connection failed: {e}. Running in local mode only.")
                     self.connected = False
             
-            # Start connection in background thread
             thread = threading.Thread(target=connect_thread, daemon=True)
             thread.start()
-            
-            # Wait a bit for connection
             time.sleep(0.5)
             
         except Exception as e:
@@ -358,7 +440,7 @@ class AirKeyboardNotes:
                 max_num_hands=1,
                 min_detection_confidence=0.7,
                 min_tracking_confidence=0.5,
-                model_complexity=1  # 0, 1, or 2 (higher = more accurate but slower)
+                model_complexity=1
             )
             self.mp_draw = mp.solutions.drawing_utils
             logger.info("MediaPipe Hands initialized")
@@ -380,7 +462,6 @@ class AirKeyboardNotes:
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.cam_height)
         self.cap.set(cv2.CAP_PROP_FPS, CONFIG["camera"]["fps"])
         
-        # Verify actual settings
         actual_width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         actual_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
         logger.info(f"Camera initialized: {actual_width}x{actual_height}")
@@ -401,14 +482,12 @@ class AirKeyboardNotes:
     def _save_notes(self):
         """Save notes to file."""
         try:
-            # Save to main notes file
             with open(CONFIG["files"]["notes_file"], 'a') as f:
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 f.write(f"\n[{timestamp}]\n")
                 f.write("\n".join(self.text_lines))
                 f.write("\n" + "-"*50 + "\n")
             
-            # Also save to dated backup
             dated_file = f"notes_{datetime.now().strftime('%Y%m%d')}.txt"
             with open(dated_file, 'a') as f:
                 f.write(f"\n[{timestamp}]\n")
@@ -460,13 +539,11 @@ class AirKeyboardNotes:
         tips = [4, 8, 12, 16, 20]
         pips = [3, 6, 10, 14, 18]
         
-        # Thumb detection (horizontal)
         thumb_tip_x = hand_landmarks.landmark[tips[0]].x
         thumb_ip_x = hand_landmarks.landmark[pips[0]].x
         
-        # Detect if hand is right or left based on wrist position
         wrist_x = hand_landmarks.landmark[0].x
-        is_right_hand = wrist_x < 0.5  # Assuming camera is mirrored
+        is_right_hand = wrist_x < 0.5
         
         if is_right_hand:
             thumb_extended = thumb_tip_x < thumb_ip_x
@@ -475,7 +552,6 @@ class AirKeyboardNotes:
         
         fingers.append(thumb_extended)
         
-        # Other 4 fingers (vertical)
         for i in range(1, 5):
             if hand_landmarks.landmark[tips[i]].y < hand_landmarks.landmark[pips[i]].y:
                 fingers.append(True)
@@ -486,48 +562,49 @@ class AirKeyboardNotes:
     
     def detect_gesture(self, fingers):
         """Detect gesture from finger states."""
-        # Count extended fingers
         extended_count = sum(fingers)
         
-        if fingers[0] and not any(fingers[1:5]):  # Only thumb
+        if fingers[0] and not any(fingers[1:5]):
             return "THUMB_UP"
-        if not any(fingers):  # All closed
+        if not any(fingers):
             return "FIST"
-        if fingers[0] and fingers[4] and not any(fingers[1:4]):  # Thumb + Pinky only
+        if fingers[0] and fingers[4] and not any(fingers[1:4]):
             return "SHAKA"
-        if fingers[1] and not any([fingers[2], fingers[3], fingers[4]]):  # Only index
+        if fingers[1] and not any([fingers[2], fingers[3], fingers[4]]):
             return "INDEX_ONLY"
-        if fingers[1] and fingers[2] and not any([fingers[3], fingers[4]]):  # Index + Middle
+        if fingers[1] and fingers[2] and not any([fingers[3], fingers[4]]):
             return "INDEX_MIDDLE"
-        if fingers[1] and fingers[2] and fingers[3] and not fingers[4]:  # Three fingers
+        if fingers[1] and fingers[2] and fingers[3] and not fingers[4]:
             return "THREE_FINGERS"
-        if all(fingers):  # All open
+        if all(fingers):
             return "OPEN_PALM"
         return "UNKNOWN"
     
     def finalize_stroke(self):
         """Processes the drawn stroke, recognizes it, and appends to text."""
-        if not self.stroke_pts or len(self.stroke_pts) < 10:
+        if not self.stroke_pts or len(self.stroke_pts) < 15:  # Increased minimum points
             self._clear_drawing()
             return
         
         start_time = time.time()
         
-        # Find bounding box of the stroke points
+        # Find bounding box of the stroke points with padding
         xs = [pt[0] for pt in self.stroke_pts]
         ys = [pt[1] for pt in self.stroke_pts]
-        min_x = max(0, min(xs) - 20)
-        max_x = min(self.cam_width, max(xs) + 20)
-        min_y = max(0, min(ys) - 20)
-        max_y = min(self.cam_height, max(ys) + 20)
+        min_x = max(0, min(xs) - 30)
+        max_x = min(self.cam_width, max(xs) + 30)
+        min_y = max(0, min(ys) - 30)
+        max_y = min(self.cam_height, max(ys) + 30)
         
-        if (max_x - min_x) > 20 and (max_y - min_y) > 20:
+        if (max_x - min_x) > 30 and (max_y - min_y) > 30:
             stroke_crop = self.drawing_gray[min_y:max_y, min_x:max_x]
+            
+            # Normalize stroke size
+            stroke_crop = cv2.resize(stroke_crop, (128, 128))
             
             char, confidence = self.recognizer.recognize(stroke_crop)
             
             if char:
-                # Save to undo stack
                 self.undo_stack.append({
                     'line': len(self.text_lines) - 1,
                     'text': self.text_lines[-1],
@@ -539,11 +616,22 @@ class AirKeyboardNotes:
                 self.status_msg = f"✓ Recognized: {char} ({confidence:.0%})"
                 self.status_color = (0, 255, 0)
                 
-                logger.debug(f"Recognized '{char}' with confidence {confidence:.2f}")
+                logger.info(f"Recognized '{char}' with confidence {confidence:.2f}")
+                
+                # Provide voice feedback if enabled
+                if hasattr(self, 'connected') and self.connected:
+                    try:
+                        self.sio.emit('gesture_update', {
+                            'gesture': 'CHARACTER_RECOGNIZED',
+                            'character': char,
+                            'confidence': confidence
+                        })
+                    except:
+                        pass
             else:
                 self.status_msg = "✗ Unrecognized stroke"
                 self.status_color = (0, 0, 255)
-                logger.debug(f"Stroke not recognized (confidence: {confidence:.2f})")
+                logger.debug(f"Stroke not recognized")
         
         # Track performance
         recognition_time = time.time() - start_time
@@ -595,16 +683,14 @@ class AirKeyboardNotes:
         if dist < threshold:
             return
         
-        # Determine swipe direction
         if abs(dx) > abs(dy):
-            if dx > 0:  # Right (Space)
+            if dx > 0:
                 self.insert_space()
-            else:  # Left (Backspace)
+            else:
                 self.undo_last_char()
         else:
-            if dy > 0:  # Down (New Line)
+            if dy > 0:
                 self.new_line()
-            # Up swipe could be used for other features
     
     def update_fps(self):
         """Calculate and update FPS."""
@@ -617,7 +703,7 @@ class AirKeyboardNotes:
     def run(self):
         """Main application loop."""
         print("\n" + "="*60)
-        print("📝 AIR KEYBOARD NOTES - PRODUCTION EDITION")
+        print("📝 AIR KEYBOARD NOTES - ENHANCED EDITION")
         print("="*60)
         print("Controls:")
         print("  👍 THUMB (hold 2s)   → Enter Notes Mode")
@@ -630,10 +716,14 @@ class AirKeyboardNotes:
         print("     ↓ Down  → New Line")
         print("="*60)
         print(f"Server Mode: {'Enabled' if self.server_enabled and self.connected else 'Local Only'}")
+        print("Tips for better recognition:")
+        print("  • Draw LARGE, CLEAR letters")
+        print("  • Keep strokes SMOOTH and CONTINUOUS")
+        print("  • Use SIMPLE print letters (not cursive)")
+        print("  • Draw letters in ONE CONTINUOUS stroke")
         print("Press 'q' to quit | 's' to save | 'c' to clear")
         print("="*60 + "\n")
         
-        # Variables for swipe detection
         swipe_start_pos = None
         
         while self.running:
@@ -661,7 +751,7 @@ class AirKeyboardNotes:
                 cx = int(index_tip.x * self.cam_width)
                 cy = int(index_tip.y * self.cam_height)
                 
-                # --- MODE TOGGLING & SAVING ---
+                # MODE TOGGLING & SAVING
                 if gesture == "THUMB_UP" and not self.notes_mode_active:
                     if self.process_holding_gesture("THUMB_UP", current_time):
                         self.notes_mode_active = True
@@ -689,17 +779,15 @@ class AirKeyboardNotes:
                             self.status_color = (0, 0, 255)
                         self._emit_update()
                 
-                # Reset hold tracking if gesture changed
                 if gesture != self.last_gesture:
                     self.current_holding_gesture = None
                 self.last_gesture = gesture
                 
-                # --- NOTES MODE ACTIONS ---
+                # NOTES MODE ACTIONS
                 if self.notes_mode_active:
                     if gesture == "INDEX_ONLY":
                         # Draw Mode
                         if self.prev_x is not None and self.prev_y is not None:
-                            # Draw thick lines for better template matching
                             cv2.line(self.drawing_canvas, (self.prev_x, self.prev_y), (cx, cy), 
                                     (0, 255, 0), CONFIG["drawing"]["line_thickness"])
                             cv2.line(self.drawing_gray, (self.prev_x, self.prev_y), (cx, cy), 
@@ -711,7 +799,6 @@ class AirKeyboardNotes:
                         swipe_start_pos = None
                     
                     elif gesture == "INDEX_MIDDLE":
-                        # Swipe controls
                         if swipe_start_pos is None:
                             swipe_start_pos = (cx, cy)
                         else:
@@ -737,7 +824,7 @@ class AirKeyboardNotes:
             # Update FPS
             self.update_fps()
             
-            cv2.imshow("Air Keyboard Notes - Production Edition", frame)
+            cv2.imshow("Air Keyboard Notes - Enhanced Edition", frame)
             
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q'):
@@ -756,20 +843,16 @@ class AirKeyboardNotes:
     
     def _render_ui(self, frame):
         """Render all UI elements."""
-        # Blend drawing canvas
         frame = cv2.addWeighted(frame, 1.0, self.drawing_canvas, 0.7, 0)
         
-        # Top Panel
         panel_height = CONFIG["ui"]["panel_height"]
         cv2.rectangle(frame, (0, 0), (self.cam_width, panel_height), (30, 30, 30), -1)
         
-        # Title and Status
         cv2.putText(frame, "✍️ AIR KEYBOARD NOTES", (10, 30), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
         cv2.putText(frame, self.status_msg, (10, 60), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.status_color, 2)
         
-        # Word predictions
         if self.notes_mode_active and self.predictor and self.current_word:
             suggestions = self.predictor.predict(self.current_word, max_suggestions=3)
             if suggestions:
@@ -777,48 +860,41 @@ class AirKeyboardNotes:
                 cv2.putText(frame, sug_str, (10, 90), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 200, 255), 2)
         
-        # Server status indicator
         if self.server_enabled:
             status_color = (0, 255, 0) if self.connected else (0, 0, 255)
             status_text = "● SERVER" if self.connected else "○ SERVER"
             cv2.putText(frame, status_text, (self.cam_width - 120, 30), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, status_color, 1)
         
-        # FPS Counter
         fps_text = f"FPS: {self.fps}"
         cv2.putText(frame, fps_text, (self.cam_width - 100, 60), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
         
-        # Mode indicator
         if self.notes_mode_active:
             cv2.rectangle(frame, (self.cam_width - 150, 70), 
                          (self.cam_width - 10, 105), (0, 255, 0), -1)
             cv2.putText(frame, "ACTIVE", (self.cam_width - 130, 95), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
         
-        # Written text area
         y_offset = panel_height + 40
         max_lines = CONFIG["ui"]["max_display_lines"]
         for i, line in enumerate(reversed(self.text_lines[-max_lines:])):
-            # Truncate long lines
             if len(line) > 60:
                 line = line[:57] + "..."
             cv2.putText(frame, line, (20, y_offset + i * 40), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 1)
         
-        # Performance metrics
         if self.recognition_times:
             avg_time = sum(self.recognition_times) / len(self.recognition_times)
             perf_text = f"Recognition: {avg_time*1000:.0f}ms"
             cv2.putText(frame, perf_text, (self.cam_width - 200, self.cam_height - 60), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (150, 150, 150), 1)
         
-        # Bottom Info Bar
         info_height = CONFIG["ui"]["info_height"]
         cv2.rectangle(frame, (0, self.cam_height - info_height), 
                      (self.cam_width, self.cam_height), (30, 30, 30), -1)
         
-        controls_text = "Controls: THUMB(2s)=Start | FIST(2s)=Stop | SHAKA(2s)=Save | INDEX=Draw | INDEX+MIDDLE=Swipe"
+        controls_text = "THUMB(2s)=Start | FIST(2s)=Stop | SHAKA(2s)=Save | INDEX=Draw | INDEX+MIDDLE=Swipe"
         cv2.putText(frame, controls_text, (10, self.cam_height - 15), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (150, 150, 150), 1)
         
