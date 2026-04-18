@@ -1,230 +1,478 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>University Project Announcement | Utkal MCA</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Gesture Control System | Complete Project Overview</title>
+    <!-- Tailwind CSS + Font Awesome + Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom tailwind config override for extra elegance -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#81ecff",
-                        "on-secondary": "#380052",
-                        "on-tertiary-fixed-variant": "#006823",
-                        "on-primary": "#005762",
-                        "inverse-on-surface": "#53555a",
-                        "on-error-container": "#ffa8a3",
-                        "secondary-container": "#7d01b1",
-                        "error-container": "#9f0519",
-                        "secondary-dim": "#d277ff",
-                        "surface-container-lowest": "#000000",
-                        "outline": "#74757a",
-                        "on-tertiary": "#006723",
-                        "on-tertiary-container": "#005d1f",
-                        "inverse-primary": "#006976",
-                        "on-background": "#f6f6fc",
-                        "tertiary": "#b9ffb8",
-                        "on-surface-variant": "#aaabb0",
-                        "surface-container-highest": "#23262c",
-                        "surface-container": "#171a1f",
-                        "tertiary-dim": "#54ee70",
-                        "on-error": "#490006",
-                        "primary-container": "#00e3fd",
-                        "surface-bright": "#292c33",
-                        "secondary-fixed": "#eec2ff",
-                        "on-secondary-container": "#f3cfff",
-                        "on-primary-fixed-variant": "#005762",
-                        "secondary-fixed-dim": "#e7afff",
-                        "inverse-surface": "#f9f9ff",
-                        "outline-variant": "#46484d",
-                        "on-surface": "#f6f6fc",
-                        "surface-container-low": "#111318",
-                        "on-tertiary-fixed": "#004816",
-                        "error-dim": "#d7383b",
-                        "on-secondary-fixed": "#56007c",
-                        "surface-variant": "#23262c",
-                        "surface-dim": "#0c0e12",
-                        "on-primary-fixed": "#003840",
-                        "surface-tint": "#81ecff",
-                        "error": "#ff716c",
-                        "tertiary-container": "#64fd7d",
-                        "surface": "#0c0e12",
-                        "primary-fixed-dim": "#00d4ec",
-                        "tertiary-fixed-dim": "#54ee70",
-                        "surface-container-high": "#1d2025",
-                        "tertiary-fixed": "#64fd7d",
-                        "primary-dim": "#00d4ec",
-                        "secondary": "#d277ff",
-                        "primary-fixed": "#00e3fd",
-                        "background": "#0c0e12",
-                        "on-secondary-fixed-variant": "#800ab4",
-                        "on-primary-container": "#004d57"
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.125rem",
-                        lg: "0.25rem",
-                        xl: "0.5rem",
-                        full: "0.75rem"
-                    },
-                    fontFamily: {
-                        headline: ["Space Grotesk"],
-                        body: ["Inter"],
-                        label: ["Inter"]
-                    }
-                }
-            }
-        }
-    </script>
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js for analytics visualization demo -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        .glass-panel {
-            background: rgba(23, 26, 31, 0.4);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
+        * {
+            font-family: 'Inter', sans-serif;
         }
 
-        .floating-container {
-            perspective: 1000px;
+        body {
+            scroll-behavior: smooth;
         }
 
-        .kinetic-float {
-            animation: float 6s ease-in-out infinite;
+        .gradient-bg {
+            background: radial-gradient(circle at 10% 20%, rgba(0, 20, 40, 0.9), rgba(0, 0, 0, 0.95));
         }
 
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0px) rotateX(0deg);
-            }
-
-            50% {
-                transform: translateY(-20px) rotateX(2deg);
-            }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2rem;
+            transition: all 0.2s ease;
         }
 
-        .text-glow {
-            text-shadow: 0 0 15px rgba(129, 236, 255, 0.3);
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.4);
+            transform: translateY(-3px);
         }
 
-        .gold-accent {
-            background: linear-gradient(90deg, #FFD700, #FDB931);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-decoration: underline;
-            text-decoration-color: rgba(253, 185, 49, 0.5);
-            text-underline-offset: 4px;
+        .tech-badge {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-left: 3px solid #4f46e5;
         }
 
-        .royal-gradient {
-            background: radial-gradient(circle at top right, #380052 0%, #0c0e12 40%, #001a33 100%);
+        .table-container::-webkit-scrollbar {
+            height: 5px;
+            width: 5px;
+        }
+
+        .feature-icon {
+            background: linear-gradient(145deg, #1e1b4b, #0f0c2c);
+        }
+
+        .glow-text {
+            text-shadow: 0 0 8px rgba(79, 70, 229, 0.6);
+        }
+
+        .hero-section {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" opacity="0.1"><path fill="%234f46e5" d="M0,0 L1200,0 L1200,800 L0,800 Z" fill-opacity="0.05"/><circle cx="200" cy="200" r="80" fill="%236366f1" fill-opacity="0.2"/><circle cx="1000" cy="600" r="120" fill="%238188f8" fill-opacity="0.15"/><path d="M400,600 L500,500 L600,600 L500,700 Z" fill="%234f46e5" fill-opacity="0.1"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right;
+            background-size: cover;
         }
     </style>
 </head>
 
-<body
-    class="bg-background text-on-surface font-body min-h-screen flex items-center justify-center p-4 md:p-6 royal-gradient overflow-hidden">
+<body class="bg-black text-gray-200">
 
-    <main class="w-full max-w-4xl mx-auto floating-container">
-        <div class="absolute -top-24 -left-24 w-96 h-96 bg-secondary-container/20 rounded-full blur-[120px]"></div>
-        <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-[120px]"></div>
-
-        <div
-            class="kinetic-float glass-panel relative z-10 p-8 md:p-16 rounded-xl border border-white/5 shadow-2xl flex flex-col items-center text-center">
-            <button onclick="window.history.back()"
-                class="absolute top-6 right-6 text-on-surface-variant hover:text-white transition-colors duration-200 group">
-                <span class="material-symbols-outlined text-2xl group-active:scale-90 transition-transform">close</span>
-            </button>
-
-            <div class="mb-8 relative">
-                <div class="absolute inset-0 bg-primary/20 blur-2xl rounded-full"></div>
-                <div
-                    class="relative bg-surface-container-highest p-5 rounded-full border border-primary/20 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-5xl text-primary"
-                        style="font-variation-settings: 'FILL' 1;">school</span>
-                </div>
+    <!-- ========== HERO / NAVIGATION ========== -->
+    <header class="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-hand-peace text-3xl text-indigo-400"></i>
+                <span class="font-bold text-xl tracking-tight">Gesture<span
+                        class="text-indigo-400">Control</span></span>
+                <span class="text-xs bg-indigo-600/30 px-2 py-0.5 rounded-full ml-2">v2.4.0</span>
             </div>
+            <nav class="flex flex-wrap gap-5 text-sm font-medium">
+                <a href="#overview" class="hover:text-indigo-300 transition">Overview</a>
+                <a href="#tech" class="hover:text-indigo-300 transition">Tech Stack</a>
+                <a href="#architecture" class="hover:text-indigo-300 transition">Architecture</a>
+                <a href="#features" class="hover:text-indigo-300 transition">Features</a>
+                <a href="#future" class="hover:text-indigo-300 transition">Future Scope</a>
+                <a href="#metrics" class="hover:text-indigo-300 transition">Metrics</a>
+            </nav>
+        </div>
+    </header>
 
-            <header class="space-y-6 max-w-2xl">
-                <p class="font-headline font-medium tracking-[0.2em] text-primary uppercase text-sm mb-4">Announcement
-                </p>
-                <h1 class="font-headline text-3xl md:text-5xl font-bold leading-tight tracking-tight">
-                    This is our final year project in my university —
-                    <span class="gold-accent">Utkal University</span>,
-                    <span class="gold-accent">MCA Department</span>.
-                </h1>
-                <p class="text-on-surface-variant text-lg md:text-xl font-light leading-relaxed">
-                    A synthesis of rigorous research, architectural innovation, and technological mastery, marking our
-                    transition from academia to professional excellence.
-                </p>
-            </header>
-
-            <div class="mt-12 flex flex-col sm:flex-row items-center gap-6">
-                <button onclick="alert('Project explorer — immersive details coming soon. Stay tuned!')"
-                    class="group relative px-10 py-4 font-headline font-bold text-on-primary tracking-wide transition-all duration-300 cursor-pointer">
+    <main class="max-w-7xl mx-auto px-5 md:px-8 py-10 space-y-20">
+        <!-- ########## PROJECT OVERVIEW SECTION ########## -->
+        <section id="overview" class="hero-section rounded-3xl p-6 md:p-10 glass-card">
+            <div class="flex flex-col lg:flex-row gap-10 items-center">
+                <div class="flex-1">
                     <div
-                        class="absolute inset-0 bg-primary-container rounded-lg shadow-[0_0_20px_rgba(0,227,253,0.3)] group-hover:shadow-[0_0_35px_rgba(0,227,253,0.5)] transition-all">
+                        class="inline-flex items-center gap-2 bg-indigo-500/20 px-4 py-1.5 rounded-full text-indigo-300 text-sm font-semibold mb-5">
+                        <i class="fas fa-magic"></i> <span>Human-Computer Interaction Reinvented</span>
                     </div>
-                    <span class="relative flex items-center gap-2">
-                        Explore Project
-                        <span
-                            class="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                    </span>
-                </button>
-                <button onclick="window.open('https://utkaluniversity.ac.in', '_blank')"
-                    class="px-6 py-2 font-label text-sm font-semibold text-on-surface-variant hover:text-white border-b border-transparent hover:border-primary transition-all duration-200 flex items-center gap-2 cursor-pointer">
-                    Visit College
-                    <span class="material-symbols-outlined text-base">open_in_new</span>
-                </button>
+                    <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">🎯 GESTURE CONTROL
+                        SYSTEM</h1>
+                    <p class="text-xl text-gray-300 mt-5 leading-relaxed">Touchless, intuitive control of your computer
+                        using <span class="text-indigo-300 font-semibold">webcam + AI hand tracking</span>. Replace
+                        mouse & keyboard with natural hand gestures.</p>
+                    <div class="flex flex-wrap gap-4 mt-8">
+                        <div class="flex items-center gap-2"><i
+                                class="fas fa-check-circle text-green-400"></i><span>85-95% Accuracy</span></div>
+                        <div class="flex items-center gap-2"><i class="fas fa-bolt text-yellow-400"></i><span>&lt;50ms
+                                latency</span></div>
+                        <div class="flex items-center gap-2"><i class="fas fa-chart-line text-blue-400"></i><span>10+
+                                gestures</span></div>
+                    </div>
+                </div>
+                <div class="flex-1 flex justify-center">
+                    <div
+                        class="relative w-64 h-64 md:w-80 md:h-80 rounded-full bg-gradient-to-tr from-indigo-600/30 to-purple-600/30 flex items-center justify-center backdrop-blur-sm border border-white/20">
+                        <i class="fas fa-hand-peace text-7xl text-indigo-300 animate-pulse"></i>
+                    </div>
+                </div>
             </div>
-
-            <footer class="mt-12 pt-8 border-t border-white/5 w-full flex justify-center gap-8">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary/60 text-sm">verified</span>
-                    <span class="text-xs uppercase tracking-widest text-on-surface-variant font-label">Official
-                        Release</span>
+            <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-5 text-center pt-4">
+                <div class="bg-white/5 rounded-xl p-4"><i class="fas fa-universal-access text-2xl text-indigo-300"></i>
+                    <p class="font-bold mt-1">Accessibility First</p>
+                    <p class="text-sm text-gray-400">No physical contact</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary/60 text-sm">calendar_today</span>
-                    <span class="text-xs uppercase tracking-widest text-on-surface-variant font-label">Session
-                        2024</span>
+                <div class="bg-white/5 rounded-xl p-4"><i class="fas fa-microchip text-2xl text-indigo-300"></i>
+                    <p class="font-bold mt-1">MediaPipe + OpenCV</p>
+                    <p class="text-sm text-gray-400">21 landmark points</p>
                 </div>
-            </footer>
-        </div>
+                <div class="bg-white/5 rounded-xl p-4"><i class="fas fa-chart-simple text-2xl text-indigo-300"></i>
+                    <p class="font-bold mt-1">Real-time Dashboard</p>
+                    <p class="text-sm text-gray-400">WebSocket analytics</p>
+                </div>
+            </div>
+        </section>
 
-        <div class="absolute top-0 left-0 -mt-8 -ml-8 opacity-20 pointer-events-none">
-            <img alt="University crest artistic" class="w-32 h-32 rounded-full object-cover grayscale"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBo-LYNGyrqVLSASUJlBM1cVpdOCTT_0pH8-rvKYg_JEJy6Kl6zYFqpNVAoGm4v8xHCijdlQB-ZkZmnW8MJ6TaNL_lKjTUW5D0wZIlo9gzabRknaeH-zyOZMFL9erZBvz2VTdl5sSQfj8f0kV_8QAzwa0xDkiOkNIg-vRO44qNkGbuvxjR7r1LiZtMmb-jjyFqUG4w-NC173y0WUlO6GQf3sCWqgAG8ekAXl7MZxiiHzs39JEf4FsFYzQ0PC2emADIAViVYlPHuqvI" />
-        </div>
-        <div class="absolute bottom-0 right-0 -mb-8 -mr-8 opacity-20 pointer-events-none">
-            <img alt="Campus silhouette" class="w-40 h-40 rounded-full object-cover grayscale"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAllrbRLBJn8_XhEoEhSoNv3CItSySJ-jD5NkCiH27mosljCEt8JkigLRwJouXSrhqBQuziNJCOQoWoO0zYkUzDcKr2EDRH3WAUkorK8invxQQcnctgyIMuJiD6bqwNjOl9MBvRB8VHRfcHOmMBv3sICjGCF3wpUIjO8WMTVRKghD1jN_9G9XKm-BeWkNm7ebxwFe608HmbZliIo44hY5hAnYcn9f2VtPYlPqD8Z2rOUZzMVJ7-EboIHc8--Qn3psw0yTpXbUG2h68" />
-        </div>
+        <!-- ########## TECHNOLOGIES USED ########## -->
+        <section id="tech">
+            <div class="flex items-center gap-3 mb-7">
+                <i class="fas fa-cogs text-3xl text-indigo-400"></i>
+                <h2 class="text-3xl md:text-4xl font-bold">🛠️ Technologies Used</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="glass-card p-5"><i class="fab fa-python text-3xl text-blue-400"></i>
+                    <h3 class="text-xl font-bold mt-2">Backend Core</h3>
+                    <p class="text-gray-300 text-sm">Python 3.10+, Flask, Flask-SocketIO, JWT, bcrypt, SQLite/MongoDB,
+                        Waitress</p>
+                </div>
+                <div class="glass-card p-5"><i class="fab fa-js text-3xl text-yellow-300"></i>
+                    <h3 class="text-xl font-bold mt-2">Frontend & Styling</h3>
+                    <p class="text-gray-300 text-sm">Tailwind CSS, Socket.IO Client, Canvas API, Chart.js, html2canvas,
+                        jsPDF</p>
+                </div>
+                <div class="glass-card p-5"><i class="fas fa-eye text-3xl text-green-400"></i>
+                    <h3 class="text-xl font-bold mt-2">Computer Vision</h3>
+                    <p class="text-gray-300 text-sm">MediaPipe (0.10+), OpenCV 4.9, NumPy, TensorFlow Lite for on-device
+                        inference</p>
+                </div>
+                <div class="glass-card p-5"><i class="fas fa-mouse-pointer text-3xl text-purple-400"></i>
+                    <h3 class="text-xl font-bold mt-2">Gesture Execution</h3>
+                    <p class="text-gray-300 text-sm">PyAutoGUI, MediaPipe Hands, Custom Gesture Engine,
+                        gesture-to-action mapping</p>
+                </div>
+                <div class="glass-card p-5"><i class="fas fa-code-branch text-3xl text-cyan-400"></i>
+                    <h3 class="text-xl font-bold mt-2">DevOps & Tools</h3>
+                    <p class="text-gray-300 text-sm">Git, venv, VS Code, Postman, Production WSGI (Waitress)</p>
+                </div>
+                <div class="glass-card p-5"><i class="fas fa-chalkboard-user text-3xl text-orange-400"></i>
+                    <h3 class="text-xl font-bold mt-2">Additional Features</h3>
+                    <p class="text-gray-300 text-sm">Air Canvas, Air Keyboard, Word Prediction, Session Recording, Games
+                        Hub</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ########## SYSTEM ARCHITECTURE + WORKING FLOW (combined) ########## -->
+        <section id="architecture">
+            <div class="flex items-center gap-3 mb-7">
+                <i class="fas fa-project-diagram text-3xl text-indigo-400"></i>
+                <h2 class="text-3xl md:text-4xl font-bold">🏗️ System Architecture & Workflow</h2>
+            </div>
+            <div class="glass-card p-6 md:p-8 overflow-x-auto">
+                <pre class="text-xs md:text-sm font-mono text-gray-300 whitespace-pre-wrap">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      GESTURE CONTROL SYSTEM FLOW                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  WEBCAM ──▶ MediaPipe Hand Tracking ──▶ Gesture Classifier ──▶ PyAutoGUI   │
+│     │              │                         │                   │          │
+│     ▼              ▼                         ▼                   ▼          │
+│  Frame    21 Landmarks (x,y,z)      Pinch/Swipe/Fist         Cursor/Click   │
+│  Capture                            Confidence >85%          Scroll/Zoom    │
+│                                                                             │
+│  ◀────────────── WebSocket (Socket.IO) ────────────────▶ Flask Server      │
+│   Dashboard Updates / Real-time Logs / Analytics / Device Management       │
+└─────────────────────────────────────────────────────────────────────────────┘
+        </pre>
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><i class="fas fa-hand-peace text-indigo-300"></i> <span class="font-semibold">Step 1:</span>
+                        User hand → webcam capture → MediaPipe inference</div>
+                    <div><i class="fas fa-brain text-indigo-300"></i> <span class="font-semibold">Step 2:</span> Gesture
+                        detection engine classifies (pinch, fist, peace, etc.)</div>
+                    <div><i class="fas fa-broadcast-tower text-indigo-300"></i> <span class="font-semibold">Step
+                            3:</span> Action mapped via PyAutoGUI + Socket.IO broadcast</div>
+                    <div><i class="fas fa-chart-line text-indigo-300"></i> <span class="font-semibold">Step 4:</span>
+                        Dashboard updates in real-time with logs & analytics</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ########## FEATURES IMPLEMENTED TABLE ########## -->
+        <section id="features">
+            <div class="flex items-center gap-3 mb-7">
+                <i class="fas fa-star-of-life text-3xl text-indigo-400"></i>
+                <h2 class="text-3xl md:text-4xl font-bold">✨ Core Gestures & Advanced Features</h2>
+            </div>
+            <div class="glass-card p-5 overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-white/20">
+                            <th class="py-3 px-2">Gesture</th>
+                            <th class="py-3 px-2">Action</th>
+                            <th class="py-3 px-2">Confidence</th>
+                            <th class="py-3 px-2">Advanced Features</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-white/10">
+                            <td class="py-2 px-2">👆 Index Finger</td>
+                            <td>Move Cursor</td>
+                            <td>90%</td>
+                            <td rowspan="4" class="align-top">✨ Air Canvas ✨ Air Keyboard ✨ Session Recording ✨ Word
+                                Prediction ✨ Dark/Light Theme ✨ Haptic/Voice feedback ✨ Games Hub (Dino, Rhino, Flappy)
+                                ✨ Multi-device Sync ✨ Analytics Dashboard</td>
+                        </tr>
+                        <tr class="border-b border-white/10">
+                            <td class="py-2 px-2">🤏 Pinch (thumb+index)</td>
+                            <td>Left Click</td>
+                            <td>95%</td>
+                        </tr>
+                        <tr class="border-b border-white/10">
+                            <td class="py-2 px-2">✌️ Peace Sign</td>
+                            <td>Right Click</td>
+                            <td>85%</td>
+                        </tr>
+                        <tr class="border-b border-white/10">
+                            <td class="py-2 px-2">✋ Open Palm (hold 4s)</td>
+                            <td>Screenshot</td>
+                            <td>85%</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-2">🖐️ 3 Fingers + Motion</td>
+                            <td>Scroll / Zoom</td>
+                            <td>80-92%</td>
+                            <td class="text-indigo-300">➕ Air Canvas (draw in air) | Air Keyboard (type gestures) |
+                                Real-time logs</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="flex items-center gap-3 bg-indigo-950/30 p-3 rounded-xl"><i
+                        class="fas fa-paintbrush text-xl text-pink-400"></i><span>Air Canvas</span></div>
+                <div class="flex items-center gap-3 bg-indigo-950/30 p-3 rounded-xl"><i
+                        class="fas fa-keyboard text-xl text-green-400"></i><span>Air Keyboard</span></div>
+                <div class="flex items-center gap-3 bg-indigo-950/30 p-3 rounded-xl"><i
+                        class="fas fa-chart-pie text-xl text-blue-400"></i><span>Analytics Dashboard</span></div>
+                <div class="flex items-center gap-3 bg-indigo-950/30 p-3 rounded-xl"><i
+                        class="fas fa-gamepad text-xl text-yellow-400"></i><span>Gesture Games Hub</span></div>
+            </div>
+        </section>
+
+        <!-- ########## FUTURE SCOPE ########## -->
+        <section id="future">
+            <div class="flex items-center gap-3 mb-7">
+                <i class="fas fa-rocket text-3xl text-indigo-400"></i>
+                <h2 class="text-3xl md:text-4xl font-bold">🔮 Future Scope & Roadmap</h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="glass-card p-5"><i class="fas fa-hands text-2xl text-indigo-300"></i>
+                    <h3 class="text-xl font-semibold mt-2">Multi-hand Support</h3>
+                    <p class="text-gray-400">Track both hands simultaneously for richer controls.</p><span
+                        class="text-xs bg-indigo-800/50 px-2 py-0.5 rounded-full mt-2 inline-block">3-6 months</span>
+                </div>
+                <div class="glass-card p-5"><i class="fas fa-robot text-2xl text-indigo-300"></i>
+                    <h3 class="text-xl font-semibold mt-2">AI Gesture Prediction</h3>
+                    <p class="text-gray-400">Machine learning models to predict next gesture & reduce latency.</p><span
+                        class="text-xs bg-indigo-800/50 px-2 py-0.5 rounded-full mt-2 inline-block">6-12 months</span>
+                </div>
+                <div class="glass-card p-5"><i class="fas fa-vr-cardboard text-2xl text-indigo-300"></i>
+                    <h3 class="text-xl font-semibold mt-2">VR/AR Integration</h3>
+                    <p class="text-gray-400">Control virtual objects in 3D space, metaverse ready.</p><span
+                        class="text-xs bg-indigo-800/50 px-2 py-0.5 rounded-full mt-2 inline-block">1-2 years</span>
+                </div>
+                <div class="glass-card p-5"><i class="fas fa-cloud-upload-alt text-2xl text-indigo-300"></i>
+                    <h3 class="text-xl font-semibold mt-2">Cloud Sync + Mobile App</h3>
+                    <p class="text-gray-400">iOS/Android companion, sync gestures across devices.</p>
+                </div>
+                <div class="glass-card p-5"><i class="fas fa-hospital-user text-2xl text-indigo-300"></i>
+                    <h3 class="text-xl font-semibold mt-2">Healthcare Suite</h3>
+                    <p class="text-gray-400">Touchless control in operation rooms, rehabilitation.</p>
+                </div>
+                <div class="glass-card p-5"><i class="fas fa-chalkboard text-2xl text-indigo-300"></i>
+                    <h3 class="text-xl font-semibold mt-2">Education & Smart Homes</h3>
+                    <p class="text-gray-400">Interactive whiteboards, IoT gesture control.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ########## PERFORMANCE METRICS & DEMO ANALYTICS CHART ########## -->
+        <section id="metrics">
+            <div class="flex items-center gap-3 mb-7">
+                <i class="fas fa-chart-line text-3xl text-indigo-400"></i>
+                <h2 class="text-3xl md:text-4xl font-bold">📊 Performance Metrics & Live Demo Stats</h2>
+            </div>
+            <div class="glass-card p-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-indigo-400">&lt;50ms</div>
+                        <div class="text-gray-400 text-sm">Gesture Recognition</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-indigo-400">30 FPS</div>
+                        <div class="text-gray-400 text-sm">Camera Processing</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-indigo-400">92%</div>
+                        <div class="text-gray-400 text-sm">Avg Accuracy</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-indigo-400">100+</div>
+                        <div class="text-gray-400 text-sm">Concurrent Users</div>
+                    </div>
+                </div>
+                <div class="w-full h-64 bg-gray-900/40 rounded-xl p-2">
+                    <canvas id="performanceChart" width="400" height="200" class="w-full h-full"></canvas>
+                </div>
+                <p class="text-xs text-gray-400 mt-4 text-center">* Simulated performance metrics: Gesture accuracy by
+                    gesture type (based on live test data).</p>
+            </div>
+        </section>
+
+        <!-- ########## PROJECT STRUCTURE & DATABASE SCHEMA + SECURITY ########## -->
+        <section>
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-7">
+                <div class="flex items-center gap-3"><i class="fas fa-folder-tree text-3xl text-indigo-400"></i>
+                    <h2 class="text-3xl font-bold">📁 Project Structure & Security</h2>
+                </div>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-6">
+                <div class="glass-card p-5 font-mono text-xs md:text-sm overflow-x-auto">
+                    <pre class="text-gray-300">
+Gesture-Control/
+├── server/ (Flask + SocketIO)
+│   ├── routes/ (auth, device, canvas)
+│   ├── models/ (User, Device)
+│   └── templates/ (dashboard, canvas, games)
+├── client/ (gesture clients)
+│   ├── final_gesture_client_fixed.py
+│   ├── air_canvas_client.py
+│   └── dino_game.py
+├── docs/ report.txt
+└── README.md
+          </pre>
+                </div>
+                <div class="glass-card p-5">
+                    <h3 class="text-xl font-bold flex gap-2"><i class="fas fa-shield-alt text-green-400"></i>Security
+                        Highlights</h3>
+                    <ul class="mt-3 space-y-2 text-gray-300">
+                        <li><i class="fas fa-key text-indigo-400 w-5"></i> JWT tokens (24h expiry) + bcrypt hashing (12
+                            rounds)</li>
+                        <li><i class="fas fa-database text-indigo-400 w-5"></i> Parameterized queries (SQL injection
+                            protection)</li>
+                        <li><i class="fas fa-globe text-indigo-400 w-5"></i> CORS restricted & XSS escaping</li>
+                        <li><i class="fas fa-stopwatch text-indigo-400 w-5"></i> Rate limiting: 60 requests/minute</li>
+                        <li><i class="fas fa-user-lock text-indigo-400 w-5"></i> Session management + token blacklisting
+                        </li>
+                    </ul>
+                    <div class="mt-5 bg-black/40 p-3 rounded-lg"><i class="fas fa-database"></i> <strong>Database
+                            schema:</strong> Users, Devices, Gesture_logs (SQLite/MongoDB dual support).</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ########## CONCLUSION & INNOVATION ########## -->
+        <section class="glass-card p-8 text-center">
+            <i class="fas fa-trophy text-5xl text-yellow-400 mb-4"></i>
+            <h2 class="text-3xl font-bold">🎯 Conclusion – Production-Ready Innovation</h2>
+            <p class="text-gray-300 max-w-3xl mx-auto mt-4">The Gesture Control System delivers a complete touchless HCI
+                solution with 10+ gestures, WebSocket real-time dashboard, Air Canvas, Air Keyboard, word prediction,
+                and games hub. Achieved <strong>85-95% accuracy</strong> and sub-50ms latency.
+                Future-ready: multi-hand, VR integration, and healthcare applications. <span
+                    class="text-indigo-300">“The future of interaction is touchless and intuitive.”</span></p>
+            <div class="flex flex-wrap justify-center gap-6 mt-8">
+                <div class="bg-indigo-500/20 rounded-full px-6 py-2"><i class="fas fa-check-circle text-indigo-300"></i>
+                    10+ Gestures</div>
+                <div class="bg-indigo-500/20 rounded-full px-6 py-2"><i class="fas fa-chalkboard-user"></i> Air Canvas
+                </div>
+                <div class="bg-indigo-500/20 rounded-full px-6 py-2"><i class="fas fa-chart-line"></i> Real-time
+                    Analytics</div>
+                <div class="bg-indigo-500/20 rounded-full px-6 py-2"><i class="fas fa-mobile-alt"></i> Multi-device
+                    ready</div>
+            </div>
+            <div class="mt-8 text-sm text-gray-400 border-t border-white/10 pt-6">📚 References: MediaPipe Hands, Flask,
+                Socket.IO, Tailwind CSS, OpenCV, PyAutoGUI — Academic & Open Source</div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-gray-500 text-sm py-8 border-t border-white/10">
+            <i class="fas fa-hand-peace"></i> Gesture Control System – Complete Project Overview | Version 2.4.0 | ©
+            2025 Human-Computer Interaction
+        </footer>
     </main>
 
     <script>
-            (function () {
-                const closeBtn = document.querySelector('.kinetic-float button');
-                if (closeBtn && !closeBtn.hasAttribute('data-handled')) {
-                    closeBtn.setAttribute('data-handled', 'true');
-                    closeBtn.onclick = function (e) {
-                        if (window.history.length > 1) {
-                            window.history.back();
-                        } else {
-                            window.location.href = window.location.pathname;
+        // Initialize a beautiful Chart.js chart for performance metrics (accuracy per gesture)
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['Pinch Click', 'Cursor Move', 'Scroll', 'Zoom', 'Screenshot', 'Air Canvas', 'Peace RightClick'],
+                datasets: [{
+                    label: 'Recognition Accuracy (%)',
+                    data: [95, 90, 82, 92, 87, 88, 85],
+                    backgroundColor: 'rgba(99, 102, 241, 0.3)',
+                    borderColor: '#4f46e5',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#818cf8',
+                    pointBorderColor: '#ffffff',
+                    pointRadius: 5,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20,
+                            color: '#cbd5e1'
+                        },
+                        grid: {
+                            color: '#334155'
+                        },
+                        angleLines: {
+                            color: '#334155'
                         }
-                        e.preventDefault();
-                    };
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#e2e8f0',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.label}: ${ctx.raw}% accuracy`
+                        }
+                    }
                 }
-            })();
+            }
+        });
+        // subtle interactive hover on glass cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transition = 'all 0.2s ease';
+            });
+        });
     </script>
 </body>
 

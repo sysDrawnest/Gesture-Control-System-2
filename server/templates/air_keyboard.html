@@ -223,8 +223,7 @@
             class="glass rounded-xl p-4 mb-6 border border-white/10 text-center transition-all duration-300">
             <div class="flex items-center justify-center gap-3">
                 <span class="material-symbols-outlined text-primary">gesture</span>
-                <span class="text-on-surface-variant font-body">Waiting for Python Client to connect... Run 'python
-                    client/air_keyboard.py'</span>
+                <span class="text-on-surface-variant font-body">Initializing Gesture Control System...</span>
             </div>
         </div>
 
@@ -370,7 +369,37 @@
             }
         }
 
-        socket.on('connect', () => updateConnection(true));
+        // ========== Process Lifecycle Management ==========
+        function startGestureClient() {
+            fetch('/api/system/start-client/air_keyboard', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log('[System] Client started:', data.message);
+                statusBanner.innerHTML = `
+                    <div class="flex items-center justify-center gap-3">
+                        <span class="material-symbols-outlined text-primary animate-pulse">gesture</span>
+                        <span class="text-on-surface-variant font-body">Gesture Client Launching...</span>
+                    </div>
+                `;
+            })
+            .catch(err => console.error('[System] Failed to start client:', err));
+        }
+
+        function stopGestureClient() {
+            navigator.sendBeacon('/api/system/stop-client/air_keyboard');
+        }
+
+        socket.on('connect', () => {
+            updateConnection(true);
+            // Launch client on socket connection
+            startGestureClient();
+            // Cleanup on close
+            window.addEventListener('beforeunload', stopGestureClient);
+        });
+        
         socket.on('disconnect', () => updateConnection(false));
 
         socket.on('keyboard_data', (data) => {
@@ -383,9 +412,9 @@
                     </div>
                 `;
                 if (data.status_msg.includes('Active')) {
-                    statusBanner.classList.add('border-primary/30');
+                    statusBanner.classList.add('border-tertiary/20');
                 } else {
-                    statusBanner.classList.remove('border-primary/30');
+                    statusBanner.classList.remove('border-tertiary/20');
                 }
             }
 

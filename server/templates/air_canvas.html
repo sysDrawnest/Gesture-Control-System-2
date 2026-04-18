@@ -970,12 +970,36 @@
             }
         }
 
+        // ========== Process Lifecycle Management ==========
+        function startGestureClient() {
+            fetch('/api/system/start-client/air_canvas_client', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => console.log('[System] Client started:', data.message))
+            .catch(err => console.error('[System] Failed to start client:', err));
+        }
+
+        function stopGestureClient() {
+            // Use sendBeacon for reliable cleanup on page close
+            navigator.sendBeacon('/api/system/stop-client/air_canvas_client');
+            console.log('[System] Client stop signal sent');
+        }
+
         // ========== Initialize everything ==========
         function init() {
             initCanvas();
             bindEvents();
             initWebSocket();
             loadUserInfo();
+            
+            // Auto-start gesture client
+            startGestureClient();
+            
+            // Cleanup on close
+            window.addEventListener('beforeunload', stopGestureClient);
+            
             updateStatus(true, 'System ready');
         }
 
