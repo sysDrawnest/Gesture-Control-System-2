@@ -127,38 +127,23 @@
         .royal-gradient {
             background: radial-gradient(circle at top right, #380052 0%, #0c0e12 40%, #001a33 100%);
         }
-
-        /* no navbar styles - completely removed */
     </style>
 </head>
 
 <body
     class="bg-background text-on-surface font-body min-h-screen flex items-center justify-center p-4 md:p-6 royal-gradient overflow-hidden">
-    <!-- 
-        ============================================
-        COMPLETE REPLACEMENT: 
-        - NO TopBar, NO Sidebar, NO Navigation bar
-        - NO routing buttons, NO header/footer menus
-        - ONLY the centered announcement card (kinetic pulse design)
-        ============================================
-    -->
 
-    <!-- Main Content: PURE Announcement Card - centered, no extra chrome -->
     <main class="w-full max-w-4xl mx-auto floating-container">
-        <!-- Background Ambient Glows (preserved from new code for atmosphere) -->
         <div class="absolute -top-24 -left-24 w-96 h-96 bg-secondary-container/20 rounded-full blur-[120px]"></div>
         <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-[120px]"></div>
 
-        <!-- The Kinetic Pulse Card - fully intact from your new design -->
         <div
             class="kinetic-float glass-panel relative z-10 p-8 md:p-16 rounded-xl border border-white/5 shadow-2xl flex flex-col items-center text-center">
-            <!-- Close Button - provides dismiss functionality without nav -->
             <button onclick="window.history.back()"
                 class="absolute top-6 right-6 text-on-surface-variant hover:text-white transition-colors duration-200 group">
                 <span class="material-symbols-outlined text-2xl group-active:scale-90 transition-transform">close</span>
             </button>
 
-            <!-- Graduation Cap Icon with glowing effect -->
             <div class="mb-8 relative">
                 <div class="absolute inset-0 bg-primary/20 blur-2xl rounded-full"></div>
                 <div
@@ -168,7 +153,6 @@
                 </div>
             </div>
 
-            <!-- Content Section -->
             <header class="space-y-6 max-w-2xl">
                 <p class="font-headline font-medium tracking-[0.2em] text-primary uppercase text-sm mb-4">Announcement
                 </p>
@@ -183,9 +167,7 @@
                 </p>
             </header>
 
-            <!-- Action Buttons (clean interactions, no routing sidebar) -->
             <div class="mt-12 flex flex-col sm:flex-row items-center gap-6">
-                <!-- Primary Action: Explore Project -->
                 <button onclick="alert('Project explorer — immersive details coming soon. Stay tuned!')"
                     class="group relative px-10 py-4 font-headline font-bold text-on-primary tracking-wide transition-all duration-300 cursor-pointer">
                     <div
@@ -197,7 +179,6 @@
                             class="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </span>
                 </button>
-                <!-- Secondary Action: Visit College (opens official site in new tab) -->
                 <button onclick="window.open('https://utkaluniversity.ac.in', '_blank')"
                     class="px-6 py-2 font-label text-sm font-semibold text-on-surface-variant hover:text-white border-b border-transparent hover:border-primary transition-all duration-200 flex items-center gap-2 cursor-pointer">
                     Visit College
@@ -205,7 +186,6 @@
                 </button>
             </div>
 
-            <!-- Subtle Metadata Footer -->
             <footer class="mt-12 pt-8 border-t border-white/5 w-full flex justify-center gap-8">
                 <div class="flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary/60 text-sm">verified</span>
@@ -220,7 +200,6 @@
             </footer>
         </div>
 
-        <!-- Decorative Elements (artistic imagery, preserved from new code) -->
         <div class="absolute top-0 left-0 -mt-8 -ml-8 opacity-20 pointer-events-none">
             <img alt="University crest artistic" class="w-32 h-32 rounded-full object-cover grayscale"
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuBo-LYNGyrqVLSASUJlBM1cVpdOCTT_0pH8-rvKYg_JEJy6Kl6zYFqpNVAoGm4v8xHCijdlQB-ZkZmnW8MJ6TaNL_lKjTUW5D0wZIlo9gzabRknaeH-zyOZMFL9erZBvz2VTdl5sSQfj8f0kV_8QAzwa0xDkiOkNIg-vRO44qNkGbuvxjR7r1LiZtMmb-jjyFqUG4w-NC173y0WUlO6GQf3sCWqgAG8ekAXl7MZxiiHzs39JEf4FsFYzQ0PC2emADIAViVYlPHuqvI" />
@@ -231,30 +210,20 @@
         </div>
     </main>
 
-    <!-- 
-        Absolutely NO navbar, NO TopBar, NO Sidebar, NO routing buttons.
-        Only the announcement card with full immersive design.
-        Optional: tiny script for graceful close behavior (if no history)
-    -->
     <script>
             (function () {
-                // ensure close button works gracefully without breaking if no history exists
                 const closeBtn = document.querySelector('.kinetic-float button');
                 if (closeBtn && !closeBtn.hasAttribute('data-handled')) {
                     closeBtn.setAttribute('data-handled', 'true');
-                    const originalClick = closeBtn.onclick;
                     closeBtn.onclick = function (e) {
                         if (window.history.length > 1) {
                             window.history.back();
                         } else {
-                            // gentle fallback: just reload the same page (no navigation menu appears)
                             window.location.href = window.location.pathname;
                         }
                         e.preventDefault();
                     };
                 }
-                // ensure no residual navigation elements are added dynamically
-                console.log(' Full replacement: No TopBar, No Sidebar, No Navbar — only centered announcement card.');
             })();
     </script>
 </body>
