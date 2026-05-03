@@ -6,3 +6,4 @@ python-socketio[client]>=5.11.0
 requests>=2.31.0
 numpy>=1.24.3
 websocket-client>=1.7.0
+gevent>=24.2.1
