@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KINETIC PULSE | Smart Home Controller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0a0a1a 0%, #0a1a0a 100%); min-height: 100vh; color: white; overflow-x: hidden; }
+        .font-space { font-family: 'Space Grotesk', sans-serif; }
+        .glass { backdrop-filter: blur(24px); background: rgba(35, 38, 44, 0.45); border: 1px solid rgba(255,255,255,0.07); }
+
+        /* Device card */
+        .device-card {
+            background: rgba(35, 38, 44, 0.45);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 24px;
+            padding: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: default;
+            position: relative;
+            overflow: hidden;
+        }
+        .device-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .device-card.on { border-color: rgba(255,255,255,0.2); }
+        .device-card.on::before { opacity: 1; }
+
+        /* Light card */
+        .device-card.light-card.on {
+            border-color: rgba(255, 220, 0, 0.4);
+            box-shadow: 0 0 40px rgba(255, 220, 0, 0.15), inset 0 0 60px rgba(255, 220, 0, 0.05);
+        }
+        .device-card.light-card.on .device-icon { color: #ffd700; text-shadow: 0 0 30px rgba(255, 215, 0, 0.8); }
+
+        /* Fan card */
+        .device-card.fan-card.on {
+            border-color: rgba(0, 200, 255, 0.4);
+            box-shadow: 0 0 40px rgba(0, 200, 255, 0.15), inset 0 0 60px rgba(0, 200, 255, 0.05);
+        }
+        .device-card.fan-card.on .device-icon { color: #00c8ff; text-shadow: 0 0 30px rgba(0, 200, 255, 0.8); }
+        .device-card.fan-card.on .fan-icon { animation: fanSpin 1s linear infinite; }
+
+        /* Curtains card */
+        .device-card.curtains-card.on {
+            border-color: rgba(150, 100, 255, 0.4);
+            box-shadow: 0 0 40px rgba(150, 100, 255, 0.15), inset 0 0 60px rgba(150, 100, 255, 0.05);
+        }
+        .device-card.curtains-card.on .device-icon { color: #9664ff; text-shadow: 0 0 30px rgba(150, 100, 255, 0.8); }
+
+        @keyframes fanSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.5s ease forwards; }
+
+        /* ON/OFF badge */
+        .state-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 100px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .state-badge.on  { background: rgba(0,255,100,0.15); color: #22c55e; border: 1px solid rgba(0,255,100,0.3); }
+        .state-badge.off { background: rgba(255,255,255,0.05); color: #64748b; border: 1px solid rgba(255,255,255,0.1); }
+        .state-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .state-badge.on  .state-dot { background: #22c55e; box-shadow: 0 0 8px #22c55e; animation: pulse 1.5s infinite; }
+        .state-badge.off .state-dot { background: #64748b; }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+        /* Gesture HUD */
+        .gesture-display {
+            font-size: 4rem; min-width: 80px; text-align: center;
+            transition: all 0.3s ease;
+        }
+        .gesture-display.active { animation: gestureAnim 0.4s ease; }
+        @keyframes gestureAnim {
+            0% { transform: scale(0.7); opacity: 0.5; }
+            60% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Room temperature widget */
+        .temp-circle {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: conic-gradient(#00f3ff 0deg, #7c3aed 200deg, rgba(255,255,255,0.1) 200deg);
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .temp-inner {
+            width: 62px; height: 62px; border-radius: 50%;
+            background: #0f172a;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column;
+        }
+
+        /* Event log */
+        .event-item { animation: logFade 0.4s ease; }
+        @keyframes logFade { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+    </style>
+</head>
+<body>
+    <!-- Nav -->
+    <header class="w-full sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/10 flex justify-between items-center px-6 py-4">
+        <div class="flex items-center gap-8">
+            <a href="/home" class="text-2xl font-bold tracking-tighter text-cyan-400 uppercase font-space">KINETIC_PULSE</a>
+            <nav class="hidden md:flex gap-6">
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors uppercase text-xs tracking-widest font-space" href="/dashboard">Dashboard</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors uppercase text-xs tracking-widest font-space" href="/games">Games Hub</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors uppercase text-xs tracking-widest font-space" href="/presentation">Presentation</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors uppercase text-xs tracking-widest font-space" href="/mediaplayer">Media Player</a>
+                <a class="text-cyan-400 font-space tracking-widest text-xs uppercase" href="/smarthome">Smart Home</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="neuralBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-yellow-500/40 bg-yellow-500/10">
+                <div id="neuralDot" class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
+                <span id="neuralText" class="text-xs text-yellow-400 font-space tracking-wider">Initializing...</span>
+            </div>
+            <button id="logoutBtn" class="text-slate-500 hover:text-cyan-400 text-xs uppercase tracking-widest font-space transition-colors">Logout</button>
+        </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto py-10 px-6 animate-in">
+        <!-- Title -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-4xl font-space font-bold mb-1">🏠 Smart Home <span class="text-green-400">Controller</span></h1>
+                <p class="text-slate-500 text-xs uppercase tracking-[0.3em] font-space">Control your home with hand gestures</p>
+            </div>
+            <!-- Summary badges -->
+            <div class="flex gap-3">
+                <div class="glass rounded-xl px-4 py-2 text-center">
+                    <div class="text-xs text-slate-400 font-space">Active Devices</div>
+                    <div class="text-xl font-bold text-green-400" id="activeCount">0</div>
+                </div>
+                <div class="glass rounded-xl px-4 py-2 text-center">
+                    <div class="text-xs text-slate-400 font-space">Commands</div>
+                    <div class="text-xl font-bold text-cyan-400" id="commandCount">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Device Grid -->
+            <div class="lg:col-span-2 space-y-4">
+                <!-- Devices -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Lights -->
+                    <div class="device-card light-card off" id="lightsCard">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <div class="text-xs text-slate-500 uppercase tracking-wider font-space">Living Room</div>
+                                <div class="text-lg font-space font-bold mt-1">Lights</div>
+                            </div>
+                            <span class="state-badge off" id="lightsBadge">
+                                <span class="state-dot"></span> OFF
+                            </span>
+                        </div>
+                        <div class="device-icon text-5xl text-slate-700 mb-4 transition-all duration-500" id="lightsIcon">💡</div>
+                        <div class="text-xs text-slate-600 font-space">👆 Point Up = ON &nbsp;|&nbsp; 👇 Down = OFF</div>
+                    </div>
+
+                    <!-- Fan -->
+                    <div class="device-card fan-card off" id="fanCard">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <div class="text-xs text-slate-500 uppercase tracking-wider font-space">Ceiling</div>
+                                <div class="text-lg font-space font-bold mt-1">Fan</div>
+                            </div>
+                            <span class="state-badge off" id="fanBadge">
+                                <span class="state-dot"></span> OFF
+                            </span>
+                        </div>
+                        <div class="device-icon text-5xl text-slate-700 mb-4 transition-all duration-500" id="fanIcon">🌀</div>
+                        <div class="text-xs text-slate-600 font-space">✌️ Peace = ON &nbsp;|&nbsp; ✊ Fist = OFF</div>
+                    </div>
+
+                    <!-- Curtains -->
+                    <div class="device-card curtains-card off" id="curtainsCard">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <div class="text-xs text-slate-500 uppercase tracking-wider font-space">Window</div>
+                                <div class="text-lg font-space font-bold mt-1">Curtains</div>
+                            </div>
+                            <span class="state-badge off" id="curtainsBadge">
+                                <span class="state-dot"></span> CLOSED
+                            </span>
+                        </div>
+                        <div class="device-icon text-5xl text-slate-700 mb-4 transition-all duration-500" id="curtainsIcon">🪟</div>
+                        <div class="text-xs text-slate-600 font-space">🖐️ Wave = Toggle Open/Close</div>
+                    </div>
+                </div>
+
+                <!-- Room Scene Presets -->
+                <div class="glass rounded-2xl p-5">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-4">Quick Scenes</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button onclick="activateScene('morning')" class="p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 transition-all text-left">
+                            <div class="text-2xl mb-1">🌅</div>
+                            <div class="text-xs font-space text-yellow-400">Morning</div>
+                            <div class="text-[10px] text-slate-500">Lights ON, Fan OFF</div>
+                        </button>
+                        <button onclick="activateScene('relax')" class="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-all text-left">
+                            <div class="text-2xl mb-1">🌙</div>
+                            <div class="text-xs font-space text-purple-400">Relax</div>
+                            <div class="text-[10px] text-slate-500">Dim lights, Fan ON</div>
+                        </button>
+                        <button onclick="activateScene('all_off')" class="p-3 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all text-left">
+                            <div class="text-2xl mb-1">😴</div>
+                            <div class="text-xs font-space text-red-400">Sleep</div>
+                            <div class="text-[10px] text-slate-500">All devices OFF</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Activity Log -->
+                <div class="glass rounded-2xl p-5">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-4">Activity Log</h3>
+                    <div class="space-y-2 max-h-40 overflow-y-auto" id="activityLog">
+                        <div class="text-xs text-slate-600 font-space">Waiting for gestures...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="space-y-4">
+                <!-- Gesture HUD -->
+                <div class="glass rounded-2xl p-5 text-center">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-3">Current Gesture</h3>
+                    <div class="gesture-display" id="gestureDisplay">🤚</div>
+                    <div class="text-cyan-400 font-space text-sm tracking-wider mt-2" id="gestureLabel">Waiting...</div>
+                    <div class="text-slate-500 text-xs mt-1" id="gestureAction">—</div>
+                </div>
+
+                <!-- Room Stats -->
+                <div class="glass rounded-2xl p-5">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-4">Room Status</h3>
+                    <div class="flex justify-around">
+                        <div class="text-center">
+                            <div class="temp-circle mx-auto mb-2">
+                                <div class="temp-inner">
+                                    <div class="text-sm font-bold text-cyan-400" id="tempVal">24°C</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-slate-500">Temp</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl mb-2" id="timeDisplay">--:--</div>
+                            <div class="text-xs text-slate-500">Time</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gesture Guide -->
+                <div class="glass rounded-2xl p-5">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-3">Gesture Guide</h3>
+                    <div class="space-y-2.5 text-sm">
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span>👆</span><span class="font-space">Point Up</span></div><span class="text-xs text-yellow-400">Lights ON</span></div>
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span>👇</span><span class="font-space">Point Down</span></div><span class="text-xs text-slate-500">Lights OFF</span></div>
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span>✌️</span><span class="font-space">Peace</span></div><span class="text-xs text-cyan-400">Fan ON</span></div>
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span>✊</span><span class="font-space">Fist</span></div><span class="text-xs text-slate-500">Fan OFF</span></div>
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span>🖐️</span><span class="font-space">Wave</span></div><span class="text-xs text-purple-400">Curtains Toggle</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/login';
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/login';
+        });
+
+        const CLIENT_ID = '{{ client_id | default("smarthome_game") }}';
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch(`/api/system/start-client/${CLIENT_ID}`, { method:'POST', headers:{'Content-Type':'application/json'} }).catch(()=>{});
+            updateClock();
+            setInterval(updateClock, 30000);
+        });
+        window.addEventListener('beforeunload', () => navigator.sendBeacon(`/api/system/stop-client/${CLIENT_ID}`));
+
+        // State
+        const deviceState = { lights: false, fan: false, curtains: false };
+        let commandCount = 0;
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('timeDisplay').textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        }
+
+        function countActive() {
+            return Object.values(deviceState).filter(Boolean).length;
+        }
+
+        function addLog(message, color = '#94a3b8') {
+            const log = document.getElementById('activityLog');
+            const now = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+            const item = document.createElement('div');
+            item.className = 'event-item flex items-center gap-2 text-xs py-1 border-b border-white/5';
+            item.innerHTML = `<span style="color:${color}">●</span><span class="text-slate-400 font-mono">${now}</span><span class="text-slate-300">${message}</span>`;
+            log.insertBefore(item, log.firstChild);
+            // Keep only last 10
+            while (log.children.length > 10) log.removeChild(log.lastChild);
+        }
+
+        function setDevice(device, state) {
+            deviceState[device] = state;
+            commandCount++;
+            document.getElementById('commandCount').textContent = commandCount;
+            document.getElementById('activeCount').textContent = countActive();
+
+            if (device === 'lights') {
+                const card = document.getElementById('lightsCard');
+                const badge = document.getElementById('lightsBadge');
+                const icon = document.getElementById('lightsIcon');
+                card.className = `device-card light-card ${state ? 'on' : 'off'}`;
+                badge.className = `state-badge ${state ? 'on' : 'off'}`;
+                badge.innerHTML = `<span class="state-dot"></span> ${state ? 'ON' : 'OFF'}`;
+                icon.style.color = state ? '#ffd700' : '';
+                addLog(`💡 Lights turned ${state ? 'ON' : 'OFF'}`, state ? '#ffd700' : '#64748b');
+            } else if (device === 'fan') {
+                const card = document.getElementById('fanCard');
+                const badge = document.getElementById('fanBadge');
+                const icon = document.getElementById('fanIcon');
+                card.className = `device-card fan-card ${state ? 'on' : 'off'}`;
+                badge.className = `state-badge ${state ? 'on' : 'off'}`;
+                badge.innerHTML = `<span class="state-dot"></span> ${state ? 'ON' : 'OFF'}`;
+                icon.className = `device-icon text-5xl mb-4 transition-all duration-500 ${state ? 'fan-icon' : ''}`;
+                icon.style.color = state ? '#00c8ff' : '';
+                addLog(`🌀 Fan turned ${state ? 'ON' : 'OFF'}`, state ? '#00c8ff' : '#64748b');
+            } else if (device === 'curtains') {
+                const card = document.getElementById('curtainsCard');
+                const badge = document.getElementById('curtainsBadge');
+                card.className = `device-card curtains-card ${state ? 'on' : 'off'}`;
+                badge.className = `state-badge ${state ? 'on' : 'off'}`;
+                badge.innerHTML = `<span class="state-dot"></span> ${state ? 'OPEN' : 'CLOSED'}`;
+                addLog(`🪟 Curtains ${state ? 'Opened' : 'Closed'}`, '#9664ff');
+            }
+        }
+
+        function activateScene(scene) {
+            if (scene === 'morning') { setDevice('lights', true); setDevice('fan', false); setDevice('curtains', true); addLog('🌅 Morning scene activated', '#f59e0b'); }
+            else if (scene === 'relax') { setDevice('lights', true); setDevice('fan', true); addLog('🌙 Relax scene activated', '#8b5cf6'); }
+            else if (scene === 'all_off') { setDevice('lights', false); setDevice('fan', false); setDevice('curtains', false); addLog('😴 Sleep scene activated', '#ef4444'); }
+        }
+
+        const gestureMap = {
+            'POINT_UP':        { emoji: '☝️', label: 'Point Up',   action: 'Lights ON',       fn: () => setDevice('lights', true) },
+            'POINT_DOWN':      { emoji: '👇', label: 'Point Down', action: 'Lights OFF',      fn: () => setDevice('lights', false) },
+            'PEACE':           { emoji: '✌️', label: 'Peace',      action: 'Fan ON',          fn: () => setDevice('fan', true) },
+            'FIST':            { emoji: '✊', label: 'Fist',       action: 'Fan OFF',         fn: () => setDevice('fan', false) },
+            'WAVE':            { emoji: '🖐️', label: 'Wave',       action: 'Toggle Curtains', fn: () => setDevice('curtains', !deviceState.curtains) },
+            'CURTAINS_TOGGLE': { emoji: '🖐️', label: 'Wave',       action: 'Toggle Curtains', fn: () => setDevice('curtains', !deviceState.curtains) },
+        };
+
+        function showGestureFeedback(gesture) {
+            const info = gestureMap[gesture] || { emoji: '🤚', label: gesture, action: '—' };
+            const display = document.getElementById('gestureDisplay');
+            display.textContent = info.emoji;
+            display.classList.remove('active');
+            void display.offsetWidth;
+            display.classList.add('active');
+            document.getElementById('gestureLabel').textContent = info.label;
+            document.getElementById('gestureAction').textContent = info.action;
+        }
+
+        // WebSocket
+        const socket = io('/', { query: { token }, transports: ['websocket', 'polling'] });
+        socket.on('connect', () => {
+            document.getElementById('neuralDot').className = 'w-2 h-2 rounded-full bg-green-500 animate-pulse';
+            document.getElementById('neuralText').textContent = 'Neural Link Active';
+            document.getElementById('neuralBadge').className = 'flex items-center gap-2 px-3 py-1.5 rounded-full border border-green-500/40 bg-green-500/10';
+            document.getElementById('neuralText').className = 'text-xs text-green-400 font-space tracking-wider';
+        });
+        socket.on('disconnect', () => {
+            document.getElementById('neuralDot').className = 'w-2 h-2 rounded-full bg-red-500';
+            document.getElementById('neuralText').textContent = 'Disconnected';
+        });
+
+        let lastGestureTime = 0;
+        socket.on('gesture_activity', (data) => {
+            const gesture = (data.gesture || '').toUpperCase();
+            const now = Date.now();
+            if (now - lastGestureTime < 800) return; // Prevent accidental double-trigger
+            lastGestureTime = now;
+
+            showGestureFeedback(gesture);
+            const info = gestureMap[gesture];
+            if (info) info.fn();
+        });
+    </script>
+</body>
+</html>
