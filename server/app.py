@@ -227,11 +227,20 @@ def start_client(client_name):
     games_dir = os.path.join(client_dir, 'games')
     game_script_path = os.path.join(games_dir, script_name)
     
+    # Try different naming conventions for games
     if os.path.exists(game_script_path):
         client_dir = games_dir
         script_path = game_script_path
     else:
-        script_path = os.path.join(client_dir, script_name)
+        # Try with _game suffix (e.g. flappy -> flappy_game.py)
+        alt_script_name = f"{client_name}_game.py"
+        alt_game_script_path = os.path.join(games_dir, alt_script_name)
+        if os.path.exists(alt_game_script_path):
+            client_dir = games_dir
+            script_path = alt_game_script_path
+            script_name = alt_script_name
+        else:
+            script_path = os.path.join(client_dir, script_name)
     
     # Fallback to main gesture client if specific one doesn't exist
     if not os.path.exists(script_path):
