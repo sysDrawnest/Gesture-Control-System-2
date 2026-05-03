@@ -55,6 +55,7 @@ def detect_gesture(lms):
     fingers = get_finger_states(lms)
     index_tip = lms[8]
     middle_tip = lms[12]
+    ring_tip = lms[16]
     thumb_tip = lms[4]
     
     pinch_dist = calculate_distance(thumb_tip, index_tip)
@@ -63,17 +64,16 @@ def detect_gesture(lms):
     if sum(fingers) == 0:
         return "FIST", 0.5
     
-    # Peace sign (index + middle only)
+    # Peace sign (index + middle separated)
     if fingers[1] and fingers[2] and not fingers[3] and not fingers[4]:
-        return "PEACE", index_tip.x
+        # Check if index and middle tips are separated (V shape)
+        tip_dist = calculate_distance(index_tip, middle_tip)
+        if tip_dist > 0.08:
+            return "PEACE", index_tip.x
     
     # Index only
     if fingers[1] and not fingers[2] and not fingers[3] and not fingers[4]:
         return "INDEX", index_tip.x
-    
-    # Index + Middle (pointing)
-    if fingers[1] and fingers[2] and not fingers[3] and not fingers[4]:
-        return "POINT", index_tip.x
     
     # Middle only
     if fingers[2] and not fingers[1] and not fingers[3] and not fingers[4]:
@@ -81,7 +81,7 @@ def detect_gesture(lms):
     
     # Ring only
     if fingers[3] and not fingers[1] and not fingers[2] and not fingers[4]:
-        return "RING", lms[16].x
+        return "RING", ring_tip.x
     
     # Pinch for click
     if pinch_dist < PINCH_THRESHOLD:
@@ -90,9 +90,12 @@ def detect_gesture(lms):
     return "NONE", 0.5
 
 CONNECTIONS = [
-    (0, 1), (1, 2), (2, 3), (3, 4), (0, 5), (5, 6), (6, 7), (7, 8),
-    (0, 9), (9, 10), (10, 11), (11, 12), (0, 13), (13, 14), (14, 15), (15, 16),
-    (0, 17), (17, 18), (18, 19), (19, 20),
+    (0, 1), (1, 2), (2, 3), (3, 4), # Thumb
+    (0, 5), (5, 6), (6, 7), (7, 8), # Index
+    (0, 9), (9, 10), (10, 11), (11, 12), # Middle
+    (0, 13), (13, 14), (14, 15), (15, 16), # Ring
+    (0, 17), (17, 18), (18, 19), (19, 20), # Pinky
+    (5, 9), (9, 13), (13, 17) # Palm
 ]
 FINGERTIPS = {4, 8, 12, 16, 20}
 

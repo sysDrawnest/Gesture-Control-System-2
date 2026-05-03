@@ -488,49 +488,75 @@
     }
 
     // WebSocket for gesture control
-    function initWebSocket() {
-        const token = localStorage.getItem('token');
-        if (!token) return;
+    function initGestureControl() {
+        // Use the global socket from base.html if available
+        const currentSocket = window.socket || (typeof socket !== 'undefined' ? socket : null);
+        
+        if (!currentSocket) {
+            console.warn('[Piano] Global socket not found, waiting...');
+            setTimeout(initGestureControl, 1000);
+            return;
+        }
 
-        socket = io('/', { query: { token }, transports: ['websocket', 'polling'] });
+        console.log('[Piano] Gesture control linked to neural link');
+        isConnected = true;
 
-        socket.on('connect', () => {
-            isConnected = true;
-            console.log('[WS] Connected');
-        });
+        // Hook into the global gesture handler
+        window.handleGesture = function(gesture, data) {
+            if (!data) return;
+            
+            document.getElementById('currentGesture').textContent = gesture;
+            
+            // Handle X-position based hovering for all pointing gestures
+            if (data.x !== undefined) {
+                const pianoContainer = document.getElementById('piano');
+                const keyCount = notes.length;
+                const index = Math.floor(data.x * keyCount);
+                const allKeys = pianoContainer.querySelectorAll('.key');
+                
+                if (index >= 0 && index < allKeys.length) {
+                    const targetKey = allKeys[index];
+                    if (currentHoveredKey !== targetKey) {
+                        // Clear old hover
+                        if (currentHoveredKey) currentHoveredKey.style.background = '';
+                        
+                        currentHoveredKey = targetKey;
+                        // Visual hint for hover
+                        currentHoveredKey.style.background = 'rgba(0, 243, 255, 0.1)';
+                    }
+                }
+            }
 
-        socket.on('disconnect', () => {
-            isConnected = false;
-            console.log('[WS] Disconnected');
-        });
-
-        socket.on('gesture_update', (data) => {
-            const gesture = data.gesture;
-            document.getElementById('currentGesture').innerHTML = gesture;
-
-            const currentTime = Date.now();
-
-            // Handle gestures
+            // Handle action gestures
             if (gesture === 'PINCH' || gesture === 'LEFT_CLICK') {
                 if (currentHoveredKey) {
                     const noteName = currentHoveredKey.getAttribute('data-note-name');
+                    const octave = parseInt(currentHoveredKey.getAttribute('data-octave'));
                     const note = notes.find(n => n.name === noteName);
                     if (note) {
-                        playNote(note, currentOctave);
+                        playNote(note, octave);
                     }
                 }
             } else if (gesture === 'PEACE') {
-                if (!recording && !playback) {
-                    startRecording();
-                } else if (recording) {
-                    stopRecording();
-                } else if (playback) {
-                    stopPlayback();
+                const now = Date.now();
+                if (now - lastGestureTime > 1000) { // Cooldown for toggle
+                    if (!recording && !playback) {
+                        startRecording();
+                    } else if (recording) {
+                        stopRecording();
+                    } else if (playback) {
+                        stopPlayback();
+                    }
+                    lastGestureTime = now;
                 }
             } else if (gesture === 'FIST') {
-                clearSong();
+                const now = Date.now();
+                if (now - lastGestureTime > 1000) {
+                    clearSong();
+                    lastGestureTime = now;
+                }
             }
-        });
+        };
     }
 
     // Event listeners
@@ -557,7 +583,7 @@
 
     // Initialize
     buildPiano();
-    initWebSocket();
+    initGestureControl();
 
     // Initialize audio on first user interaction
     document.body.addEventListener('click', () => {
