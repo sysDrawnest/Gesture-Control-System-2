@@ -8,22 +8,23 @@
         display: flex;
         justify-content: center;
         gap: 8px;
-        padding: 40px;
+        padding: 40px 20px;
         background: rgba(0, 0, 0, 0.4);
         border-radius: 40px;
         border: 1px solid rgba(255, 255, 255, 0.05);
         min-height: 400px;
         perspective: 1000px;
+        flex-wrap: wrap;
     }
 
     .key {
         width: 80px;
         height: 300px;
-        background: rgba(255, 255, 255, 0.03);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 0 0 15px 15px;
         position: relative;
-        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
         display: flex;
         align-items: flex-end;
@@ -35,16 +36,19 @@
     .key::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 10px;
         background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px 5px 0 0;
     }
 
     .key.active {
         transform: rotateX(0deg) translateY(5px);
-        background: linear-gradient(180deg, rgba(0, 243, 255, 0.2) 0%, rgba(0, 243, 255, 0.05) 100%);
+        background: linear-gradient(180deg, rgba(0, 243, 255, 0.3) 0%, rgba(0, 243, 255, 0.05) 100%);
         border-color: #00f3ff;
-        box-shadow: 0 10px 30px rgba(0, 243, 255, 0.3);
+        box-shadow: 0 10px 30px rgba(0, 243, 255, 0.4);
     }
 
     .key.active .note-name {
@@ -55,73 +59,165 @@
     .note-name {
         font-family: 'Space Grotesk', sans-serif;
         font-weight: 700;
-        color: rgba(255, 255, 255, 0.2);
-        font-size: 20px;
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 18px;
+        transition: all 0.1s ease;
     }
 
     .wave-display {
         height: 120px;
         width: 100%;
-        background: rgba(0, 0, 0, 0.2);
+        background: rgba(0, 0, 0, 0.3);
         border-radius: 20px;
         margin-bottom: 30px;
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        gap: 2px;
     }
 
     .bar {
         width: 4px;
-        margin: 0 2px;
+        margin: 0 1px;
         background: #00f3ff;
         height: 5px;
-        transition: height 0.1s;
+        transition: height 0.08s ease;
         border-radius: 2px;
-        opacity: 0.5;
+        opacity: 0.6;
+    }
+
+    .octave-control {
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 60px;
+        padding: 8px 16px;
+        backdrop-filter: blur(10px);
+    }
+
+    @keyframes keyGlow {
+        0% {
+            text-shadow: 0 0 0px #00f3ff;
+        }
+
+        100% {
+            text-shadow: 0 0 20px #00f3ff;
+        }
+    }
+
+    .playing-note {
+        animation: keyGlow 0.3s ease-out;
+    }
+
+    .gesture-hint {
+        transition: all 0.2s ease;
+    }
+
+    .gesture-hint.active {
+        transform: scale(1.1);
+        background: rgba(0, 243, 255, 0.2);
+        border-color: #00f3ff;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .recording-pulse {
+        animation: pulse 1s infinite;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto py-12 px-6">
-    <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-8">
+<div class="max-w-7xl mx-auto py-8 px-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
         <div>
             <div class="flex items-center gap-3 mb-2">
-                <a href="/games" class="p-2 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-cyan-400 transition-all">
+                <a href="/games"
+                    class="p-2 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-cyan-400 transition-all">
                     <span class="material-symbols-outlined">arrow_back</span>
                 </a>
-                <h1 class="text-4xl font-space font-bold tracking-tight">Gesture <span class="text-cyan-400">Piano</span></h1>
+                <h1 class="text-4xl font-space font-bold tracking-tight">Gesture <span
+                        class="text-cyan-400">Piano</span></h1>
             </div>
-            <p class="text-slate-500 text-xs uppercase tracking-[0.3em] font-space">Hover to select | Pinch to sound</p>
+            <p class="text-slate-500 text-xs uppercase tracking-[0.3em] font-space">Hover over keys with finger | Pinch
+                to play</p>
         </div>
-        
-        <div class="flex gap-4">
-            <button id="toggleOsc" class="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl font-space text-xs uppercase tracking-widest hover:bg-white/10 transition-all">
-                Oscillator: <span class="text-cyan-400">Sine</span>
+
+        <div class="flex gap-3">
+            <div class="octave-control flex items-center gap-3">
+                <button id="octaveDown"
+                    class="w-10 h-10 bg-white/5 border border-white/10 rounded-xl hover:bg-white/20 transition-all">
+                    <span class="material-symbols-outlined text-sm">remove</span>
+                </button>
+                <span class="font-space text-sm font-bold text-cyan-400 min-w-[60px] text-center"
+                    id="octaveLabel">Octave 4</span>
+                <button id="octaveUp"
+                    class="w-10 h-10 bg-white/5 border border-white/10 rounded-xl hover:bg-white/20 transition-all">
+                    <span class="material-symbols-outlined text-sm">add</span>
+                </button>
+            </div>
+            <button id="toggleOsc"
+                class="px-5 py-2 bg-white/5 border border-white/10 rounded-xl font-space text-xs uppercase tracking-widest hover:bg-white/10 transition-all">
+                Wave: <span id="oscTypeLabel" class="text-cyan-400">Sine</span>
+            </button>
+            <button id="recordBtn"
+                class="px-5 py-2 bg-red-500/20 border border-red-500/40 text-red-400 rounded-xl font-space text-xs uppercase tracking-widest hover:bg-red-500/30 transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">fiber_manual_record</span> Record
+            </button>
+            <button id="playbackBtn"
+                class="px-5 py-2 bg-green-500/20 border border-green-500/40 text-green-400 rounded-xl font-space text-xs uppercase tracking-widest hover:bg-green-500/30 transition-all flex items-center gap-2"
+                disabled>
+                <span class="material-symbols-outlined text-sm">play_arrow</span> Play
             </button>
         </div>
     </div>
 
-    <!-- Visualization -->
-    <div class="wave-display" id="visualizer">
-        <!-- Bars generated by JS -->
+    <!-- Visualizer -->
+    <div class="wave-display" id="visualizer"></div>
+
+    <!-- Piano Keys -->
+    <div class="piano-container" id="piano"></div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-xs text-slate-400 uppercase tracking-wider">Notes Played</div>
+            <div class="text-2xl font-bold text-cyan-400" id="noteCount">0</div>
+        </div>
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-xs text-slate-400 uppercase tracking-wider">Last Note</div>
+            <div class="text-lg font-mono text-white" id="lastNote">-</div>
+        </div>
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-xs text-slate-400 uppercase tracking-wider">Current Gesture</div>
+            <div class="text-sm text-white" id="currentGesture">Waiting...</div>
+        </div>
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-xs text-slate-400 uppercase tracking-wider">Status</div>
+            <div class="text-sm text-green-400" id="statusText">Connected</div>
+        </div>
     </div>
 
-    <!-- Keys Area -->
-    <div class="piano-container" id="piano">
-        <div class="key" data-note="261.63"><span class="note-name">C4</span></div>
-        <div class="key" data-note="293.66"><span class="note-name">D4</span></div>
-        <div class="key" data-note="329.63"><span class="note-name">E4</span></div>
-        <div class="key" data-note="349.23"><span class="note-name">F4</span></div>
-        <div class="key" data-note="392.00"><span class="note-name">G4</span></div>
-        <div class="key" data-note="440.00"><span class="note-name">A4</span></div>
-        <div class="key" data-note="493.88"><span class="note-name">B4</span></div>
-        <div class="key" data-note="523.25"><span class="note-name">C5</span></div>
+    <!-- Recording Indicator -->
+    <div id="recordingIndicator"
+        class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-500/80 backdrop-blur-md px-6 py-3 rounded-full hidden">
+        <span class="material-symbols-outlined text-white animate-pulse">fiber_manual_record</span>
+        <span class="text-white font-space text-sm ml-2">RECORDING...</span>
     </div>
 
-    <div class="mt-12 text-center text-slate-500 text-xs font-space uppercase tracking-widest border-t border-white/5 pt-8">
-        System active: Audio Context Initialized on first interaction
+    <div
+        class="mt-8 text-center text-slate-500 text-xs font-space uppercase tracking-widest border-t border-white/5 pt-8">
+        🎹 Play with gestures: Point at keys | Pinch to play | Peace sign to record | Fist to clear
     </div>
 </div>
 {% endblock %}
@@ -130,11 +226,39 @@
 <script>
     let audioCtx = null;
     let oscType = 'sine';
+    let currentOctave = 4;
+    let noteCount = 0;
+    let lastNotePlayed = '';
+    let recording = false;
+    let recordedNotes = [];
+    let playback = false;
+    let playbackIndex = 0;
+
+    // Note frequencies (Hz)
+    const notes = [
+        { name: 'C', freq: 261.63, display: 'C' },
+        { name: 'C#', freq: 277.18, display: 'C#' },
+        { name: 'D', freq: 293.66, display: 'D' },
+        { name: 'D#', freq: 311.13, display: 'D#' },
+        { name: 'E', freq: 329.63, display: 'E' },
+        { name: 'F', freq: 349.23, display: 'F' },
+        { name: 'F#', freq: 369.99, display: 'F#' },
+        { name: 'G', freq: 392.00, display: 'G' },
+        { name: 'G#', freq: 415.30, display: 'G#' },
+        { name: 'A', freq: 440.00, display: 'A' },
+        { name: 'A#', freq: 466.16, display: 'A#' },
+        { name: 'B', freq: 493.88, display: 'B' }
+    ];
+
     const visualizer = document.getElementById('visualizer');
     const bars = [];
+    let socket = null;
+    let isConnected = false;
+    let lastGestureTime = 0;
+    let currentHoveredKey = null;
 
     // Create visualizer bars
-    for(let i=0; i<60; i++) {
+    for (let i = 0; i < 60; i++) {
         const bar = document.createElement('div');
         bar.className = 'bar';
         visualizer.appendChild(bar);
@@ -145,63 +269,299 @@
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
     }
 
-    function playNote(freq, element) {
+    function playNote(note, octave = currentOctave) {
         initAudio();
+
+        const actualFreq = note.freq * Math.pow(2, octave - 4);
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
 
         oscillator.type = oscType;
-        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        oscillator.frequency.setValueAtTime(actualFreq, audioCtx.currentTime);
 
-        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1);
+        gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.8);
 
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
 
         oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 1);
+        oscillator.stop(audioCtx.currentTime + 0.8);
 
-        // UI Effects
-        element.classList.add('active');
-        setTimeout(() => element.classList.remove('active'), 200);
+        // Update UI
+        noteCount++;
+        lastNotePlayed = `${note.display}${octave}`;
+        document.getElementById('noteCount').textContent = noteCount;
+        document.getElementById('lastNote').textContent = lastNotePlayed;
+        document.getElementById('lastNote').classList.add('playing-note');
+        setTimeout(() => document.getElementById('lastNote').classList.remove('playing-note'), 300);
 
         // Visualizer effect
         bars.forEach(bar => {
-            const h = Math.random() * 80 + 10;
+            const h = Math.random() * 100 + 20;
             bar.style.height = h + 'px';
             bar.style.opacity = '1';
             setTimeout(() => {
                 bar.style.height = '5px';
                 bar.style.opacity = '0.5';
-            }, 200);
+            }, 150);
+        });
+
+        // Highlight key
+        const keyElement = document.querySelector(`.key[data-note-name="${note.name}"][data-octave="${octave}"]`);
+        if (keyElement) {
+            keyElement.classList.add('active');
+            setTimeout(() => keyElement.classList.remove('active'), 200);
+        }
+
+        // Record if recording
+        if (recording) {
+            recordedNotes.push({
+                note: note.name,
+                octave: octave,
+                freq: actualFreq,
+                timestamp: Date.now()
+            });
+            updateSongStatus();
+        }
+
+        // Send to server via WebSocket
+        if (socket && isConnected) {
+            socket.emit('gesture_update', {
+                gesture: 'PLAY_NOTE',
+                note: `${note.display}${octave}`,
+                confidence: 0.95,
+                type: 'piano'
+            });
+        }
+    }
+
+    function buildPiano() {
+        const pianoContainer = document.getElementById('piano');
+        pianoContainer.innerHTML = '';
+
+        notes.forEach(note => {
+            const key = document.createElement('div');
+            key.className = 'key';
+            key.setAttribute('data-note-name', note.name);
+            key.setAttribute('data-note-freq', note.freq);
+            key.setAttribute('data-octave', currentOctave);
+            key.innerHTML = `<span class="note-name">${note.display}${currentOctave}</span>`;
+
+            // Mouse click
+            key.addEventListener('click', () => {
+                playNote(note, currentOctave);
+            });
+
+            // Hover tracking for gesture
+            key.addEventListener('mouseenter', () => {
+                currentHoveredKey = key;
+            });
+            key.addEventListener('mouseleave', () => {
+                if (currentHoveredKey === key) currentHoveredKey = null;
+            });
+
+            pianoContainer.appendChild(key);
         });
     }
 
-    document.querySelectorAll('.key').forEach(key => {
-        key.addEventListener('mousedown', () => {
-            playNote(parseFloat(key.dataset.note), key);
+    function changeOctave(delta) {
+        const newOctave = currentOctave + delta;
+        if (newOctave >= 2 && newOctave <= 6) {
+            currentOctave = newOctave;
+            document.getElementById('octaveLabel').textContent = `Octave ${currentOctave}`;
+            buildPiano();
+        }
+    }
+
+    function updateSongStatus() {
+        const playbackBtn = document.getElementById('playbackBtn');
+        if (recordedNotes.length > 0) {
+            playbackBtn.disabled = false;
+            playbackBtn.classList.remove('opacity-50');
+        } else {
+            playbackBtn.disabled = true;
+        }
+    }
+
+    function startRecording() {
+        recording = true;
+        recordedNotes = [];
+        document.getElementById('recordBtn').innerHTML = '<span class="material-symbols-outlined text-sm">stop</span> Stop';
+        document.getElementById('recordBtn').classList.add('bg-red-500/40');
+        document.getElementById('recordingIndicator').classList.remove('hidden');
+        document.getElementById('statusText').textContent = '🔴 RECORDING';
+        document.getElementById('statusText').classList.add('text-red-400');
+    }
+
+    function stopRecording() {
+        recording = false;
+        document.getElementById('recordBtn').innerHTML = '<span class="material-symbols-outlined text-sm">fiber_manual_record</span> Record';
+        document.getElementById('recordBtn').classList.remove('bg-red-500/40');
+        document.getElementById('recordingIndicator').classList.add('hidden');
+        document.getElementById('statusText').textContent = `✅ Recorded ${recordedNotes.length} notes`;
+        document.getElementById('statusText').classList.add('text-green-400');
+        setTimeout(() => {
+            document.getElementById('statusText').textContent = 'Connected';
+            document.getElementById('statusText').classList.remove('text-green-400');
+        }, 2000);
+        updateSongStatus();
+    }
+
+    function startPlayback() {
+        if (recordedNotes.length === 0) return;
+
+        playback = true;
+        playbackIndex = 0;
+        document.getElementById('playbackBtn').innerHTML = '<span class="material-symbols-outlined text-sm">stop</span> Stop';
+        document.getElementById('statusText').textContent = '▶️ PLAYING BACK...';
+        document.getElementById('statusText').classList.add('text-green-400');
+
+        function playNextNote() {
+            if (!playback || playbackIndex >= recordedNotes.length) {
+                stopPlayback();
+                return;
+            }
+
+            const noteData = recordedNotes[playbackIndex];
+            // Play note using stored frequency
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = oscType;
+            oscillator.frequency.setValueAtTime(noteData.freq, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.6);
+
+            // Visual feedback
+            const keyElement = document.querySelector(`.key[data-note-name="${noteData.note}"][data-octave="${noteData.octave}"]`);
+            if (keyElement) {
+                keyElement.classList.add('active');
+                setTimeout(() => keyElement.classList.remove('active'), 200);
+            }
+
+            // Visualizer
+            bars.forEach(bar => {
+                const h = Math.random() * 80 + 20;
+                bar.style.height = h + 'px';
+                setTimeout(() => bar.style.height = '5px', 150);
+            });
+
+            playbackIndex++;
+
+            let delay = 400;
+            if (playbackIndex < recordedNotes.length) {
+                const timeDiff = recordedNotes[playbackIndex].timestamp - recordedNotes[playbackIndex - 1].timestamp;
+                delay = Math.min(Math.max(timeDiff, 200), 800);
+            }
+            setTimeout(playNextNote, delay);
+        }
+
+        playNextNote();
+    }
+
+    function stopPlayback() {
+        playback = false;
+        document.getElementById('playbackBtn').innerHTML = '<span class="material-symbols-outlined text-sm">play_arrow</span> Play';
+        document.getElementById('statusText').textContent = 'Connected';
+        document.getElementById('statusText').classList.remove('text-green-400');
+    }
+
+    function clearSong() {
+        if (recording) stopRecording();
+        if (playback) stopPlayback();
+        recordedNotes = [];
+        updateSongStatus();
+        document.getElementById('statusText').textContent = '🗑️ Song cleared';
+        setTimeout(() => {
+            document.getElementById('statusText').textContent = 'Connected';
+        }, 1500);
+    }
+
+    // WebSocket for gesture control
+    function initWebSocket() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        socket = io('/', { query: { token }, transports: ['websocket', 'polling'] });
+
+        socket.on('connect', () => {
+            isConnected = true;
+            console.log('[WS] Connected');
         });
+
+        socket.on('disconnect', () => {
+            isConnected = false;
+            console.log('[WS] Disconnected');
+        });
+
+        socket.on('gesture_update', (data) => {
+            const gesture = data.gesture;
+            document.getElementById('currentGesture').innerHTML = gesture;
+
+            const currentTime = Date.now();
+
+            // Handle gestures
+            if (gesture === 'PINCH' || gesture === 'LEFT_CLICK') {
+                if (currentHoveredKey) {
+                    const noteName = currentHoveredKey.getAttribute('data-note-name');
+                    const note = notes.find(n => n.name === noteName);
+                    if (note) {
+                        playNote(note, currentOctave);
+                    }
+                }
+            } else if (gesture === 'PEACE') {
+                if (!recording && !playback) {
+                    startRecording();
+                } else if (recording) {
+                    stopRecording();
+                } else if (playback) {
+                    stopPlayback();
+                }
+            } else if (gesture === 'FIST') {
+                clearSong();
+            }
+        });
+    }
+
+    // Event listeners
+    document.getElementById('octaveDown').addEventListener('click', () => changeOctave(-1));
+    document.getElementById('octaveUp').addEventListener('click', () => changeOctave(1));
+    document.getElementById('recordBtn').addEventListener('click', () => {
+        if (recording) stopRecording();
+        else startRecording();
+    });
+    document.getElementById('playbackBtn').addEventListener('click', () => {
+        if (playback) stopPlayback();
+        else startPlayback();
     });
 
     const oscBtn = document.getElementById('toggleOsc');
+    const oscTypeLabel = document.getElementById('oscTypeLabel');
     const types = ['sine', 'square', 'triangle', 'sawtooth'];
     let typeIdx = 0;
     oscBtn.addEventListener('click', () => {
         typeIdx = (typeIdx + 1) % types.length;
         oscType = types[typeIdx];
-        oscBtn.innerHTML = `Oscillator: <span class="text-cyan-400 uppercase">${oscType}</span>`;
+        oscTypeLabel.textContent = oscType.charAt(0).toUpperCase() + oscType.slice(1);
     });
 
-    window.handleGesture = function(gesture) {
-        if (gesture === 'PINCH' || gesture === 'LEFT_CLICK' || gesture === 'POINT') {
-            const hoveredKey = document.querySelector('.key:hover');
-            if (hoveredKey) {
-                playNote(parseFloat(hoveredKey.dataset.note), hoveredKey);
-            }
-        }
-    }
+    // Initialize
+    buildPiano();
+    initWebSocket();
+
+    // Initialize audio on first user interaction
+    document.body.addEventListener('click', () => {
+        initAudio();
+    }, { once: true });
 </script>
 {% endblock %}
