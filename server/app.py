@@ -82,13 +82,14 @@ except Exception as e:
 
 # Import and register blueprints
 try:
-    from routes import auth_bp, device_bp, control_bp, canvas_bp, profile_bp
+    from routes import auth_bp, device_bp, control_bp, canvas_bp, profile_bp, games_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(device_bp, url_prefix='/api')
     app.register_blueprint(control_bp, url_prefix='/api')
     app.register_blueprint(canvas_bp, url_prefix='/api')
     app.register_blueprint(profile_bp, url_prefix='/api/profile')
+    app.register_blueprint(games_bp)
     
     logger.info("All blueprints registered successfully")
 except ImportError as e:
@@ -152,29 +153,11 @@ def tutorial():
     """Interactive tutorial page"""
     return render_template('tutorial.html')
 
-@app.route('/games')
-@login_required
-def games_hub():
-    """Dedicated Games Hub page"""
-    return render_template('games.html')
 
 @app.route('/finalyear')
 def final_year():
     """Final year project showcase page"""
     return render_template('finalyear.html')
-
-@app.route('/games/<game_slug>')
-@login_required
-def individual_game(game_slug):
-    """Dynamic route for individual games"""
-    # Map slugs to nice names or metadata if needed, but for now just render
-    try:
-        # Check if template exists to avoid 500
-        template_name = f'games/{game_slug}.html'
-        return render_template(template_name, game_id=game_slug)
-    except Exception as e:
-        logger.error(f"Error loading game {game_slug}: {e}")
-        return render_template('games.html'), 404
 
 # Static files
 @app.route('/static/<path:path>')

@@ -4,5 +4,6 @@ from .device_routes import device_bp
 from .control_routes import control_bp
 from .canvas_routes import canvas_bp
 from .profile_routes import profile_bp
+from .game_routes import games_bp
 
-__all__ = ['auth_bp', 'device_bp', 'control_bp', 'canvas_bp', 'profile_bp']
+__all__ = ['auth_bp', 'device_bp', 'control_bp', 'canvas_bp', 'profile_bp', 'games_bp']
