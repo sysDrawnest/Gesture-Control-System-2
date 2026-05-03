@@ -15,9 +15,12 @@ def games_hub():
 
 # Mapping of game slugs to their actual python client filenames
 GAME_CLIENT_MAPPING = {
-    'flappy': 'flappy_game',
-    'dino': 'dino_game',
-    'piano': 'piano_game'
+    'flappy':       'flappy_game',
+    'dino':         'dino_game',
+    'piano':        'piano_game',
+    'presentation': 'presentation_game',
+    'mediaplayer':  'mediaplayer_game',
+    'smarthome':    'smarthome_game',
 }
 
 @games_bp.route('/games/<game_slug>')

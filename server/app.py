@@ -159,6 +159,24 @@ def final_year():
     """Final year project showcase page"""
     return render_template('finalyear.html')
 
+@app.route('/presentation')
+@login_required
+def presentation():
+    """Presentation Controller page"""
+    return render_template('presentation.html', client_id='presentation_game')
+
+@app.route('/mediaplayer')
+@login_required
+def mediaplayer():
+    """Media Player Controller page"""
+    return render_template('mediaplayer.html', client_id='mediaplayer_game')
+
+@app.route('/smarthome')
+@login_required
+def smarthome():
+    """Smart Home Controller page"""
+    return render_template('smarthome.html', client_id='smarthome_game')
+
 # Static files
 @app.route('/static/<path:path>')
 def serve_static(path):

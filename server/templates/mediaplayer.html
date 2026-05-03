@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KINETIC PULSE | Media Player Controller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0a0a1a 0%, #12051e 100%); min-height: 100vh; color: white; overflow-x: hidden; }
+        .font-space { font-family: 'Space Grotesk', sans-serif; }
+        .glass { backdrop-filter: blur(24px); background: rgba(35, 38, 44, 0.45); border: 1px solid rgba(255,255,255,0.07); }
+
+        /* Album art */
+        .album-art {
+            width: 220px; height: 220px; border-radius: 20px;
+            background: linear-gradient(135deg, #6c3483 0%, #1a6090 100%);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 5rem;
+            box-shadow: 0 20px 60px rgba(108, 52, 131, 0.5);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .album-art.playing {
+            animation: albumSpin 8s linear infinite;
+            box-shadow: 0 20px 60px rgba(0, 243, 255, 0.4);
+        }
+        .album-art::after {
+            content: '';
+            position: absolute;
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        @keyframes albumSpin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        /* Progress bar */
+        .progress-track {
+            height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px;
+            cursor: pointer; position: relative; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; border-radius: 4px;
+            background: linear-gradient(90deg, #7c3aed, #00f3ff);
+            transition: width 0.5s linear;
+        }
+
+        /* Volume bar */
+        .vol-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; position: relative; }
+        .vol-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #10b981, #00f3ff); transition: width 0.3s ease; }
+
+        /* Equalizer bars */
+        .eq-bar {
+            width: 4px; border-radius: 4px;
+            background: linear-gradient(180deg, #00f3ff, #7c3aed);
+            transition: height 0.1s ease;
+            min-height: 4px;
+        }
+
+        /* Gesture feedback */
+        .gesture-flash {
+            position: fixed; inset: 0; pointer-events: none; z-index: 200;
+            opacity: 0; transition: opacity 0.1s ease;
+            background: radial-gradient(circle at 50% 50%, rgba(0,243,255,0.08) 0%, transparent 70%);
+        }
+        .gesture-flash.show { opacity: 1; }
+
+        /* Control buttons */
+        .ctrl-btn {
+            width: 52px; height: 52px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(16px);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        .ctrl-btn:hover { background: rgba(255,255,255,0.12); transform: scale(1.08); }
+        .ctrl-btn.active { background: rgba(0,243,255,0.2); border-color: #00f3ff; box-shadow: 0 0 20px rgba(0,243,255,0.3); }
+        .ctrl-btn-lg { width: 70px; height: 70px; font-size: 1.5rem; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.5s ease forwards; }
+    </style>
+</head>
+<body>
+    <div class="gesture-flash" id="gestureFlash"></div>
+
+    <!-- Nav -->
+    <header class="w-full sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/10 flex justify-between items-center px-6 py-4">
+        <div class="flex items-center gap-8">
+            <a href="/home" class="text-2xl font-bold tracking-tighter text-cyan-400 uppercase font-space">KINETIC_PULSE</a>
+            <nav class="hidden md:flex gap-6">
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors uppercase text-xs tracking-widest font-space" href="/dashboard">Dashboard</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors uppercase text-xs tracking-widest font-space" href="/games">Games Hub</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors uppercase text-xs tracking-widest font-space" href="/presentation">Presentation</a>
+                <a class="text-cyan-400 font-space tracking-widest text-xs uppercase" href="/mediaplayer">Media Player</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors uppercase text-xs tracking-widest font-space" href="/smarthome">Smart Home</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="neuralBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-yellow-500/40 bg-yellow-500/10">
+                <div id="neuralDot" class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
+                <span id="neuralText" class="text-xs text-yellow-400 font-space tracking-wider">Initializing...</span>
+            </div>
+            <button id="logoutBtn" class="text-slate-500 hover:text-cyan-400 text-xs uppercase tracking-widest font-space transition-colors">Logout</button>
+        </div>
+    </header>
+
+    <div class="max-w-5xl mx-auto py-10 px-6 animate-in">
+        <!-- Title -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-space font-bold mb-1">🎵 Media Player <span class="text-purple-400">Controller</span></h1>
+            <p class="text-slate-500 text-xs uppercase tracking-[0.3em] font-space">Control any media player or YouTube with hand gestures</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main player -->
+            <div class="lg:col-span-2 space-y-5">
+                <!-- Player card -->
+                <div class="glass rounded-2xl p-8">
+                    <div class="flex gap-8 items-center">
+                        <!-- Album Art -->
+                        <div class="album-art" id="albumArt">🎵</div>
+
+                        <!-- Track Info -->
+                        <div class="flex-1">
+                            <div class="text-[10px] uppercase tracking-widest text-slate-500 font-space mb-1" id="trackGenre">Electronic / Ambient</div>
+                            <h2 class="text-2xl font-space font-bold mb-1" id="trackName">Neural Pulse</h2>
+                            <p class="text-slate-400 text-sm mb-6" id="trackArtist">Kinetic Wave ft. AI Collective</p>
+
+                            <!-- Progress -->
+                            <div class="mb-2">
+                                <div class="progress-track" id="progressTrack">
+                                    <div class="progress-fill" id="progressFill" style="width: 35%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-slate-500 mt-1">
+                                    <span id="currentTime">1:23</span>
+                                    <span id="totalTime">3:47</span>
+                                </div>
+                            </div>
+
+                            <!-- Volume -->
+                            <div class="flex items-center gap-3 mb-4">
+                                <span class="material-symbols-outlined text-slate-400 text-sm">volume_down</span>
+                                <div class="flex-1 vol-track">
+                                    <div class="vol-fill" id="volumeFill" style="width: 60%"></div>
+                                </div>
+                                <span class="material-symbols-outlined text-slate-400 text-sm">volume_up</span>
+                                <span class="text-xs text-cyan-400 font-space ml-1" id="volLabel">60%</span>
+                            </div>
+
+                            <!-- Controls -->
+                            <div class="flex items-center justify-center gap-4">
+                                <button class="ctrl-btn" id="prevBtn" title="Previous Track">
+                                    <span class="material-symbols-outlined">skip_previous</span>
+                                </button>
+                                <button class="ctrl-btn ctrl-btn-lg" id="playBtn" title="Play/Pause">
+                                    <span class="material-symbols-outlined text-2xl text-cyan-400" id="playIcon">play_arrow</span>
+                                </button>
+                                <button class="ctrl-btn" id="nextBtn" title="Next Track">
+                                    <span class="material-symbols-outlined">skip_next</span>
+                                </button>
+                                <button class="ctrl-btn" id="stopBtn" title="Stop">
+                                    <span class="material-symbols-outlined text-slate-400">stop</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Equalizer -->
+                <div class="glass rounded-2xl p-5">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-4">Audio Visualizer</h3>
+                    <div class="flex items-end justify-center gap-1 h-20" id="eqContainer"></div>
+                </div>
+
+                <!-- YouTube Hint -->
+                <div class="glass rounded-2xl p-4 border border-purple-500/20 bg-purple-500/5">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">▶️</span>
+                        <div>
+                            <div class="text-sm font-space text-white">YouTube Mode Active</div>
+                            <div class="text-xs text-slate-400">Gestures also send YouTube keyboard shortcuts (K = play/pause, Shift+N = next, ← → = seek)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Gesture Guide + Status -->
+            <div class="space-y-4">
+                <!-- Gesture HUD -->
+                <div class="glass rounded-2xl p-5 text-center">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-3">Last Gesture</h3>
+                    <div class="text-5xl mb-2" id="gestureEmoji">🤚</div>
+                    <div class="text-cyan-400 font-space text-sm tracking-widest mb-1" id="gestureLabel">Waiting...</div>
+                    <div class="text-slate-500 text-xs" id="gestureAction">—</div>
+                </div>
+
+                <!-- Gesture Guide -->
+                <div class="glass rounded-2xl p-5">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-3">Gesture Guide</h3>
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2 text-sm"><span>👍</span><span class="font-space">Thumb Up</span></div><span class="text-xs text-cyan-400">Play/Pause</span></div>
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2 text-sm"><span>👎</span><span class="font-space">Thumb Down</span></div><span class="text-xs text-red-400">Stop</span></div>
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2 text-sm"><span>👉</span><span class="font-space">Point Right</span></div><span class="text-xs text-green-400">Next Track</span></div>
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2 text-sm"><span>👈</span><span class="font-space">Point Left</span></div><span class="text-xs text-green-400">Prev Track</span></div>
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2 text-sm"><span>🤏</span><span class="font-space">Pinch</span></div><span class="text-xs text-yellow-400">Volume Up</span></div>
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2 text-sm"><span>✋</span><span class="font-space">Open Palm</span></div><span class="text-xs text-yellow-400">Volume Down</span></div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="glass rounded-2xl p-5 space-y-3">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-2">Session Stats</h3>
+                    <div class="flex justify-between text-sm"><span class="text-slate-400">Gestures Sent</span><span class="text-cyan-400 font-space" id="gestureCount">0</span></div>
+                    <div class="flex justify-between text-sm"><span class="text-slate-400">Volume</span><span class="text-cyan-400 font-space" id="statVol">60%</span></div>
+                    <div class="flex justify-between text-sm"><span class="text-slate-400">State</span><span class="text-yellow-400 font-space" id="statState">Paused</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/login';
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/login';
+        });
+
+        const CLIENT_ID = '{{ client_id | default("mediaplayer_game") }}';
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch(`/api/system/start-client/${CLIENT_ID}`, { method: 'POST', headers: {'Content-Type':'application/json'} }).catch(()=>{});
+        });
+        window.addEventListener('beforeunload', () => navigator.sendBeacon(`/api/system/stop-client/${CLIENT_ID}`));
+
+        // State
+        let isPlaying = false;
+        let volume = 60;
+        let gestureCount = 0;
+        let progress = 35;
+        let progressInterval = null;
+
+        // Equalizer setup
+        const eqContainer = document.getElementById('eqContainer');
+        const eqBars = [];
+        for (let i = 0; i < 32; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'eq-bar';
+            bar.style.height = '4px';
+            eqContainer.appendChild(bar);
+            eqBars.push(bar);
+        }
+
+        function animateEQ(active) {
+            if (!active) {
+                eqBars.forEach(b => { b.style.height = '4px'; b.style.opacity = '0.3'; });
+                return;
+            }
+            eqBars.forEach(bar => {
+                const h = Math.random() * 72 + 8;
+                bar.style.height = h + 'px';
+                bar.style.opacity = '0.8';
+            });
+        }
+
+        let eqInterval = null;
+        function setPlaying(state) {
+            isPlaying = state;
+            document.getElementById('playIcon').textContent = state ? 'pause' : 'play_arrow';
+            document.getElementById('albumArt').className = state ? 'album-art playing' : 'album-art';
+            document.getElementById('statState').textContent = state ? 'Playing' : 'Paused';
+            document.getElementById('statState').className = state ? 'text-green-400 font-space' : 'text-yellow-400 font-space';
+
+            clearInterval(eqInterval);
+            clearInterval(progressInterval);
+
+            if (state) {
+                eqInterval = setInterval(() => animateEQ(true), 100);
+                progressInterval = setInterval(() => {
+                    progress = Math.min(100, progress + 0.05);
+                    document.getElementById('progressFill').style.width = progress + '%';
+                }, 500);
+            } else {
+                animateEQ(false);
+            }
+        }
+
+        function setVolume(v) {
+            volume = Math.max(0, Math.min(100, v));
+            document.getElementById('volumeFill').style.width = volume + '%';
+            document.getElementById('volLabel').textContent = volume + '%';
+            document.getElementById('statVol').textContent = volume + '%';
+        }
+
+        const tracks = [
+            { emoji: '🎵', name: 'Neural Pulse', artist: 'Kinetic Wave', genre: 'Electronic / Ambient' },
+            { emoji: '🎸', name: 'Cyber Dawn', artist: 'Digital Frontier', genre: 'Rock / Electronic' },
+            { emoji: '🎹', name: 'Quantum Beat', artist: 'AI Symphony', genre: 'Classical / Fusion' },
+            { emoji: '🥁', name: 'Core Protocol', artist: 'Binary Rhythm', genre: 'Drum & Bass' },
+        ];
+        let trackIndex = 0;
+
+        function loadTrack(idx) {
+            trackIndex = (idx + tracks.length) % tracks.length;
+            const t = tracks[trackIndex];
+            document.getElementById('albumArt').textContent = t.emoji;
+            document.getElementById('trackName').textContent = t.name;
+            document.getElementById('trackArtist').textContent = t.artist;
+            document.getElementById('trackGenre').textContent = t.genre;
+            progress = 0;
+            document.getElementById('progressFill').style.width = '0%';
+            if (isPlaying) setPlaying(true);
+        }
+
+        // Button handlers
+        document.getElementById('playBtn').addEventListener('click', () => setPlaying(!isPlaying));
+        document.getElementById('stopBtn').addEventListener('click', () => { setPlaying(false); progress = 0; document.getElementById('progressFill').style.width = '0%'; });
+        document.getElementById('nextBtn').addEventListener('click', () => loadTrack(trackIndex + 1));
+        document.getElementById('prevBtn').addEventListener('click', () => loadTrack(trackIndex - 1));
+
+        // Gesture feedback
+        const gestureMap = {
+            'THUMB_UP':    { emoji: '👍', label: 'Thumb Up',    action: 'Play / Pause' },
+            'THUMB_DOWN':  { emoji: '👎', label: 'Thumb Down',  action: 'Stop' },
+            'POINT_RIGHT': { emoji: '👉', label: 'Point Right', action: 'Next Track →' },
+            'POINT_LEFT':  { emoji: '👈', label: 'Point Left',  action: '← Prev Track' },
+            'PINCH':       { emoji: '🤏', label: 'Pinch',       action: 'Volume Up 🔊' },
+            'OPEN_PALM':   { emoji: '✋', label: 'Open Palm',   action: 'Volume Down 🔉' },
+        };
+
+        function showGesture(gesture) {
+            const info = gestureMap[gesture] || { emoji: '🤚', label: gesture, action: '—' };
+            document.getElementById('gestureEmoji').textContent = info.emoji;
+            document.getElementById('gestureLabel').textContent = info.label;
+            document.getElementById('gestureAction').textContent = info.action;
+            gestureCount++;
+            document.getElementById('gestureCount').textContent = gestureCount;
+
+            const flash = document.getElementById('gestureFlash');
+            flash.classList.add('show');
+            setTimeout(() => flash.classList.remove('show'), 200);
+        }
+
+        function handleGestureAction(gesture) {
+            showGesture(gesture);
+            switch (gesture) {
+                case 'THUMB_UP':    setPlaying(!isPlaying); break;
+                case 'THUMB_DOWN':  setPlaying(false); break;
+                case 'POINT_RIGHT': loadTrack(trackIndex + 1); break;
+                case 'POINT_LEFT':  loadTrack(trackIndex - 1); break;
+                case 'PINCH':       setVolume(volume + 10); break;
+                case 'OPEN_PALM':   setVolume(volume - 10); break;
+            }
+        }
+
+        // WebSocket
+        const socket = io('/', { query: { token }, transports: ['websocket', 'polling'] });
+        socket.on('connect', () => {
+            document.getElementById('neuralDot').className = 'w-2 h-2 rounded-full bg-green-500 animate-pulse';
+            document.getElementById('neuralText').textContent = 'Neural Link Active';
+            document.getElementById('neuralBadge').className = 'flex items-center gap-2 px-3 py-1.5 rounded-full border border-green-500/40 bg-green-500/10';
+            document.getElementById('neuralText').className = 'text-xs text-green-400 font-space tracking-wider';
+        });
+        socket.on('disconnect', () => {
+            document.getElementById('neuralDot').className = 'w-2 h-2 rounded-full bg-red-500';
+            document.getElementById('neuralText').textContent = 'Disconnected';
+        });
+
+        let lastGestureTime = 0;
+        socket.on('gesture_activity', (data) => {
+            const gesture = (data.gesture || '').toUpperCase();
+            const now = Date.now();
+            if (now - lastGestureTime < 700) return;
+            lastGestureTime = now;
+            if (gesture in gestureMap) handleGestureAction(gesture);
+        });
+
+        // Init
+        animateEQ(false);
+    </script>
+</body>
+</html>

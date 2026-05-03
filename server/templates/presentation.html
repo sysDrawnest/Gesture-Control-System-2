@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KINETIC PULSE | Presentation Controller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%); min-height: 100vh; color: white; overflow-x: hidden; }
+        .font-space { font-family: 'Space Grotesk', sans-serif; }
+        .glass { backdrop-filter: blur(24px); background: rgba(35, 38, 44, 0.45); border: 1px solid rgba(255,255,255,0.07); }
+
+        /* Slide */
+        .slide-container {
+            background: linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            aspect-ratio: 16/9;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .slide-container.active-next { animation: slideInRight 0.4s ease forwards; }
+        .slide-container.active-prev { animation: slideInLeft 0.4s ease forwards; }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(60px) scale(0.97); }
+            to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-60px) scale(0.97); }
+            to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        /* Gesture feedback ring */
+        .gesture-ring {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+            transition: all 0.3s ease;
+        }
+        .gesture-ring.active {
+            border-color: #00f3ff;
+            box-shadow: 0 0 30px rgba(0,243,255,0.4), inset 0 0 20px rgba(0,243,255,0.1);
+            animation: ringPulse 0.5s ease;
+        }
+        @keyframes ringPulse {
+            0%   { transform: scale(0.9); }
+            50%  { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .neural-badge { display: flex; align-items: center; gap: 8px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.5s ease forwards; }
+
+        .progress-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+        .progress-dot.active { background: #00f3ff; box-shadow: 0 0 8px #00f3ff; }
+    </style>
+</head>
+<body>
+    <!-- Nav -->
+    <header class="w-full sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/10 flex justify-between items-center px-6 py-4">
+        <div class="flex items-center gap-8">
+            <a href="/home" class="text-2xl font-bold tracking-tighter text-cyan-400 uppercase font-space">KINETIC_PULSE</a>
+            <nav class="hidden md:flex gap-6">
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors uppercase text-xs tracking-widest font-space" href="/dashboard">Dashboard</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors uppercase text-xs tracking-widest font-space" href="/games">Games Hub</a>
+                <a class="text-cyan-400 font-space tracking-widest text-xs uppercase" href="/presentation">Presentation</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors uppercase text-xs tracking-widest font-space" href="/mediaplayer">Media Player</a>
+                <a class="text-slate-400 hover:text-cyan-300 transition-colors uppercase text-xs tracking-widest font-space" href="/smarthome">Smart Home</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="neuralLinkBadge" class="neural-badge px-3 py-1.5 rounded-full border border-yellow-500/40 bg-yellow-500/10">
+                <div id="neuralDot" class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
+                <span id="neuralText" class="text-xs text-yellow-400 font-space tracking-wider">Initializing...</span>
+            </div>
+            <button id="logoutBtn" class="text-slate-500 hover:text-cyan-400 text-xs uppercase tracking-widest font-space transition-colors">Logout</button>
+        </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto py-10 px-6 animate-in">
+        <!-- Title -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-4xl">📊</span>
+                    <h1 class="text-4xl font-space font-bold">Presentation <span class="text-cyan-400">Controller</span></h1>
+                </div>
+                <p class="text-slate-500 text-xs uppercase tracking-[0.3em] font-space">Control your slides with hand gestures</p>
+            </div>
+            <div class="flex gap-3">
+                <button id="fullscreenBtn" class="px-4 py-2 glass rounded-xl text-xs font-space uppercase tracking-widest hover:border-cyan-500/50 transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">fullscreen</span> Fullscreen (F5)
+                </button>
+                <a href="/games" class="px-4 py-2 glass rounded-xl text-xs font-space uppercase tracking-widest hover:border-cyan-500/50 transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">arrow_back</span> Back
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Slide Panel -->
+            <div class="lg:col-span-2 space-y-4">
+                <div class="slide-container p-12" id="slideContainer">
+                    <!-- Slide number badge -->
+                    <div class="absolute top-4 right-4 px-3 py-1 bg-black/50 rounded-full text-xs font-space text-cyan-400" id="slideBadge">1 / 8</div>
+
+                    <div class="flex flex-col items-center justify-center h-full text-center" id="slideContent">
+                        <div class="text-6xl mb-6" id="slideEmoji">🚀</div>
+                        <h2 class="text-3xl font-space font-bold mb-4 text-white" id="slideTitle">Welcome to the Future</h2>
+                        <p class="text-slate-400 text-lg max-w-lg" id="slideBody">Gesture-controlled presentations powered by AI hand tracking. Point to advance, peace sign to go back.</p>
+                    </div>
+                </div>
+
+                <!-- Slide navigation dots -->
+                <div class="flex justify-center gap-2" id="progressDots"></div>
+
+                <!-- Controls -->
+                <div class="flex justify-center items-center gap-6">
+                    <button id="prevBtn" onclick="prevSlide()" class="flex items-center gap-2 px-5 py-2.5 glass rounded-xl hover:border-cyan-500/40 transition-all font-space text-sm">
+                        <span class="material-symbols-outlined">arrow_back_ios</span> Previous
+                    </button>
+                    <span class="text-slate-500 text-sm font-space" id="slideCounter">Slide 1 of 8</span>
+                    <button id="nextBtn" onclick="nextSlide()" class="flex items-center gap-2 px-5 py-2.5 glass rounded-xl hover:border-cyan-500/40 transition-all font-space text-sm">
+                        Next <span class="material-symbols-outlined">arrow_forward_ios</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Gestures + Status -->
+            <div class="space-y-4">
+                <!-- Gesture HUD -->
+                <div class="glass rounded-2xl p-5">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-4">Current Gesture</h3>
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="gesture-ring" id="gestureRing">🤚</div>
+                        <div class="text-cyan-400 font-space text-sm tracking-widest" id="gestureLabel">Waiting...</div>
+                        <div class="text-slate-500 text-xs" id="gestureAction">—</div>
+                    </div>
+                </div>
+
+                <!-- Gesture Guide -->
+                <div class="glass rounded-2xl p-5">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-4">Gesture Guide</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between py-2 border-b border-white/5">
+                            <div class="flex items-center gap-3"><span class="text-xl">👆</span><span class="text-sm font-space">Point</span></div>
+                            <span class="text-xs text-cyan-400">Next Slide</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 border-b border-white/5">
+                            <div class="flex items-center gap-3"><span class="text-xl">✌️</span><span class="text-sm font-space">Peace</span></div>
+                            <span class="text-xs text-cyan-400">Previous</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 border-b border-white/5">
+                            <div class="flex items-center gap-3"><span class="text-xl">✋</span><span class="text-sm font-space">Open Palm</span></div>
+                            <span class="text-xs text-green-400">Start (F5)</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2">
+                            <div class="flex items-center gap-3"><span class="text-xl">✊</span><span class="text-sm font-space">Fist</span></div>
+                            <span class="text-xs text-red-400">End (Esc)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Thumbnails -->
+                <div class="glass rounded-2xl p-5">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-4">Slide Deck</h3>
+                    <div class="space-y-2 max-h-64 overflow-y-auto" id="thumbnailList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auth guard
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/login';
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        });
+
+        // Auto-launch/kill client
+        const CLIENT_ID = '{{ client_id | default("presentation_game") }}';
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch(`/api/system/start-client/${CLIENT_ID}`, { method: 'POST', headers: {'Content-Type':'application/json'} })
+                .catch(e => console.log('Client launch error:', e));
+        });
+        window.addEventListener('beforeunload', () => {
+            navigator.sendBeacon(`/api/system/stop-client/${CLIENT_ID}`);
+        });
+
+        // Slide data
+        const slides = [
+            { emoji: '🚀', title: 'Welcome to the Future', body: 'Gesture-controlled presentations powered by AI hand tracking.' },
+            { emoji: '🤖', title: 'Gesture Recognition', body: 'MediaPipe detects 21 hand landmarks in real-time at 30+ FPS.' },
+            { emoji: '🧠', title: 'Neural Link Technology', body: 'WebSocket bridges your hand movements to the digital world instantly.' },
+            { emoji: '📊', title: 'Data Visualization', body: 'Transform how audiences interact with your data and insights.' },
+            { emoji: '🌐', title: 'Works Everywhere', body: 'Compatible with PowerPoint, Google Slides, LibreOffice, and PDF viewers.' },
+            { emoji: '⚡', title: 'Ultra-Low Latency', body: 'Under 50ms response time from gesture to action. Real-time control.' },
+            { emoji: '🎯', title: 'Precision Control', body: 'Sub-pixel accuracy with confidence scoring and cooldown management.' },
+            { emoji: '✅', title: 'Get Started Today', body: 'Open your presentation and use OPEN PALM gesture to start the show!' },
+        ];
+
+        let currentSlide = 0;
+
+        function buildDots() {
+            const container = document.getElementById('progressDots');
+            container.innerHTML = '';
+            slides.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.className = `progress-dot ${i === 0 ? 'active' : ''}`;
+                dot.onclick = () => goToSlide(i);
+                dot.style.cursor = 'pointer';
+                container.appendChild(dot);
+            });
+        }
+
+        function buildThumbnails() {
+            const list = document.getElementById('thumbnailList');
+            list.innerHTML = '';
+            slides.forEach((slide, i) => {
+                const item = document.createElement('div');
+                item.className = `flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-white/5 ${i === 0 ? 'bg-cyan-500/10 border border-cyan-500/30' : ''}`;
+                item.id = `thumb-${i}`;
+                item.innerHTML = `<span class="text-lg">${slide.emoji}</span><div><div class="text-xs font-space text-white">${slide.title}</div><div class="text-[10px] text-slate-500">Slide ${i+1}</div></div>`;
+                item.onclick = () => goToSlide(i);
+                list.appendChild(item);
+            });
+        }
+
+        function renderSlide(dir = 'none') {
+            const slide = slides[currentSlide];
+            const container = document.getElementById('slideContainer');
+            container.classList.remove('active-next', 'active-prev');
+            void container.offsetWidth; // reflow
+            if (dir === 'next') container.classList.add('active-next');
+            else if (dir === 'prev') container.classList.add('active-prev');
+
+            document.getElementById('slideEmoji').textContent = slide.emoji;
+            document.getElementById('slideTitle').textContent = slide.title;
+            document.getElementById('slideBody').textContent = slide.body;
+            document.getElementById('slideBadge').textContent = `${currentSlide + 1} / ${slides.length}`;
+            document.getElementById('slideCounter').textContent = `Slide ${currentSlide + 1} of ${slides.length}`;
+
+            // Update dots
+            document.querySelectorAll('.progress-dot').forEach((d, i) => {
+                d.classList.toggle('active', i === currentSlide);
+            });
+            // Update thumbnails
+            document.querySelectorAll('[id^="thumb-"]').forEach((t, i) => {
+                t.className = `flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-white/5 ${i === currentSlide ? 'bg-cyan-500/10 border border-cyan-500/30' : ''}`;
+            });
+        }
+
+        function goToSlide(index, dir = 'none') {
+            const oldIndex = currentSlide;
+            currentSlide = Math.max(0, Math.min(slides.length - 1, index));
+            const d = currentSlide > oldIndex ? 'next' : currentSlide < oldIndex ? 'prev' : dir;
+            renderSlide(d);
+        }
+
+        function nextSlide() { goToSlide(currentSlide + 1, 'next'); }
+        function prevSlide() { goToSlide(currentSlide - 1, 'prev'); }
+
+        // Keyboard fallback
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') nextSlide();
+            else if (e.key === 'ArrowLeft') prevSlide();
+        });
+        document.getElementById('fullscreenBtn').addEventListener('click', () => {
+            document.getElementById('slideContainer').requestFullscreen?.();
+        });
+
+        buildDots();
+        buildThumbnails();
+        renderSlide();
+
+        // WebSocket Gesture Control
+        const gestureIcons = { POINT: '👆', PEACE: '✌️', OPEN_PALM: '✋', FIST: '✊' };
+        const gestureActions = {
+            POINT:     'Next Slide →',
+            PEACE:     '← Previous Slide',
+            OPEN_PALM: 'Start Presentation',
+            FIST:      'End Presentation'
+        };
+
+        function showGestureFeedback(gesture) {
+            const ring = document.getElementById('gestureRing');
+            const label = document.getElementById('gestureLabel');
+            const action = document.getElementById('gestureAction');
+            ring.textContent = gestureIcons[gesture] || '🤚';
+            label.textContent = gesture;
+            action.textContent = gestureActions[gesture] || '—';
+            ring.classList.add('active');
+            setTimeout(() => ring.classList.remove('active'), 600);
+        }
+
+        const socket = io('/', { query: { token }, transports: ['websocket', 'polling'] });
+
+        socket.on('connect', () => {
+            document.getElementById('neuralDot').className = 'w-2 h-2 rounded-full bg-green-500 animate-pulse';
+            document.getElementById('neuralText').textContent = 'Neural Link Active';
+            document.getElementById('neuralLinkBadge').className = 'neural-badge px-3 py-1.5 rounded-full border border-green-500/40 bg-green-500/10';
+            document.getElementById('neuralText').className = 'text-xs text-green-400 font-space tracking-wider';
+        });
+        socket.on('disconnect', () => {
+            document.getElementById('neuralDot').className = 'w-2 h-2 rounded-full bg-red-500';
+            document.getElementById('neuralText').textContent = 'Disconnected';
+        });
+
+        let lastGestureTime = 0;
+        socket.on('gesture_activity', (data) => {
+            const gesture = (data.gesture || '').toUpperCase();
+            const now = Date.now();
+            if (now - lastGestureTime < 600) return; // client-side cooldown
+            lastGestureTime = now;
+
+            if (gesture === 'POINT')     { nextSlide(); showGestureFeedback(gesture); }
+            else if (gesture === 'PEACE') { prevSlide(); showGestureFeedback(gesture); }
+            else if (gesture === 'OPEN_PALM' || gesture === 'OPEN PALM') { showGestureFeedback('OPEN_PALM'); }
+            else if (gesture === 'FIST') { showGestureFeedback(gesture); }
+        });
+    </script>
+</body>
+</html>
