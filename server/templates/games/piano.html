@@ -33,6 +33,11 @@
         transform: rotateX(5deg);
     }
 
+    .key:hover {
+        background: rgba(0, 243, 255, 0.1);
+        border-color: #00f3ff;
+    }
+
     .key::before {
         content: '';
         position: absolute;
@@ -108,16 +113,6 @@
         animation: keyGlow 0.3s ease-out;
     }
 
-    .gesture-hint {
-        transition: all 0.2s ease;
-    }
-
-    .gesture-hint.active {
-        transform: scale(1.1);
-        background: rgba(0, 243, 255, 0.2);
-        border-color: #00f3ff;
-    }
-
     @keyframes pulse {
 
         0%,
@@ -149,8 +144,8 @@
                 <h1 class="text-4xl font-space font-bold tracking-tight">Gesture <span
                         class="text-cyan-400">Piano</span></h1>
             </div>
-            <p class="text-slate-500 text-xs uppercase tracking-[0.3em] font-space">Hover over keys with finger | Pinch
-                to play</p>
+            <p class="text-slate-500 text-xs uppercase tracking-[0.3em] font-space">Click keys or use gestures to play
+            </p>
         </div>
 
         <div class="flex gap-3">
@@ -185,7 +180,7 @@
     <!-- Visualizer -->
     <div class="wave-display" id="visualizer"></div>
 
-    <!-- Piano Keys -->
+    <!-- Piano Keys - Will be populated by JavaScript -->
     <div class="piano-container" id="piano"></div>
 
     <!-- Stats -->
@@ -204,7 +199,7 @@
         </div>
         <div class="glass rounded-xl p-4 text-center">
             <div class="text-xs text-slate-400 uppercase tracking-wider">Status</div>
-            <div class="text-sm text-green-400" id="statusText">Connected</div>
+            <div class="text-sm text-green-400" id="statusText">Ready</div>
         </div>
     </div>
 
@@ -252,9 +247,6 @@
 
     const visualizer = document.getElementById('visualizer');
     const bars = [];
-    let socket = null;
-    let isConnected = false;
-    let lastGestureTime = 0;
     let currentHoveredKey = null;
 
     // Create visualizer bars
@@ -329,20 +321,15 @@
             });
             updateSongStatus();
         }
-
-        // Send to server via WebSocket
-        if (socket && isConnected) {
-            socket.emit('gesture_update', {
-                gesture: 'PLAY_NOTE',
-                note: `${note.display}${octave}`,
-                confidence: 0.95,
-                type: 'piano'
-            });
-        }
     }
 
     function buildPiano() {
         const pianoContainer = document.getElementById('piano');
+        if (!pianoContainer) {
+            console.error('Piano container not found!');
+            return;
+        }
+
         pianoContainer.innerHTML = '';
 
         notes.forEach(note => {
@@ -368,6 +355,8 @@
 
             pianoContainer.appendChild(key);
         });
+
+        console.log(`[Piano] Built ${notes.length} keys for octave ${currentOctave}`);
     }
 
     function changeOctave(delta) {
@@ -383,7 +372,6 @@
         const playbackBtn = document.getElementById('playbackBtn');
         if (recordedNotes.length > 0) {
             playbackBtn.disabled = false;
-            playbackBtn.classList.remove('opacity-50');
         } else {
             playbackBtn.disabled = true;
         }
@@ -407,7 +395,7 @@
         document.getElementById('statusText').textContent = `✅ Recorded ${recordedNotes.length} notes`;
         document.getElementById('statusText').classList.add('text-green-400');
         setTimeout(() => {
-            document.getElementById('statusText').textContent = 'Connected';
+            document.getElementById('statusText').textContent = 'Ready';
             document.getElementById('statusText').classList.remove('text-green-400');
         }, 2000);
         updateSongStatus();
@@ -429,7 +417,6 @@
             }
 
             const noteData = recordedNotes[playbackIndex];
-            // Play note using stored frequency
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
 
@@ -472,7 +459,7 @@
     function stopPlayback() {
         playback = false;
         document.getElementById('playbackBtn').innerHTML = '<span class="material-symbols-outlined text-sm">play_arrow</span> Play';
-        document.getElementById('statusText').textContent = 'Connected';
+        document.getElementById('statusText').textContent = 'Ready';
         document.getElementById('statusText').classList.remove('text-green-400');
     }
 
@@ -483,80 +470,31 @@
         updateSongStatus();
         document.getElementById('statusText').textContent = '🗑️ Song cleared';
         setTimeout(() => {
-            document.getElementById('statusText').textContent = 'Connected';
+            document.getElementById('statusText').textContent = 'Ready';
         }, 1500);
     }
 
-    // WebSocket for gesture control
-    function initGestureControl() {
-        // Use the global socket from base.html if available
-        const currentSocket = window.socket || (typeof socket !== 'undefined' ? socket : null);
-        
-        if (!currentSocket) {
-            console.warn('[Piano] Global socket not found, waiting...');
-            setTimeout(initGestureControl, 1000);
-            return;
-        }
-
-        console.log('[Piano] Gesture control linked to neural link');
-        isConnected = true;
-
-        // Hook into the global gesture handler
-        window.handleGesture = function(gesture, data) {
-            if (!data) return;
-            
+    // Simulate gesture for demo (for testing without actual gesture client)
+    function simulateGestureForDemo() {
+        // This shows random gestures for demo purposes
+        const gestures = ['POINT', 'PINCH', 'PEACE', 'FIST'];
+        let idx = 0;
+        setInterval(() => {
+            const gesture = gestures[idx % gestures.length];
             document.getElementById('currentGesture').textContent = gesture;
-            
-            // Handle X-position based hovering for all pointing gestures
-            if (data.x !== undefined) {
-                const pianoContainer = document.getElementById('piano');
-                const keyCount = notes.length;
-                const index = Math.floor(data.x * keyCount);
-                const allKeys = pianoContainer.querySelectorAll('.key');
-                
-                if (index >= 0 && index < allKeys.length) {
-                    const targetKey = allKeys[index];
-                    if (currentHoveredKey !== targetKey) {
-                        // Clear old hover
-                        if (currentHoveredKey) currentHoveredKey.style.background = '';
-                        
-                        currentHoveredKey = targetKey;
-                        // Visual hint for hover
-                        currentHoveredKey.style.background = 'rgba(0, 243, 255, 0.1)';
-                    }
-                }
-            }
+            idx++;
 
-            // Handle action gestures
-            if (gesture === 'PINCH' || gesture === 'LEFT_CLICK') {
-                if (currentHoveredKey) {
-                    const noteName = currentHoveredKey.getAttribute('data-note-name');
-                    const octave = parseInt(currentHoveredKey.getAttribute('data-octave'));
-                    const note = notes.find(n => n.name === noteName);
-                    if (note) {
-                        playNote(note, octave);
-                    }
-                }
-            } else if (gesture === 'PEACE') {
-                const now = Date.now();
-                if (now - lastGestureTime > 1000) { // Cooldown for toggle
-                    if (!recording && !playback) {
-                        startRecording();
-                    } else if (recording) {
-                        stopRecording();
-                    } else if (playback) {
-                        stopPlayback();
-                    }
-                    lastGestureTime = now;
-                }
-            } else if (gesture === 'FIST') {
-                const now = Date.now();
-                if (now - lastGestureTime > 1000) {
-                    clearSong();
-                    lastGestureTime = now;
+            // Simulate pointing position (random key)
+            const keys = document.querySelectorAll('.key');
+            if (keys.length > 0) {
+                const randomKey = keys[Math.floor(Math.random() * keys.length)];
+                if (currentHoveredKey !== randomKey) {
+                    if (currentHoveredKey) currentHoveredKey.style.background = '';
+                    currentHoveredKey = randomKey;
+                    currentHoveredKey.style.background = 'rgba(0, 243, 255, 0.1)';
                 }
             }
-        };
+        }, 3000);
     }
 
     // Event listeners
@@ -581,13 +519,17 @@
         oscTypeLabel.textContent = oscType.charAt(0).toUpperCase() + oscType.slice(1);
     });
 
-    // Initialize
+    // Initialize piano
     buildPiano();
-    initGestureControl();
+
+    // For demo purposes, simulate gestures (remove this in production)
+    simulateGestureForDemo();
 
     // Initialize audio on first user interaction
     document.body.addEventListener('click', () => {
         initAudio();
     }, { once: true });
+
+    console.log('[Piano] Page initialized successfully');
 </script>
 {% endblock %}
