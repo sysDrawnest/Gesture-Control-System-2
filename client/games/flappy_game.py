@@ -14,6 +14,7 @@ import time
 import argparse
 import os
 import sys
+import pyautogui
 
 # Add parent directory to sys.path to allow importing core modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -137,17 +138,22 @@ def main():
 
     # State tracking
     last_gesture = "NONE"
+    flap_count = 0
+    last_flap_time = 0
+    FLAP_COOLDOWN = 0.15  # 150ms between flaps
     
     print("=" * 60)
-    print("👾 FLAPPY PULSE CONTROLLER ACTIVE")
-    print("   PINCH or OPEN_PALM to Flap!")
-    print("   Low latency mode enabled.")
+    print("🐦 FLAPPY PULSE CONTROLLER ACTIVE")
+    print("   🤏 PINCH or ✋ OPEN_PALM to Flap!")
+    print("   💡 TIP: Tap repeatedly like a drum beat!")
+    print("   📊 Flap counter will show on screen")
     print("=" * 60)
 
     try:
         while True:
             ret, frame = cap.read()
-            if not ret: break
+            if not ret: 
+                break
 
             frame = cv2.flip(frame, 1)
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -155,28 +161,79 @@ def main():
             result = detector.detect(rgb_image)
 
             gesture = "NONE"
+            current_time = time.time()
+            gesture_detected = False
+            
             if result.hand_landmarks:
                 lms = result.hand_landmarks[0]
                 draw_hand_landmarks(frame, lms)
                 gesture = detect_game_gesture(lms)
                 
-                # Only trigger on gesture transition or if it's a "pulse"
+                # Trigger flap on gesture with cooldown
                 if gesture in ["PINCH", "OPEN_PALM"] and gesture != last_gesture:
-                    connector.send_gesture_event(gesture, 0.98)
-                    print(f"[ACTION] FLAP -> {gesture}")
+                    if current_time - last_flap_time >= FLAP_COOLDOWN:
+                        gesture_detected = True
+                        flap_count += 1
+                        last_flap_time = current_time
+                        
+                        # Send SPACE key to game
+                        pyautogui.press('space')
+                        
+                        # Also send to server for logging
+                        connector.send_gesture_event(gesture, 0.98)
+                        print(f"[FLAP #{flap_count}] {gesture} - {time.strftime('%H:%M:%S')}")
                 
             last_gesture = gesture
 
-            # UI Overlay
-            cv2.rectangle(frame, (0, 0), (CAM_WIDTH, 50), (20, 20, 20), -1)
-            cv2.putText(frame, f"FLAPPY PULSE | GESTURE: {gesture}", (15, 35),
+            # ========== VISUAL UI OVERLAY ==========
+            # Dark background for text
+            cv2.rectangle(frame, (0, 0), (CAM_WIDTH, 120), (20, 20, 20), -1)
+            
+            # Title
+            cv2.putText(frame, "🐦 FLAPPY PULSE CONTROLLER", (15, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (139, 92, 246), 2)
+            
+            # Current Gesture
+            gesture_color = (0, 255, 0) if gesture in ["PINCH", "OPEN_PALM"] else (100, 100, 100)
+            cv2.putText(frame, f"GESTURE: {gesture}", (15, 55),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, gesture_color, 2)
+            
+            # Flap Counter (BIG!)
+            cv2.putText(frame, f"FLAPS: {flap_count}", (15, 85),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+            
+            # Visual feedback when flapping
+            if gesture_detected:
+                # Flash green screen effect
+                cv2.rectangle(frame, (0, 0), (CAM_WIDTH, CAM_HEIGHT), (0, 255, 0), 3)
+                cv2.putText(frame, "⬆️ FLAP! ⬆️", (CAM_WIDTH//2 - 80, CAM_HEIGHT//2),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
+            
+            # Instructions
+            cv2.putText(frame, "👇 PINCH or OPEN PALM = FLAP (tap repeatedly!)", (15, CAM_HEIGHT - 50),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+            cv2.putText(frame, "Press 'q' to quit", (15, CAM_HEIGHT - 25),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+            
+            # Pinch distance bar (if hand detected)
+            if result.hand_landmarks:
+                lms = result.hand_landmarks[0]
+                pinch_dist = calculate_distance(lms[4], lms[8])
+                bar_width = int(pinch_dist * 300)
+                cv2.rectangle(frame, (CAM_WIDTH - 220, 10), (CAM_WIDTH - 10, 30), (50, 50, 50), -1)
+                cv2.rectangle(frame, (CAM_WIDTH - 220, 10), (CAM_WIDTH - 220 + min(200, bar_width), 30), 
+                             (0, 255, 255), -1)
+                cv2.putText(frame, f"PINCH: {pinch_dist:.2f}", (CAM_WIDTH - 200, 48),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
 
-            cv2.imshow("Flappy Neural Link", frame)
+            cv2.imshow("Flappy Pulse - Neural Link", frame)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
+                print(f"\n[STATS] Total flaps: {flap_count}")
                 break
+                
     except KeyboardInterrupt:
+        print(f"\n[STATS] Total flaps: {flap_count}")
         pass
     finally:
         print("[SHUTDOWN] Severing neural link...")
