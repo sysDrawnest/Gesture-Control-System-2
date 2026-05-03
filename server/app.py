@@ -222,11 +222,22 @@ def start_client(client_name):
     """Start the gesture client process automatically"""
     client_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'client'))
     script_name = f"{client_name}.py"
-    script_path = os.path.join(client_dir, script_name)
+    
+    # Check in client/games/ first if it's a game
+    games_dir = os.path.join(client_dir, 'games')
+    game_script_path = os.path.join(games_dir, script_name)
+    
+    if os.path.exists(game_script_path):
+        client_dir = games_dir
+        script_path = game_script_path
+    else:
+        script_path = os.path.join(client_dir, script_name)
     
     # Fallback to main gesture client if specific one doesn't exist
     if not os.path.exists(script_path):
         script_name = "final_gesture_client_fixed.py"
+        client_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'client'))
+        script_path = os.path.join(client_dir, script_name)
         
     try:
         import sys
