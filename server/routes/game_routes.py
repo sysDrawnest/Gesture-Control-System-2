@@ -20,6 +20,7 @@ GAME_CLIENT_MAPPING = {
 }
 
 @games_bp.route('/games/<game_slug>')
+@games_bp.route('/game/<game_slug>')
 @login_required
 def individual_game(game_slug):
     """Dynamic route for individual games"""

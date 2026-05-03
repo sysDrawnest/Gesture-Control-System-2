@@ -104,7 +104,7 @@ def verify_token():
     
     return jsonify({
         'success': True,
-        'user': user_info
+        'user': user_info.to_dict()
     }), 200
 
 @auth_bp.route('/profile', methods=['GET'])
@@ -116,7 +116,7 @@ def get_profile():
     if user_info:
         return jsonify({
             'success': True,
-            'user': user_info
+            'user': user_info.to_dict()
         }), 200
     else:
         return jsonify({

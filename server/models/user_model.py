@@ -160,6 +160,23 @@ class UserModel:
             return user, None
         return None, "User not found"
 
+    def to_dict(self):
+        """Convert user model to dictionary for JSON serialization"""
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'full_name': getattr(self, 'full_name', None),
+            'bio': getattr(self, 'bio', None),
+            'location': getattr(self, 'location', None),
+            'avatar': getattr(self, 'avatar', None),
+            'theme': getattr(self, 'theme', None),
+            'dominant_hand': getattr(self, 'dominant_hand', 'right'),
+            'gesture_sensitivity': getattr(self, 'gesture_sensitivity', 0.5),
+            'created_at': self.created_at,
+            'last_login': self.last_login
+        }
+
     # Flask-Login required methods
     def get_id(self):
         return str(self.id)
