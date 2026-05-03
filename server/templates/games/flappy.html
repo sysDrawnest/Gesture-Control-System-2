@@ -4,114 +4,176 @@
 
 {% block extra_css %}
 <style>
+    :root {
+        --bird-color: #8b5cf6;
+        --pipe-color: #2d2d44;
+        --accent-glow: rgba(139, 92, 246, 0.4);
+    }
+
     .game-screen {
-        background: linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 100%);
-        border-radius: 24px;
-        box-shadow: 0 0 50px rgba(139, 92, 246, 0.1);
+        background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a0a 100%);
+        border-radius: 32px;
+        box-shadow: 0 0 80px rgba(0, 0, 0, 0.5), inset 0 0 100px rgba(139, 92, 246, 0.05);
         position: relative;
         overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     #bird {
         position: absolute;
-        width: 38px;
-        height: 38px;
-        font-size: 32px;
+        width: 42px;
+        height: 42px;
+        z-index: 10;
+        filter: drop-shadow(0 0 15px var(--accent-glow));
+        transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 5;
-        transition: transform 0.1s;
+        font-size: 36px;
     }
 
     .pipe {
         position: absolute;
-        width: 60px;
-        background: linear-gradient(90deg, #2d2d44 0%, #1e1e30 100%);
-        border: 2px solid rgba(139, 92, 246, 0.3);
-        z-index: 2;
+        width: 70px;
+        background: linear-gradient(90deg, #1e1e30 0%, #2d2d44 50%, #1e1e30 100%);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        z-index: 5;
+        box-shadow: 0 0 30px rgba(0,0,0,0.3);
     }
 
     .pipe-top {
-        border-bottom-left-radius: 8px;
-        border-bottom-right-radius: 8px;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
     }
 
     .pipe-bottom {
-        border-top-left-radius: 8px;
-        border-top-right-radius: 8px;
-        box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.5);
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
     }
 
-    .score-panel {
-        background: rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(139, 92, 246, 0.2);
+    .grid-bg {
+        position: absolute;
+        inset: 0;
+        background-image: 
+            linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
+        pointer-events: none;
+    }
+
+    .pulse-ring {
+        position: absolute;
+        border: 2px solid var(--bird-color);
+        border-radius: 50%;
+        animation: pulse-out 0.8s ease-out forwards;
+        pointer-events: none;
+    }
+
+    @keyframes pulse-out {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(3); opacity: 0; }
+    }
+
+    .score-badge {
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 8px 20px;
+        border-radius: 100px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto py-12 px-6">
-    <div class="flex justify-between items-center mb-8">
+<div class="max-w-5xl mx-auto py-12 px-6">
+    <div class="flex justify-between items-end mb-10">
         <div>
-            <div class="flex items-center gap-3 mb-1">
-                <a href="/games"
-                    class="p-2 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-purple-400 transition-all">
+            <div class="flex items-center gap-4 mb-2">
+                <a href="/games" class="p-3 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-purple-400 hover:border-purple-500/30 transition-all">
                     <span class="material-symbols-outlined">arrow_back</span>
                 </a>
-                <h1 class="text-3xl font-space font-bold tracking-tight">Flappy <span
-                        class="text-purple-400">Pulse</span></h1>
+                <div>
+                    <h1 class="text-4xl font-space font-bold tracking-tight">FLAPPY <span class="text-purple-400">PULSE</span></h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <p class="text-slate-500 text-[10px] uppercase tracking-[0.3em] font-space">Neural Link Active</p>
+                    </div>
+                </div>
             </div>
-            <p class="text-slate-500 text-[10px] uppercase tracking-[0.3em] font-space ml-12">Pinch to Flap</p>
         </div>
 
-        <div class="flex gap-4">
-            <div class="score-panel px-4 py-2 rounded-xl text-center min-w-[80px]">
-                <p class="text-[9px] text-slate-500 uppercase font-space">Score</p>
-                <p id="score" class="text-xl font-space font-bold text-white">0</p>
+        <div class="flex gap-6">
+            <div class="score-badge text-center min-w-[100px]">
+                <p class="text-[10px] text-slate-500 uppercase font-space tracking-tighter">Current Sync</p>
+                <p id="score" class="text-2xl font-space font-bold text-white">0</p>
             </div>
-            <div class="score-panel px-4 py-2 rounded-xl text-center min-w-[80px]">
-                <p class="text-[9px] text-slate-500 uppercase font-space">Best</p>
-                <p id="highScore" class="text-xl font-space font-bold text-purple-400">0</p>
+            <div class="score-badge text-center min-w-[100px] border-purple-500/30">
+                <p class="text-[10px] text-purple-400/60 uppercase font-space tracking-tighter">Peak Pulse</p>
+                <p id="highScore" class="text-2xl font-space font-bold text-purple-400">0</p>
             </div>
         </div>
     </div>
 
     <!-- Game Container -->
-    <div id="gameArea" class="game-screen w-full h-[500px] border border-white/5">
-        <div id="bird" style="top: 250px; left: 80px;">👾</div>
+    <div id="gameArea" class="game-screen w-full h-[550px]">
+        <div class="grid-bg"></div>
+        
+        <div id="bird" style="top: 250px; left: 100px;">👾</div>
 
         <!-- Score HUD -->
-        <div id="scoreHUD"
-            class="absolute top-10 left-1/2 -translate-x-1/2 text-8xl font-space font-bold text-white/10 pointer-events-none">
-            0</div>
-
-        <!-- Overlays -->
-        <div id="startScreen"
-            class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm transition-all duration-500">
-            <div
-                class="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center border border-purple-500/40 mb-4 animate-float">
-                <span class="text-4xl text-purple-400">👾</span>
-            </div>
-            <h2 class="text-2xl font-space font-bold tracking-widest mb-2 text-white">FLAPPY PULSE</h2>
-            <p class="text-slate-400 text-sm mb-6 uppercase tracking-widest font-space">Ready to flap?</p>
-            <button onclick="startGame()"
-                class="px-10 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-space font-bold uppercase tracking-[0.2em] shadow-lg shadow-purple-950/50 transition-all">
-                Launch
-            </button>
+        <div id="scoreHUD" class="absolute top-12 left-1/2 -translate-x-1/2 text-[12rem] font-space font-bold text-white/5 pointer-events-none select-none">
+            0
         </div>
 
-        <div id="deathScreen"
-            class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-red-950/20 backdrop-blur-md">
-            <span class="text-6xl mb-4">💥</span>
-            <h2 class="text-3xl font-space font-bold text-white mb-2">SYSTEM CRASH</h2>
-            <p id="finalScore" class="text-purple-300 font-space mb-8 tracking-widest uppercase">SCORE: 0</p>
-            <button onclick="startGame()"
-                class="px-10 py-3 bg-white text-black hover:bg-purple-200 rounded-full font-space font-bold uppercase tracking-[0.2em] transition-all">
-                Reboot
+        <!-- Overlays -->
+        <div id="startScreen" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md transition-all duration-500">
+            <div class="relative mb-8">
+                <div class="absolute inset-0 bg-purple-500 blur-3xl opacity-20 animate-pulse"></div>
+                <div class="w-24 h-24 bg-white/5 rounded-3xl flex items-center justify-center border border-white/10 backdrop-blur-xl relative z-10">
+                    <span class="text-5xl animate-float">👾</span>
+                </div>
+            </div>
+            <h2 class="text-4xl font-space font-bold tracking-[0.3em] mb-3 text-white">FLAPPY PULSE</h2>
+            <p class="text-slate-400 text-sm mb-10 uppercase tracking-[0.4em] font-space">Calibrate Gesture to Begin</p>
+            
+            <div class="flex flex-col gap-4 items-center">
+                <button onclick="startGame()" class="group relative px-12 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-space font-bold uppercase tracking-[0.3em] transition-all overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
+                    Initialize
+                </button>
+                <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-4">Pinch or Open Palm to flap</p>
+            </div>
+        </div>
+
+        <div id="deathScreen" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-red-950/40 backdrop-blur-xl">
+            <div class="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/40 mb-6">
+                <span class="text-4xl">💥</span>
+            </div>
+            <h2 class="text-4xl font-space font-bold text-white mb-2 tracking-widest">SYSTEM FAILURE</h2>
+            <p id="finalScore" class="text-purple-300 font-space text-xl mb-12 tracking-[0.2em] uppercase">SYNC: 0</p>
+            
+            <button onclick="startGame()" class="px-12 py-4 bg-white text-black hover:bg-purple-200 rounded-2xl font-space font-bold uppercase tracking-[0.3em] transition-all shadow-2xl shadow-white/10">
+                Reboot System
             </button>
+        </div>
+    </div>
+
+    <!-- Controls Info -->
+    <div class="mt-8 grid grid-cols-3 gap-6">
+        <div class="glass p-6 rounded-3xl border border-white/5">
+            <div class="text-purple-400 mb-3"><span class="material-symbols-outlined">pinch</span></div>
+            <h4 class="text-white font-space font-bold text-sm uppercase tracking-wider mb-1">Pinch to Flap</h4>
+            <p class="text-slate-500 text-xs leading-relaxed">Quickly join index and thumb to trigger neural lift.</p>
+        </div>
+        <div class="glass p-6 rounded-3xl border border-white/5">
+            <div class="text-cyan-400 mb-3"><span class="material-symbols-outlined">front_hand</span></div>
+            <h4 class="text-white font-space font-bold text-sm uppercase tracking-wider mb-1">Open Palm</h4>
+            <p class="text-slate-500 text-xs leading-relaxed">Spread your fingers for a secondary jump trigger.</p>
+        </div>
+        <div class="glass p-6 rounded-3xl border border-white/5">
+            <div class="text-pink-400 mb-3"><span class="material-symbols-outlined">bolt</span></div>
+            <h4 class="text-white font-space font-bold text-sm uppercase tracking-wider mb-1">Low Latency</h4>
+            <p class="text-slate-500 text-xs leading-relaxed">The system is optimized for real-time neural response.</p>
         </div>
     </div>
 </div>
@@ -129,8 +191,8 @@
 
     let birdY = 250;
     let velocity = 0;
-    let gravity = 0.4;
-    let lift = -8;
+    let gravity = 0.35;
+    let lift = -7.5;
     let isGameOver = true;
     let score = 0;
     let pipes = [];
@@ -140,29 +202,52 @@
     let highScore = localStorage.getItem('flappyHighScore') || 0;
     highScoreEl.textContent = highScore;
 
+    function createPulseRing() {
+        const ring = document.createElement('div');
+        ring.className = 'pulse-ring';
+        ring.style.width = '40px';
+        ring.style.height = '40px';
+        ring.style.left = (bird.offsetLeft) + 'px';
+        ring.style.top = (bird.offsetTop) + 'px';
+        gameArea.appendChild(ring);
+        setTimeout(() => ring.remove(), 800);
+    }
+
     function flap() {
         if (isGameOver) return;
         velocity = lift;
-        bird.style.transform = 'rotate(-25deg)';
+        createPulseRing();
     }
 
-    // Global handleGesture
+    // Global handleGesture from base.html
     window.handleGesture = function (gesture) {
         if (gesture === 'PINCH' || gesture === 'OPEN_PALM' || gesture === 'LEFT_CLICK') {
-            if (isGameOver) startGame();
-            else flap();
+            if (isGameOver && !deathScreen.classList.contains('hidden')) {
+                // Wait a bit before allowing restart after death
+            } else if (isGameOver && !startScreen.classList.contains('hidden')) {
+                startGame();
+            } else {
+                flap();
+            }
         }
     }
 
     document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' || e.code === 'ArrowUp') flap();
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+            if (isGameOver) startGame();
+            else flap();
+        }
     });
-    gameArea.addEventListener('click', flap);
+    
+    gameArea.addEventListener('click', () => {
+        if (isGameOver) startGame();
+        else flap();
+    });
 
     function createPipe() {
         if (isGameOver) return;
-        const gap = 160;
-        const minHeight = 50;
+        const gap = 180;
+        const minHeight = 60;
         const maxHeight = gameArea.offsetHeight - gap - minHeight;
         const height = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
 
@@ -191,8 +276,8 @@
         birdY += velocity;
         bird.style.top = birdY + 'px';
 
-        // Rotation based on velocity
-        const rotation = Math.min(Math.max(velocity * 4, -25), 90);
+        // Advanced rotation
+        const rotation = Math.min(Math.max(velocity * 3, -25), 90);
         bird.style.transform = `rotate(${rotation}deg)`;
 
         // Collision Check: Floor/Ceiling
@@ -202,28 +287,33 @@
 
         // Update Pipes
         pipes.forEach((pipe, index) => {
-            pipe.x -= 4;
+            pipe.x -= 4.5; // Slightly faster for more challenge
             pipe.top.style.left = pipe.x + 'px';
             pipe.bottom.style.left = pipe.x + 'px';
 
-            // Collision Check: Pipes
-            if (pipe.x < 110 && pipe.x + 60 > 80) {
-                const birdTop = birdY;
-                const birdBottom = birdY + 30;
-                const pipeTopEnd = parseInt(pipe.top.style.height);
-                const pipeBottomStart = gameArea.offsetHeight - parseInt(pipe.bottom.style.height);
+            // Precise Collision Check
+            const birdRect = bird.getBoundingClientRect();
+            const topPipeRect = pipe.top.getBoundingClientRect();
+            const bottomPipeRect = pipe.bottom.getBoundingClientRect();
 
-                if (birdTop < pipeTopEnd || birdBottom > pipeBottomStart) {
-                    endGame();
-                }
+            if (
+                birdRect.right > topPipeRect.left + 5 && 
+                birdRect.left < topPipeRect.right - 5 && 
+                (birdRect.top < topPipeRect.bottom - 5 || birdRect.bottom > bottomPipeRect.top + 5)
+            ) {
+                endGame();
             }
 
             // Score Check
-            if (!pipe.passed && pipe.x < 80) {
+            if (!pipe.passed && pipe.x < 100) {
                 pipe.passed = true;
                 score++;
                 scoreEl.textContent = score;
                 scoreHUD.textContent = score;
+                
+                // Visual feedback on score
+                scoreHUD.classList.add('text-purple-500/20');
+                setTimeout(() => scoreHUD.classList.remove('text-purple-500/20'), 200);
             }
 
             // Remove off-screen pipes
@@ -238,30 +328,37 @@
     }
 
     function startGame() {
-        isGameOver = false;
-        birdY = 250;
-        velocity = 0;
-        score = 0;
-        scoreEl.textContent = '0';
-        scoreHUD.textContent = '0';
-        pipes.forEach(p => { p.top.remove(); p.bottom.remove(); });
-        pipes = [];
+        if (!deathScreen.classList.contains('hidden') || !startScreen.classList.contains('hidden')) {
+            isGameOver = false;
+            birdY = 250;
+            velocity = 0;
+            score = 0;
+            scoreEl.textContent = '0';
+            scoreHUD.textContent = '0';
+            pipes.forEach(p => { p.top.remove(); p.bottom.remove(); });
+            pipes = [];
 
-        startScreen.classList.add('hidden');
-        deathScreen.classList.add('hidden');
+            startScreen.classList.add('hidden');
+            deathScreen.classList.add('hidden');
 
-        cancelAnimationFrame(animationId);
-        update();
+            cancelAnimationFrame(animationId);
+            update();
 
-        clearInterval(pipeInterval);
-        pipeInterval = setInterval(createPipe, 1500);
+            clearInterval(pipeInterval);
+            pipeInterval = setInterval(createPipe, 1600);
+        }
     }
 
     function endGame() {
+        if (isGameOver) return;
         isGameOver = true;
         clearInterval(pipeInterval);
         deathScreen.classList.remove('hidden');
-        document.getElementById('finalScore').textContent = 'SCORE: ' + score;
+        document.getElementById('finalScore').textContent = 'SYNC: ' + score;
+
+        // Shake effect on death
+        gameArea.classList.add('animate-pulse');
+        setTimeout(() => gameArea.classList.remove('animate-pulse'), 500);
 
         if (score > highScore) {
             highScore = score;
