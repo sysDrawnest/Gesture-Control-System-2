@@ -95,8 +95,8 @@
                 <div>
                     <h1 class="text-4xl font-space font-bold tracking-tight">FLAPPY <span class="text-purple-400">PULSE</span></h1>
                     <div class="flex items-center gap-2 mt-1">
-                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        <p class="text-slate-500 text-[10px] uppercase tracking-[0.3em] font-space">Neural Link Active</p>
+                        <span id="neuralDot" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                        <p id="neuralStatusText" class="text-slate-500 text-[10px] uppercase tracking-[0.3em] font-space">Initializing Link...</p>
                     </div>
                 </div>
             </div>
@@ -365,6 +365,27 @@
             localStorage.setItem('flappyHighScore', highScore);
             highScoreEl.textContent = highScore;
         }
+    }
+
+    // Sync status badge with WebSocket state
+    if (typeof socket !== 'undefined') {
+        const updateStatus = (connected) => {
+            const dot = document.getElementById('neuralDot');
+            const text = document.getElementById('neuralStatusText');
+            if (dot && text) {
+                if (connected) {
+                    dot.className = 'w-2 h-2 rounded-full bg-green-500 animate-pulse';
+                    text.textContent = 'Neural Link Active';
+                } else {
+                    dot.className = 'w-2 h-2 rounded-full bg-red-500';
+                    text.textContent = 'Link Severed';
+                }
+            }
+        };
+
+        if (socket.connected) updateStatus(true);
+        socket.on('connect', () => updateStatus(true));
+        socket.on('disconnect', () => updateStatus(false));
     }
 </script>
 {% endblock %}
