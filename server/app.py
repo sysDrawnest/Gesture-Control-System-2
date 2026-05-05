@@ -278,19 +278,15 @@ def start_client(client_name):
                 
         if os.name == 'nt':
             # Windows: Opens in a new visible cmd window
-            cmd = [sys.executable, script_name]
-            logger.info(f"[LAUNCH] Running: {' '.join(cmd)} in {client_dir}")
             process = subprocess.Popen(
-                cmd,
+                [sys.executable, script_name],
                 cwd=client_dir,
                 creationflags=subprocess.CREATE_NEW_CONSOLE
             )
         else:
             # Others: Background process
-            cmd = [sys.executable, script_name]
-            logger.info(f"[LAUNCH] Running: {' '.join(cmd)} in {client_dir}")
             process = subprocess.Popen(
-                cmd,
+                [sys.executable, script_name],
                 cwd=client_dir
             )
             
