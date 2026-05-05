@@ -43,6 +43,8 @@ GESTURE_COLORS = {
     'PEACE':     (255, 255, 0),
     'OPEN_PALM': (0, 200, 255),
     'FIST':      (0, 0, 255),
+    'ZOOM_IN':   (255, 255, 0),
+    'ZOOM_OUT':  (255, 0, 255),
     'NONE':      (180, 100, 255),
 }
 
@@ -74,6 +76,16 @@ def detect_gesture(lms):
     # POINT - index only
     if fingers[1] and not fingers[2] and not fingers[3] and not fingers[4]:
         return "POINT"
+
+    # ZOOM DETECTION
+    pinch_dist = calculate_distance(lms[4], lms[8])
+    # OK SIGN (Thumb + Index pinch, others up) -> ZOOM_IN
+    if pinch_dist < 0.05 and fingers[2] and fingers[3] and fingers[4]:
+        return "ZOOM_IN"
+    # THREE FINGERS (Index, Middle, Ring up) -> ZOOM_OUT
+    if fingers[1] and fingers[2] and fingers[3] and not fingers[4] and n_up >= 3:
+        return "ZOOM_OUT"
+
     return "NONE"
 
 def draw_hand(frame, lms, gesture):
@@ -93,6 +105,8 @@ GESTURE_ACTIONS = {
     'PEACE':     ('prev_slide',  'left',  '<<< Prev Slide'),
     'OPEN_PALM': ('start_pres',  'f5',    'START Presentation'),
     'FIST':      ('end_pres',    'escape','END Presentation'),
+    'ZOOM_IN':   ('zoom_in',     'ctrl++', 'Zoom IN'),
+    'ZOOM_OUT':  ('zoom_out',    'ctrl+-', 'Zoom OUT'),
 }
 
 def main():
@@ -148,6 +162,8 @@ def main():
     print("   ✌️  PEACE      = Previous Slide")
     print("   ✋ OPEN PALM  = Start Presentation (F5)")
     print("   ✊ FIST       = End Presentation (Esc)")
+    print("   👌 OK SIGN    = Zoom IN")
+    print("   🤟 3-FINGERS  = Zoom OUT")
     print("=" * 60)
 
     try:

@@ -313,6 +313,16 @@ class ServerConnector:
                     "device_id": self.device_id,
                 })
                 print(f"[SERVER] Sent screenshot notification")
+            else:
+                # Generic relay for V4 modules (Presentation, Media, Smart Home)
+                # This ensures any new gesture string is broadcast to web dashboards
+                self.sio.emit("gesture_update", {
+                    "gesture": gesture_type,
+                    "confidence": confidence,
+                    "type": "relay",
+                    "device_id": self.device_id,
+                })
+                print(f"[SERVER] Relayed gesture: {gesture_type}")
         except Exception as e:
             logger.debug(f"[ServerConnector] send_gesture_event error: {e}")
 
