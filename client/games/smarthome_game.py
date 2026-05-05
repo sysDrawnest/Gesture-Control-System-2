@@ -37,12 +37,13 @@ CONNECTIONS = [
 ]
 FINGERTIPS = {4, 8, 12, 16, 20}
 
-GESTURE_COLORS = {
     'POINT_UP':   (255, 255, 0),
     'POINT_DOWN': (100, 100, 200),
     'PEACE':      (0, 255, 150),
     'FIST':       (0, 50, 255),
     'WAVE':       (255, 150, 0),
+    'OPEN_PALM':  (100, 255, 255),
+    'EMERGENCY':  (0, 0, 255),
     'NONE':       (180, 100, 255),
 }
 
@@ -83,9 +84,12 @@ def detect_gesture(lms, positions):
     if n_up == 0:
         return "FIST"
 
-    # WAVE - open palm moving laterally
-    if n_up >= 4 and detect_wave(positions):
-        return "WAVE"
+    # OPEN_PALM / WAVE
+    if n_up >= 4:
+        if detect_wave(positions):
+            return "WAVE"
+        else:
+            return "OPEN_PALM"
 
     # PEACE - index + middle only
     if index and middle and not ring and not pinky:
@@ -122,6 +126,7 @@ GESTURE_ACTIONS = {
     'PEACE':      ('fan_on',           'Fan ON  🌀'),
     'FIST':       ('fan_off',          'Fan OFF ✊'),
     'WAVE':       ('curtains_toggle',  'Curtains Toggle 🪟'),
+    'EMERGENCY':  ('emergency',        'EMERGENCY 🚨'),
 }
 
 def main():
@@ -171,6 +176,7 @@ def main():
     last_gesture = "NONE"
     last_action_time = 0.0
     wrist_history = []
+    emergency_start_time = 0.0
 
     print("=" * 60)
     print("🏠 SMART HOME CONTROLLER ACTIVE")
@@ -179,6 +185,7 @@ def main():
     print("   ✌️  PEACE       = Fan ON")
     print("   ✊ FIST        = Fan OFF")
     print("   🖐️  WAVE        = Toggle Curtains")
+    print("   ✋ OPEN PALM (hold 3s) = EMERGENCY")
     print("=" * 60)
 
     try:
@@ -199,11 +206,26 @@ def main():
                 if len(wrist_history) > 30:
                     wrist_history.pop(0)
 
-                gesture = detect_gesture(lms, wrist_history)
+                detected = detect_gesture(lms, wrist_history)
+                
+                # Check for Emergency (Open Palm hold)
+                if detected == "OPEN_PALM":
+                    if emergency_start_time == 0:
+                        emergency_start_time = time.time()
+                    elif time.time() - emergency_start_time > 3.0:
+                        gesture = "EMERGENCY"
+                        emergency_start_time = time.time() # Reset timer to avoid spam
+                    else:
+                        gesture = "OPEN_PALM"
+                else:
+                    emergency_start_time = 0
+                    gesture = detected
+
                 draw_hand(frame, lms, gesture)
 
                 current_time = time.time()
-                if gesture != "NONE" and gesture != last_gesture and \
+                # Special case: don't cooldown emergency too long, but GESTURE_COOLDOWN is fine
+                if gesture != "NONE" and gesture != "OPEN_PALM" and gesture != last_gesture and \
                    (current_time - last_action_time > GESTURE_COOLDOWN):
                     action_info = GESTURE_ACTIONS.get(gesture)
                     if action_info:
@@ -214,6 +236,7 @@ def main():
                         last_action_time = current_time
             else:
                 wrist_history.clear()
+                emergency_start_time = 0
 
             last_gesture = gesture
 

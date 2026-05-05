@@ -43,6 +43,8 @@ GESTURE_COLORS = {
     'PEACE':     (255, 255, 0),
     'OPEN_PALM': (0, 200, 255),
     'FIST':      (0, 0, 255),
+    'PINCH_IN':  (255, 100, 255),
+    'PINCH_OUT': (255, 150, 100),
     'NONE':      (180, 100, 255),
 }
 
@@ -59,6 +61,7 @@ def calculate_distance(lm1, lm2):
 def detect_gesture(lms):
     fingers = get_finger_states(lms)
     n_up = sum(fingers)
+    thumb, index, middle, ring, pinky = fingers
 
     # FIST - all curled
     if n_up == 0:
@@ -67,13 +70,23 @@ def detect_gesture(lms):
     if n_up >= 4:
         return "OPEN_PALM"
     # PEACE - index + middle only
-    if fingers[1] and fingers[2] and not fingers[3] and not fingers[4]:
+    if index and middle and not ring and not pinky and not thumb:
         tip_dist = calculate_distance(lms[8], lms[12])
         if tip_dist > 0.06:
             return "PEACE"
     # POINT - index only
-    if fingers[1] and not fingers[2] and not fingers[3] and not fingers[4]:
+    if index and not middle and not ring and not pinky and not thumb:
         return "POINT"
+    # PINCH - thumb + index
+    if thumb and index and not middle and not ring and not pinky:
+        thumb_tip = lms[4]
+        index_tip = lms[8]
+        pinch_dist = calculate_distance(thumb_tip, index_tip)
+        if pinch_dist > PINCH_THRESHOLD:
+            return "PINCH_IN"  # fingers apart
+        else:
+            return "PINCH_OUT" # fingers together
+            
     return "NONE"
 
 def draw_hand(frame, lms, gesture):
@@ -93,6 +106,8 @@ GESTURE_ACTIONS = {
     'PEACE':     ('prev_slide',  'left',  '<<< Prev Slide'),
     'OPEN_PALM': ('start_pres',  'f5',    'START Presentation'),
     'FIST':      ('end_pres',    'escape','END Presentation'),
+    'PINCH_IN':  ('zoom_in',     '',      'ZOOM IN'),
+    'PINCH_OUT': ('zoom_out',    '',      'ZOOM OUT'),
 }
 
 def main():
@@ -148,6 +163,8 @@ def main():
     print("   ✌️  PEACE      = Previous Slide")
     print("   ✋ OPEN PALM  = Start Presentation (F5)")
     print("   ✊ FIST       = End Presentation (Esc)")
+    print("   🤏 PINCH OUT  = Zoom Out")
+    print("   👐 PINCH IN   = Zoom In")
     print("=" * 60)
 
     try:
@@ -172,8 +189,9 @@ def main():
                     action_info = GESTURE_ACTIONS.get(gesture)
                     if action_info:
                         event_name, key, label = action_info
-                        # Send keypress
-                        pyautogui.press(key)
+                        # Send keypress if a key is mapped
+                        if key:
+                            pyautogui.press(key)
                         # Send to server/browser
                         if connector:
                             connector.send_gesture_event(gesture, 0.95)

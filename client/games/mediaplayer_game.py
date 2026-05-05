@@ -45,6 +45,8 @@ GESTURE_COLORS = {
     'POINT_LEFT':  (255, 200, 0),
     'PINCH':       (255, 100, 255),
     'OPEN_PALM':   (100, 255, 255),
+    'PEACE':       (0, 255, 150),
+    'FIST':        (0, 50, 255),
     'NONE':        (180, 100, 255),
 }
 
@@ -69,6 +71,10 @@ def detect_gesture(lms):
 
     pinch_dist = calculate_distance(thumb_tip, index_tip)
 
+    # FIST - all curled (Sleep timer)
+    if n_up == 0:
+        return "FIST"
+
     # OPEN_PALM - 4+ fingers (Volume down)
     if n_up >= 4:
         return "OPEN_PALM"
@@ -88,6 +94,12 @@ def detect_gesture(lms):
         # Point LEFT (index tip is to the left of wrist)
         elif index_tip.x < wrist.x - 0.1:
             return "POINT_LEFT"
+
+    # PEACE - index and middle only
+    if index and middle and not ring and not pinky and not thumb:
+        tip_dist = calculate_distance(lms[8], lms[12])
+        if tip_dist > 0.06:
+            return "PEACE"
 
     # PINCH (Volume up)
     if pinch_dist < PINCH_THRESHOLD:
@@ -115,6 +127,8 @@ GESTURE_ACTIONS = {
     'POINT_LEFT':  ('prev_track',   '<<< Prev Track',     'prevtrack', 'shift+p'),
     'PINCH':       ('volume_up',    'Volume UP',          'volumeup',  None),
     'OPEN_PALM':   ('volume_down',  'Volume DOWN',        'volumedown', None),
+    'PEACE':       ('night_mode',   'Night Mode',         None,        None),
+    'FIST':        ('sleep_timer',  'Sleep Timer',        None,        None),
 }
 
 def main():
@@ -174,6 +188,8 @@ def main():
     print("   👈 POINT LEFT  = Prev Track")
     print("   🤏 PINCH       = Volume Up")
     print("   ✋ OPEN PALM   = Volume Down")
+    print("   ✌️  PEACE       = Night Mode")
+    print("   ✊ FIST        = Sleep Timer")
     print("=" * 60)
 
     try:
@@ -199,10 +215,11 @@ def main():
                     if action_info:
                         event_name, label, sys_key, yt_key = action_info
                         # System media key (works for local players)
-                        try:
-                            pyautogui.press(sys_key)
-                        except Exception:
-                            pass
+                        if sys_key:
+                            try:
+                                pyautogui.press(sys_key)
+                            except Exception:
+                                pass
                         # Send to server for YouTube gesture relay
                         if connector:
                             connector.send_gesture_event(gesture, 0.95)

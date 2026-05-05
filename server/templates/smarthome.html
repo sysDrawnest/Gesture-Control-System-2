@@ -265,12 +265,12 @@
                 <!-- Gesture Guide -->
                 <div class="glass rounded-2xl p-5">
                     <h3 class="text-xs uppercase tracking-widest text-slate-400 font-space mb-3">Gesture Guide</h3>
-                    <div class="space-y-2.5 text-sm">
                         <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span>👆</span><span class="font-space">Point Up</span></div><span class="text-xs text-yellow-400">Lights ON</span></div>
                         <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span>👇</span><span class="font-space">Point Down</span></div><span class="text-xs text-slate-500">Lights OFF</span></div>
                         <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span>✌️</span><span class="font-space">Peace</span></div><span class="text-xs text-cyan-400">Fan ON</span></div>
                         <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span>✊</span><span class="font-space">Fist</span></div><span class="text-xs text-slate-500">Fan OFF</span></div>
                         <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span>🖐️</span><span class="font-space">Wave</span></div><span class="text-xs text-purple-400">Curtains Toggle</span></div>
+                        <div class="flex items-center justify-between mt-2 pt-2 border-t border-red-500/20"><div class="flex items-center gap-2"><span>✋</span><span class="font-space">Open Palm (hold 3s)</span></div><span class="text-xs font-bold text-red-500">EMERGENCY</span></div>
                     </div>
                 </div>
             </div>
@@ -357,6 +357,30 @@
             else if (scene === 'all_off') { setDevice('lights', false); setDevice('fan', false); setDevice('curtains', false); addLog('😴 Sleep scene activated', '#ef4444'); }
         }
 
+        function triggerEmergency() {
+            setDevice('lights', true);
+            setDevice('fan', false);
+            setDevice('curtains', true);
+            addLog('🚨 EMERGENCY TRIGGERED!', '#ef4444');
+            
+            if (!document.getElementById('emergencyBanner')) {
+                const banner = document.createElement('div');
+                banner.id = 'emergencyBanner';
+                banner.className = 'fixed top-0 left-0 right-0 bg-red-600/90 text-white text-center py-3 z-[100] animate-pulse font-space shadow-[0_0_20px_rgba(220,38,38,0.5)] border-b border-red-400';
+                banner.innerHTML = `
+                    🚨 EMERGENCY MODE ACTIVATED - ALL LIGHTS ON, FAN OFF, CURTAINS OPEN 🚨
+                    <button onclick="resetEmergency()" class="ml-4 px-3 py-1 bg-white/20 hover:bg-white/30 transition-colors text-white rounded text-xs border border-white/50">Reset</button>
+                `;
+                document.body.prepend(banner);
+            }
+        }
+        
+        window.resetEmergency = function() {
+            const banner = document.getElementById('emergencyBanner');
+            if (banner) banner.remove();
+            addLog('✅ Emergency mode reset', '#22c55e');
+        };
+
         const gestureMap = {
             'POINT_UP':        { emoji: '☝️', label: 'Point Up',   action: 'Lights ON',       fn: () => setDevice('lights', true) },
             'POINT_DOWN':      { emoji: '👇', label: 'Point Down', action: 'Lights OFF',      fn: () => setDevice('lights', false) },
@@ -364,6 +388,7 @@
             'FIST':            { emoji: '✊', label: 'Fist',       action: 'Fan OFF',         fn: () => setDevice('fan', false) },
             'WAVE':            { emoji: '🖐️', label: 'Wave',       action: 'Toggle Curtains', fn: () => setDevice('curtains', !deviceState.curtains) },
             'CURTAINS_TOGGLE': { emoji: '🖐️', label: 'Wave',       action: 'Toggle Curtains', fn: () => setDevice('curtains', !deviceState.curtains) },
+            'EMERGENCY':       { emoji: '🚨', label: 'Open Palm',  action: 'EMERGENCY',       fn: () => triggerEmergency() },
         };
 
         function showGestureFeedback(gesture) {
