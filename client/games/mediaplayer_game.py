@@ -19,6 +19,13 @@ import time
 import argparse
 import os
 import sys
+
+# Force UTF-8 encoding for standard output to support emojis on Windows
+if sys.stdout.encoding != 'utf-8':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
 import pyautogui
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
