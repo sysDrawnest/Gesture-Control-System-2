@@ -52,7 +52,11 @@ GESTURE_COLORS = {
 
 def get_finger_states(lms):
     fingers = []
-    fingers.append(1 if lms[4].x < lms[3].x else 0)
+    # Improved Thumb detection: Check if thumb tip is far enough from palm center
+    # and higher than the MCP joint (for vertical thumb up)
+    thumb_extended = calculate_distance(lms[4], lms[5]) > 0.08
+    fingers.append(1 if thumb_extended else 0)
+    
     for tip, pip in zip([8, 12, 16, 20], [6, 10, 14, 18]):
         fingers.append(1 if lms[tip].y < lms[pip].y else 0)
     return fingers
@@ -79,11 +83,12 @@ def detect_gesture(lms):
     if n_up >= 4:
         return "OPEN_PALM"
 
-    # THUMB_UP - only thumb extended, tip significantly above wrist
+    # THUMB_UP/DOWN - only thumb extended
     if thumb and not index and not middle and not ring and not pinky:
+        # Check vertical position relative to wrist for up/down
         if thumb_tip.y < wrist.y - 0.1:
             return "THUMB_UP"
-        elif thumb_tip.y > wrist.y + 0.05:
+        elif thumb_tip.y > wrist.y + 0.1:
             return "THUMB_DOWN"
 
     # POINT - index only
@@ -214,13 +219,23 @@ def main():
                     action_info = GESTURE_ACTIONS.get(gesture)
                     if action_info:
                         event_name, label, sys_key, yt_key = action_info
-                        # System media key (works for local players)
-                        if sys_key:
-                            try:
+                        
+                        # System interaction
+                        try:
+                            if args.youtube and yt_key:
+                                if '+' in yt_key:
+                                    keys = yt_key.split('+')
+                                    pyautogui.hotkey(*keys)
+                                else:
+                                    pyautogui.press(yt_key)
+                                print(f"[YT-ACTION] Pressed {yt_key} for {label}")
+                            elif sys_key:
                                 pyautogui.press(sys_key)
-                            except Exception:
-                                pass
-                        # Send to server for YouTube gesture relay
+                                print(f"[SYS-ACTION] Pressed {sys_key} for {label}")
+                        except Exception as e:
+                            print(f"[ERROR] PyAutoGUI failed: {e}")
+
+                        # Send to server for dashboard sync
                         if connector:
                             connector.send_gesture_event(gesture, 0.95)
                         # Update simulated volume

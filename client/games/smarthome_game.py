@@ -36,7 +36,7 @@ CONNECTIONS = [
     (5, 9), (9, 13), (13, 17)
 ]
 FINGERTIPS = {4, 8, 12, 16, 20}
-
+GESTURE_COLORS = {
     'POINT_UP':   (255, 255, 0),
     'POINT_DOWN': (100, 100, 200),
     'PEACE':      (0, 255, 150),
@@ -53,7 +53,10 @@ WAVE_WINDOW = 10  # frames to track
 
 def get_finger_states(lms):
     fingers = []
-    fingers.append(1 if lms[4].x < lms[3].x else 0)
+    # Improved Thumb detection
+    thumb_extended = calculate_distance(lms[4], lms[5]) > 0.08
+    fingers.append(1 if thumb_extended else 0)
+    
     for tip, pip in zip([8, 12, 16, 20], [6, 10, 14, 18]):
         fingers.append(1 if lms[tip].y < lms[pip].y else 0)
     return fingers
@@ -252,13 +255,18 @@ def main():
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-    except KeyboardInterrupt:
-        pass
+    except Exception as e:
+        print(f"[FATAL ERROR] {e}")
+        import traceback
+        traceback.print_exc()
+        # Keep window open for a few seconds so user can see error
+        time.sleep(5)
     finally:
         print("[SHUTDOWN] Smart home controller stopped.")
-        if connector:
+        if 'connector' in locals() and connector:
             connector.disconnect()
-        cap.release()
+        if 'cap' in locals():
+            cap.release()
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
