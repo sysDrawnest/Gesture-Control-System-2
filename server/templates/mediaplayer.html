@@ -424,9 +424,10 @@
 
         let lastGestureTime = 0;
         socket.on('gesture_activity', (data) => {
+            console.log('[WS] Received gesture:', data);
             const gesture = (data.gesture || '').toUpperCase();
             const now = Date.now();
-            if (now - lastGestureTime < 700) return;
+            if (now - lastGestureTime < 400) return; // Reduced cooldown for better feel
             lastGestureTime = now;
             if (gesture in gestureMap) handleGestureAction(gesture);
         });

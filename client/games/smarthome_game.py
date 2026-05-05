@@ -137,6 +137,7 @@ def main():
     parser.add_argument("--server", default=SERVER_URL)
     parser.add_argument("--username", default=DEFAULT_USERNAME)
     parser.add_argument("--password", default=DEFAULT_PASSWORD)
+    parser.add_argument("--token", help="Direct session token")
     args = parser.parse_args()
 
     model_path = os.path.join(os.path.dirname(__file__), '..', 'hand_landmarker.task')
@@ -162,14 +163,22 @@ def main():
     connector = ServerConnector(server_url=args.server)
     print("=" * 60)
     print("[SMART HOME] Connecting to neural link...")
-    if connector.login(args.username, args.password):
+    
+    auth_success = False
+    if args.token:
+        connector.set_token(args.token)
+        auth_success = True
+    elif connector.login(args.username, args.password):
+        auth_success = True
+        
+    if auth_success:
         connector.connect()
         wait_start = time.time()
         while not connector.device_id and (time.time() - wait_start < 10):
             time.sleep(0.5)
         print(f"[OK] Neural Link Active! ID: {connector.device_id}")
     else:
-        print("[FAIL] Login failed. Running offline.")
+        print("[FAIL] Authentication failed. Running offline.")
         connector = None
 
     cap = cv2.VideoCapture(0)

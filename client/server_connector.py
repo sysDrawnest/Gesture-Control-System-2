@@ -37,6 +37,7 @@ class ServerConnector:
         self.connected = False
         self.authenticated = False
         self._enabled = False  # only send events when True
+        self.token = None
 
         # python-socketio async-compatible client (sync version)
         self.sio = socketio.Client(
@@ -51,6 +52,12 @@ class ServerConnector:
     # ------------------------------------------------------------------
     # REST Authentication
     # ------------------------------------------------------------------
+
+    def set_token(self, token: str):
+        """Manually set a token (skips login)."""
+        self.token = token
+        self.authenticated = True
+        logger.info("[ServerConnector] Token set manually")
 
     def login(self, username: str, password: str) -> bool:
         """
@@ -268,7 +275,7 @@ class ServerConnector:
                     "device_id": self.device_id,
                 })
                 print(f"[SERVER] Sent left click")
-            elif gesture_type == "PEACE":
+            elif gesture_type == "PEACE_CLICK": # Map specifically if needed
                 self.sio.emit("gesture_click", {
                     "type": "right",
                     "confidence": confidence,
@@ -285,13 +292,13 @@ class ServerConnector:
                     "device_id": self.device_id,
                 })
                 print(f"[SERVER] Sent scroll: {direction}")
-            elif gesture_type == "FIST":
+            elif gesture_type == "FIST_TOGGLE": # Avoid conflict with media FIST
                 self.sio.emit("gesture_toggle", {
                     "enabled": False,
                     "device_id": self.device_id,
                     "confidence": confidence
                 })
-            elif gesture_type == "OPEN_PALM":
+            elif gesture_type == "OPEN_PALM_TOGGLE": # Avoid conflict with media OPEN_PALM
                 self.sio.emit("gesture_toggle", {
                     "enabled": True,
                     "device_id": self.device_id,
@@ -313,6 +320,20 @@ class ServerConnector:
                     "device_id": self.device_id,
                 })
                 print(f"[SERVER] Sent screenshot notification")
+            else:
+                # CATCH-ALL: For all other gestures (V4 enhancements)
+                # Send as a generic gesture_update which the server broadcasts
+                payload = {
+                    "gesture": gesture_type,
+                    "confidence": confidence,
+                    "device_id": self.device_id,
+                    "type": "discrete"
+                }
+                if extra:
+                    payload.update(extra)
+                
+                self.sio.emit("gesture_update", payload)
+                print(f"[SERVER] Sent gesture: {gesture_type}")
         except Exception as e:
             logger.debug(f"[ServerConnector] send_gesture_event error: {e}")
 
