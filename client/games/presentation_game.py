@@ -113,11 +113,33 @@ GESTURE_ACTIONS = {
 }
 
 def main():
-    if not os.path.exists(model_path):
-        model_path = 'hand_landmarker.task'
+    # Setup logging to file for debugging
+    log_dir = os.path.dirname(__file__)
+    log_file = os.path.join(log_dir, 'presentation_debug.log')
+    def log_debug(msg):
+        try:
+            with open(log_file, 'a') as f:
+                f.write(f"[{time.ctime()}] {msg}\n")
+        except: pass
+    
+    log_debug("Starting Presentation Client...")
+    log_debug(f"Python: {sys.version}")
+    log_debug(f"CWD: {os.getcwd()}")
+
+    try:
+        parser = argparse.ArgumentParser(description="Presentation Controller")
+        parser.add_argument("--server", default=SERVER_URL)
+        parser.add_argument("--username", default=DEFAULT_USERNAME)
+        parser.add_argument("--password", default=DEFAULT_PASSWORD)
+        args = parser.parse_args()
+
+        model_path = os.path.join(log_dir, '..', 'hand_landmarker.task')
         if not os.path.exists(model_path):
-            print("[FAIL] Missing hand_landmarker.task!")
-            sys.exit(1)
+            model_path = 'hand_landmarker.task'
+            if not os.path.exists(model_path):
+                log_debug("[FAIL] Missing hand_landmarker.task!")
+                print("[FAIL] Missing hand_landmarker.task!")
+                sys.exit(1)
 
     from mediapipe.tasks import python as mp_python
     from mediapipe.tasks.python import vision
