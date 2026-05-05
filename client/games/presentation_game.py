@@ -113,13 +113,6 @@ GESTURE_ACTIONS = {
 }
 
 def main():
-    parser = argparse.ArgumentParser(description="Presentation Controller")
-    parser.add_argument("--server", default=SERVER_URL)
-    parser.add_argument("--username", default=DEFAULT_USERNAME)
-    parser.add_argument("--password", default=DEFAULT_PASSWORD)
-    args = parser.parse_args()
-
-    model_path = os.path.join(os.path.dirname(__file__), '..', 'hand_landmarker.task')
     if not os.path.exists(model_path):
         model_path = 'hand_landmarker.task'
         if not os.path.exists(model_path):
@@ -213,8 +206,11 @@ def main():
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-    except KeyboardInterrupt:
-        pass
+    except Exception as e:
+        import traceback
+        with open(os.path.join(os.path.dirname(__file__), 'presentation_error.log'), 'a') as f:
+            f.write(f"[{time.ctime()}] CRASH: {str(e)}\n{traceback.format_exc()}\n")
+        print(f"CRASH: {e}")
     finally:
         print("[SHUTDOWN] Presentation controller stopped.")
         if connector:
