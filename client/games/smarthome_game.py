@@ -20,13 +20,6 @@ import argparse
 import os
 import sys
 
-# Force UTF-8 encoding for standard output to support emojis on Windows
-if sys.stdout.encoding != 'utf-8':
-    try:
-        sys.stdout.reconfigure(encoding='utf-8')
-    except AttributeError:
-        pass
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from config import SERVER_URL, DEFAULT_USERNAME, DEFAULT_PASSWORD, CAM_WIDTH, CAM_HEIGHT, PINCH_THRESHOLD
@@ -59,10 +52,7 @@ WAVE_WINDOW = 10  # frames to track
 
 def get_finger_states(lms):
     fingers = []
-    # Thumb: Use distance from pinky base as extension proxy
-    thumb_ext = calculate_distance(lms[4], lms[17]) > calculate_distance(lms[3], lms[17])
-    fingers.append(1 if thumb_ext else 0)
-    # Other fingers: Tip above PIP
+    fingers.append(1 if lms[4].x < lms[3].x else 0)
     for tip, pip in zip([8, 12, 16, 20], [6, 10, 14, 18]):
         fingers.append(1 if lms[tip].y < lms[pip].y else 0)
     return fingers
