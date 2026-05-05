@@ -168,9 +168,17 @@
                             <div class="flex items-center gap-3"><span class="text-xl">✋</span><span class="text-sm font-space">Open Palm</span></div>
                             <span class="text-xs text-green-400">Start (F5)</span>
                         </div>
-                        <div class="flex items-center justify-between py-2">
+                        <div class="flex items-center justify-between py-2 border-b border-white/5">
                             <div class="flex items-center gap-3"><span class="text-xl">✊</span><span class="text-sm font-space">Fist</span></div>
                             <span class="text-xs text-red-400">End (Esc)</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 border-b border-white/5">
+                            <div class="flex items-center gap-3"><span class="text-xl">👌</span><span class="text-sm font-space">OK Sign</span></div>
+                            <span class="text-xs text-yellow-400">Zoom In</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2">
+                            <div class="flex items-center gap-3"><span class="text-xl">🤟</span><span class="text-sm font-space">3 Fingers</span></div>
+                            <span class="text-xs text-yellow-400">Zoom Out</span>
                         </div>
                     </div>
                 </div>
@@ -217,6 +225,14 @@
         ];
 
         let currentSlide = 0;
+        let zoomScale = 1.0;
+
+        function updateZoom() {
+            const container = document.getElementById('slideContent');
+            container.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            container.style.transformOrigin = 'center center';
+            container.style.transform = `scale(${zoomScale})`;
+        }
 
         function buildDots() {
             const container = document.getElementById('progressDots');
@@ -291,21 +307,20 @@
         renderSlide();
 
         // WebSocket Gesture Control
-        const gestureIcons = { POINT: '👆', PEACE: '✌️', OPEN_PALM: '✋', FIST: '✊' };
-        const gestureActions = {
-            POINT:     'Next Slide →',
-            PEACE:     '← Previous Slide',
             OPEN_PALM: 'Start Presentation',
-            FIST:      'End Presentation'
+            FIST:      'End Presentation',
+            ZOOM_IN:   'Zoom In 🔍+',
+            ZOOM_OUT:  'Zoom Out 🔍-'
         };
 
         function showGestureFeedback(gesture) {
             const ring = document.getElementById('gestureRing');
-            const label = document.getElementById('gestureLabel');
-            const action = document.getElementById('gestureAction');
-            ring.textContent = gestureIcons[gesture] || '🤚';
-            label.textContent = gesture;
-            action.textContent = gestureActions[gesture] || '—';
+            const icons = { ...gestureIcons, ZOOM_IN: '👌', ZOOM_OUT: '🤟' };
+            const labels = { ...gestureActions };
+
+            ring.textContent = icons[gesture] || '🤚';
+            document.getElementById('gestureLabel').textContent = gesture;
+            document.getElementById('gestureAction').textContent = labels[gesture] || '—';
             ring.classList.add('active');
             setTimeout(() => ring.classList.remove('active'), 600);
         }
@@ -334,6 +349,16 @@
             else if (gesture === 'PEACE') { prevSlide(); showGestureFeedback(gesture); }
             else if (gesture === 'OPEN_PALM' || gesture === 'OPEN PALM') { showGestureFeedback('OPEN_PALM'); }
             else if (gesture === 'FIST') { showGestureFeedback(gesture); }
+            else if (gesture === 'ZOOM_IN') { 
+                zoomScale = Math.min(2.0, zoomScale + 0.2); 
+                updateZoom(); 
+                showGestureFeedback(gesture); 
+            }
+            else if (gesture === 'ZOOM_OUT') { 
+                zoomScale = Math.max(0.5, zoomScale - 0.2); 
+                updateZoom(); 
+                showGestureFeedback(gesture); 
+            }
         });
     </script>
 </body>
