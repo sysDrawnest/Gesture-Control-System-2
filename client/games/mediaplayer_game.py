@@ -45,12 +45,18 @@ GESTURE_COLORS = {
     'POINT_LEFT':  (255, 200, 0),
     'PINCH':       (255, 100, 255),
     'OPEN_PALM':   (100, 255, 255),
+    'PEACE':       (0, 255, 150),
+    'FIST':        (0, 50, 255),
     'NONE':        (180, 100, 255),
 }
 
 def get_finger_states(lms):
     fingers = []
-    fingers.append(1 if lms[4].x < lms[3].x else 0)
+    # Improved Thumb detection: Check if thumb tip is far enough from palm center
+    # and higher than the MCP joint (for vertical thumb up)
+    thumb_extended = calculate_distance(lms[4], lms[5]) > 0.08
+    fingers.append(1 if thumb_extended else 0)
+    
     for tip, pip in zip([8, 12, 16, 20], [6, 10, 14, 18]):
         fingers.append(1 if lms[tip].y < lms[pip].y else 0)
     return fingers
@@ -69,15 +75,20 @@ def detect_gesture(lms):
 
     pinch_dist = calculate_distance(thumb_tip, index_tip)
 
+    # FIST - all curled (Sleep timer)
+    if n_up == 0:
+        return "FIST"
+
     # OPEN_PALM - 4+ fingers (Volume down)
     if n_up >= 4:
         return "OPEN_PALM"
 
-    # THUMB_UP - only thumb extended, tip significantly above wrist
+    # THUMB_UP/DOWN - only thumb extended
     if thumb and not index and not middle and not ring and not pinky:
+        # Check vertical position relative to wrist for up/down
         if thumb_tip.y < wrist.y - 0.1:
             return "THUMB_UP"
-        elif thumb_tip.y > wrist.y + 0.05:
+        elif thumb_tip.y > wrist.y + 0.1:
             return "THUMB_DOWN"
 
     # POINT - index only
@@ -88,6 +99,12 @@ def detect_gesture(lms):
         # Point LEFT (index tip is to the left of wrist)
         elif index_tip.x < wrist.x - 0.1:
             return "POINT_LEFT"
+
+    # PEACE - index and middle only
+    if index and middle and not ring and not pinky and not thumb:
+        tip_dist = calculate_distance(lms[8], lms[12])
+        if tip_dist > 0.06:
+            return "PEACE"
 
     # PINCH (Volume up)
     if pinch_dist < PINCH_THRESHOLD:
@@ -115,6 +132,8 @@ GESTURE_ACTIONS = {
     'POINT_LEFT':  ('prev_track',   '<<< Prev Track',     'prevtrack', 'shift+p'),
     'PINCH':       ('volume_up',    'Volume UP',          'volumeup',  None),
     'OPEN_PALM':   ('volume_down',  'Volume DOWN',        'volumedown', None),
+    'PEACE':       ('night_mode',   'Night Mode',         None,        None),
+    'FIST':        ('sleep_timer',  'Sleep Timer',        None,        None),
 }
 
 def main():
@@ -122,6 +141,7 @@ def main():
     parser.add_argument("--server", default=SERVER_URL)
     parser.add_argument("--username", default=DEFAULT_USERNAME)
     parser.add_argument("--password", default=DEFAULT_PASSWORD)
+    parser.add_argument("--token", help="Direct session token")
     parser.add_argument("--youtube", action="store_true", help="Use YouTube keyboard shortcuts instead of media keys")
     args = parser.parse_args()
 
@@ -148,14 +168,22 @@ def main():
     connector = ServerConnector(server_url=args.server)
     print("=" * 60)
     print("[MEDIA PLAYER] Connecting to neural link...")
-    if connector.login(args.username, args.password):
+    
+    auth_success = False
+    if args.token:
+        connector.set_token(args.token)
+        auth_success = True
+    elif connector.login(args.username, args.password):
+        auth_success = True
+        
+    if auth_success:
         connector.connect()
         wait_start = time.time()
         while not connector.device_id and (time.time() - wait_start < 10):
             time.sleep(0.5)
         print(f"[OK] Neural Link Active! ID: {connector.device_id}")
     else:
-        print("[FAIL] Login failed. Running offline.")
+        print("[FAIL] Authentication failed. Running offline.")
         connector = None
 
     cap = cv2.VideoCapture(0)
@@ -174,6 +202,8 @@ def main():
     print("   👈 POINT LEFT  = Prev Track")
     print("   🤏 PINCH       = Volume Up")
     print("   ✋ OPEN PALM   = Volume Down")
+    print("   ✌️  PEACE       = Night Mode")
+    print("   ✊ FIST        = Sleep Timer")
     print("=" * 60)
 
     try:
@@ -198,12 +228,23 @@ def main():
                     action_info = GESTURE_ACTIONS.get(gesture)
                     if action_info:
                         event_name, label, sys_key, yt_key = action_info
-                        # System media key (works for local players)
+                        
+                        # System interaction
                         try:
-                            pyautogui.press(sys_key)
-                        except Exception:
-                            pass
-                        # Send to server for YouTube gesture relay
+                            if args.youtube and yt_key:
+                                if '+' in yt_key:
+                                    keys = yt_key.split('+')
+                                    pyautogui.hotkey(*keys)
+                                else:
+                                    pyautogui.press(yt_key)
+                                print(f"[YT-ACTION] Pressed {yt_key} for {label}")
+                            elif sys_key:
+                                pyautogui.press(sys_key)
+                                print(f"[SYS-ACTION] Pressed {sys_key} for {label}")
+                        except Exception as e:
+                            print(f"[ERROR] PyAutoGUI failed: {e}")
+
+                        # Send to server for dashboard sync
                         if connector:
                             connector.send_gesture_event(gesture, 0.95)
                         # Update simulated volume

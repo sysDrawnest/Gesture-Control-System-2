@@ -101,7 +101,12 @@
                 </div>
                 <p class="text-slate-500 text-xs uppercase tracking-[0.3em] font-space">Control your slides with hand gestures</p>
             </div>
-            <div class="flex gap-3">
+                <div id="zoomBadge" class="hidden px-3 py-2 bg-cyan-500/20 text-cyan-300 rounded-xl text-xs font-space font-bold uppercase tracking-widest border border-cyan-500/30 items-center justify-center">
+                    Zoom: 100%
+                </div>
+                <button id="resetZoomBtn" onclick="resetZoom()" class="hidden px-4 py-2 glass rounded-xl text-xs font-space uppercase tracking-widest hover:border-cyan-500/50 transition-all items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">zoom_in_map</span> Reset Zoom
+                </button>
                 <button id="fullscreenBtn" class="px-4 py-2 glass rounded-xl text-xs font-space uppercase tracking-widest hover:border-cyan-500/50 transition-all flex items-center gap-2">
                     <span class="material-symbols-outlined text-sm">fullscreen</span> Fullscreen (F5)
                 </button>
@@ -168,9 +173,21 @@
                             <div class="flex items-center gap-3"><span class="text-xl">✋</span><span class="text-sm font-space">Open Palm</span></div>
                             <span class="text-xs text-green-400">Start (F5)</span>
                         </div>
-                        <div class="flex items-center justify-between py-2">
+                        <div class="flex items-center justify-between py-2 border-b border-white/5">
                             <div class="flex items-center gap-3"><span class="text-xl">✊</span><span class="text-sm font-space">Fist</span></div>
                             <span class="text-xs text-red-400">End (Esc)</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 border-b border-white/5">
+                            <div class="flex items-center gap-3"><span class="text-xl">👐</span><span class="text-sm font-space">Pinch In</span></div>
+                            <span class="text-xs text-yellow-400">Zoom In</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 border-b border-white/5">
+                            <div class="flex items-center gap-3"><span class="text-xl">🤏</span><span class="text-sm font-space">Pinch Out</span></div>
+                            <span class="text-xs text-yellow-400">Zoom Out</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2">
+                            <div class="flex items-center gap-3"><span class="text-xl">✌️✌️</span><span class="text-sm font-space">Double Pinch</span></div>
+                            <span class="text-xs text-cyan-400">Reset Zoom</span>
                         </div>
                     </div>
                 </div>
@@ -281,22 +298,70 @@
         document.addEventListener('keydown', e => {
             if (e.key === 'ArrowRight') nextSlide();
             else if (e.key === 'ArrowLeft') prevSlide();
+            else if (e.key === '+') zoomIn();
+            else if (e.key === '-') zoomOut();
+            else if (e.key === '0') resetZoom();
         });
         document.getElementById('fullscreenBtn').addEventListener('click', () => {
             document.getElementById('slideContainer').requestFullscreen?.();
         });
+
+        // Zoom state and logic
+        let zoomLevel = 1;
+
+        function updateZoomUI() {
+            const content = document.getElementById('slideContent');
+            content.style.transform = `scale(${zoomLevel})`;
+            content.style.transition = 'transform 0.2s';
+            
+            const badge = document.getElementById('zoomBadge');
+            const resetBtn = document.getElementById('resetZoomBtn');
+            
+            if (zoomLevel !== 1) {
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+                badge.textContent = `Zoom: ${Math.round(zoomLevel * 100)}%`;
+                
+                resetBtn.classList.remove('hidden');
+                resetBtn.classList.add('flex');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('flex');
+                resetBtn.classList.add('hidden');
+                resetBtn.classList.remove('flex');
+            }
+        }
+
+        function zoomIn() {
+            zoomLevel = Math.min(zoomLevel + 0.2, 2.4);
+            updateZoomUI();
+        }
+
+        function zoomOut() {
+            zoomLevel = Math.max(zoomLevel - 0.2, 0.6);
+            updateZoomUI();
+        }
+
+        function resetZoom() {
+            zoomLevel = 1;
+            updateZoomUI();
+            showGestureFeedback('DOUBLE_PINCH');
+        }
 
         buildDots();
         buildThumbnails();
         renderSlide();
 
         // WebSocket Gesture Control
-        const gestureIcons = { POINT: '👆', PEACE: '✌️', OPEN_PALM: '✋', FIST: '✊' };
+        const gestureIcons = { POINT: '👆', PEACE: '✌️', OPEN_PALM: '✋', FIST: '✊', PINCH_IN: '👐', PINCH_OUT: '🤏', DOUBLE_PINCH: '✌️✌️' };
         const gestureActions = {
             POINT:     'Next Slide →',
             PEACE:     '← Previous Slide',
             OPEN_PALM: 'Start Presentation',
-            FIST:      'End Presentation'
+            FIST:      'End Presentation',
+            PINCH_IN:  'Zoom In 🔍',
+            PINCH_OUT: 'Zoom Out 🔍',
+            DOUBLE_PINCH: 'Reset Zoom 🔍'
         };
 
         function showGestureFeedback(gesture) {
@@ -324,9 +389,23 @@
         });
 
         let lastGestureTime = 0;
+        let lastPinchOutTime = 0;
+
         socket.on('gesture_activity', (data) => {
             const gesture = (data.gesture || '').toUpperCase();
             const now = Date.now();
+            
+            // Special handling for Double Pinch
+            if (gesture === 'PINCH_OUT') {
+                if (now - lastPinchOutTime < 800 && now - lastPinchOutTime > 200) {
+                    resetZoom();
+                    lastPinchOutTime = 0;
+                    lastGestureTime = now;
+                    return;
+                }
+                lastPinchOutTime = now;
+            }
+
             if (now - lastGestureTime < 600) return; // client-side cooldown
             lastGestureTime = now;
 
@@ -334,6 +413,8 @@
             else if (gesture === 'PEACE') { prevSlide(); showGestureFeedback(gesture); }
             else if (gesture === 'OPEN_PALM' || gesture === 'OPEN PALM') { showGestureFeedback('OPEN_PALM'); }
             else if (gesture === 'FIST') { showGestureFeedback(gesture); }
+            else if (gesture === 'PINCH_IN') { zoomIn(); showGestureFeedback(gesture); }
+            else if (gesture === 'PINCH_OUT') { zoomOut(); showGestureFeedback(gesture); }
         });
     </script>
 </body>

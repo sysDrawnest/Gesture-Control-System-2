@@ -269,6 +269,15 @@ def start_client(client_name):
     try:
         import sys
         
+        # Get token from header to pass to client
+        auth_header = request.headers.get('Authorization', '')
+        token = auth_header.replace('Bearer ', '') if 'Bearer ' in auth_header else ''
+        
+        # Build command with token if available
+        cmd = [sys.executable, script_name]
+        if token:
+            cmd.extend(["--token", token])
+        
         # Kill existing process for this client if it exists
         if client_name in active_clients:
             try:
@@ -279,19 +288,19 @@ def start_client(client_name):
         if os.name == 'nt':
             # Windows: Opens in a new visible cmd window
             process = subprocess.Popen(
-                [sys.executable, script_name],
+                cmd,
                 cwd=client_dir,
                 creationflags=subprocess.CREATE_NEW_CONSOLE
             )
         else:
             # Others: Background process
             process = subprocess.Popen(
-                [sys.executable, script_name],
+                cmd,
                 cwd=client_dir
             )
             
         active_clients[client_name] = process
-        logger.info(f"Started client script: {script_name}")
+        logger.info(f"Started client script: {script_name} (token provided: {bool(token)})")
         return jsonify({'status': 'success', 'message': f'Started {script_name}'}), 200
     except Exception as e:
         logger.error(f"Failed to start client: {e}")

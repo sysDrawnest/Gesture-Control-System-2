@@ -214,6 +214,8 @@
                         <div class="flex items-center justify-between"><div class="flex items-center gap-2 text-sm"><span>👈</span><span class="font-space">Point Left</span></div><span class="text-xs text-green-400">Prev Track</span></div>
                         <div class="flex items-center justify-between"><div class="flex items-center gap-2 text-sm"><span>🤏</span><span class="font-space">Pinch</span></div><span class="text-xs text-yellow-400">Volume Up</span></div>
                         <div class="flex items-center justify-between"><div class="flex items-center gap-2 text-sm"><span>✋</span><span class="font-space">Open Palm</span></div><span class="text-xs text-yellow-400">Volume Down</span></div>
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2 text-sm"><span>✌️</span><span class="font-space">Peace</span></div><span class="text-xs text-blue-400">Night Mode</span></div>
+                        <div class="flex items-center justify-between"><div class="flex items-center gap-2 text-sm"><span>✊</span><span class="font-space">Fist</span></div><span class="text-xs text-purple-400">Sleep Timer</span></div>
                     </div>
                 </div>
 
@@ -334,6 +336,8 @@
             'POINT_LEFT':  { emoji: '👈', label: 'Point Left',  action: '← Prev Track' },
             'PINCH':       { emoji: '🤏', label: 'Pinch',       action: 'Volume Up 🔊' },
             'OPEN_PALM':   { emoji: '✋', label: 'Open Palm',   action: 'Volume Down 🔉' },
+            'PEACE':       { emoji: '✌️', label: 'Peace',       action: 'Night Mode 🌙' },
+            'FIST':        { emoji: '✊', label: 'Fist',        action: 'Sleep Timer 💤' },
         };
 
         function showGesture(gesture) {
@@ -349,15 +353,59 @@
             setTimeout(() => flash.classList.remove('show'), 200);
         }
 
+        let nightMode = false;
+        function toggleNightMode() {
+            nightMode = !nightMode;
+            if (nightMode) {
+                document.body.style.filter = 'brightness(0.7)';
+                if (volume > 30) setVolume(30);
+            } else {
+                document.body.style.filter = 'brightness(1)';
+            }
+        }
+
+        let sleepTimerId = null;
+        let currentSleepMinutes = 0;
+        function cycleSleepTimer() {
+            const options = [0, 15, 30, 60];
+            let idx = options.indexOf(currentSleepMinutes);
+            idx = (idx + 1) % options.length;
+            currentSleepMinutes = options[idx];
+            
+            if (sleepTimerId) clearTimeout(sleepTimerId);
+            
+            let badge = document.getElementById('sleepBadge');
+            if (currentSleepMinutes === 0) {
+                if (badge) badge.remove();
+                return;
+            }
+            
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.id = 'sleepBadge';
+                badge.className = 'fixed top-24 right-6 bg-slate-800/80 backdrop-blur-md border border-purple-500/50 text-white px-4 py-2 rounded-xl text-sm font-space z-50 flex items-center gap-2 animate-in';
+                document.body.appendChild(badge);
+            }
+            badge.innerHTML = `<span>💤</span> Timer: ${currentSleepMinutes}m`;
+            
+            sleepTimerId = setTimeout(() => {
+                if (isPlaying) setPlaying(false);
+                if (document.getElementById('sleepBadge')) document.getElementById('sleepBadge').remove();
+                currentSleepMinutes = 0;
+            }, currentSleepMinutes * 60 * 1000);
+        }
+
         function handleGestureAction(gesture) {
             showGesture(gesture);
             switch (gesture) {
                 case 'THUMB_UP':    setPlaying(!isPlaying); break;
-                case 'THUMB_DOWN':  setPlaying(false); break;
+                case 'THUMB_DOWN':  setPlaying(false); progress = 0; document.getElementById('progressFill').style.width = '0%'; break;
                 case 'POINT_RIGHT': loadTrack(trackIndex + 1); break;
                 case 'POINT_LEFT':  loadTrack(trackIndex - 1); break;
                 case 'PINCH':       setVolume(volume + 10); break;
                 case 'OPEN_PALM':   setVolume(volume - 10); break;
+                case 'PEACE':       toggleNightMode(); break;
+                case 'FIST':        cycleSleepTimer(); break;
             }
         }
 
@@ -376,9 +424,10 @@
 
         let lastGestureTime = 0;
         socket.on('gesture_activity', (data) => {
+            console.log('[WS] Received gesture:', data);
             const gesture = (data.gesture || '').toUpperCase();
             const now = Date.now();
-            if (now - lastGestureTime < 700) return;
+            if (now - lastGestureTime < 400) return; // Reduced cooldown for better feel
             lastGestureTime = now;
             if (gesture in gestureMap) handleGestureAction(gesture);
         });

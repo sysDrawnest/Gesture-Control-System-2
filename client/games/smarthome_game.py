@@ -36,13 +36,14 @@ CONNECTIONS = [
     (5, 9), (9, 13), (13, 17)
 ]
 FINGERTIPS = {4, 8, 12, 16, 20}
-
 GESTURE_COLORS = {
     'POINT_UP':   (255, 255, 0),
     'POINT_DOWN': (100, 100, 200),
     'PEACE':      (0, 255, 150),
     'FIST':       (0, 50, 255),
     'WAVE':       (255, 150, 0),
+    'OPEN_PALM':  (100, 255, 255),
+    'EMERGENCY':  (0, 0, 255),
     'NONE':       (180, 100, 255),
 }
 
@@ -52,7 +53,10 @@ WAVE_WINDOW = 10  # frames to track
 
 def get_finger_states(lms):
     fingers = []
-    fingers.append(1 if lms[4].x < lms[3].x else 0)
+    # Improved Thumb detection
+    thumb_extended = calculate_distance(lms[4], lms[5]) > 0.08
+    fingers.append(1 if thumb_extended else 0)
+    
     for tip, pip in zip([8, 12, 16, 20], [6, 10, 14, 18]):
         fingers.append(1 if lms[tip].y < lms[pip].y else 0)
     return fingers
@@ -83,9 +87,12 @@ def detect_gesture(lms, positions):
     if n_up == 0:
         return "FIST"
 
-    # WAVE - open palm moving laterally
-    if n_up >= 4 and detect_wave(positions):
-        return "WAVE"
+    # OPEN_PALM / WAVE
+    if n_up >= 4:
+        if detect_wave(positions):
+            return "WAVE"
+        else:
+            return "OPEN_PALM"
 
     # PEACE - index + middle only
     if index and middle and not ring and not pinky:
@@ -122,6 +129,7 @@ GESTURE_ACTIONS = {
     'PEACE':      ('fan_on',           'Fan ON  🌀'),
     'FIST':       ('fan_off',          'Fan OFF ✊'),
     'WAVE':       ('curtains_toggle',  'Curtains Toggle 🪟'),
+    'EMERGENCY':  ('emergency',        'EMERGENCY 🚨'),
 }
 
 def main():
@@ -129,6 +137,7 @@ def main():
     parser.add_argument("--server", default=SERVER_URL)
     parser.add_argument("--username", default=DEFAULT_USERNAME)
     parser.add_argument("--password", default=DEFAULT_PASSWORD)
+    parser.add_argument("--token", help="Direct session token")
     args = parser.parse_args()
 
     model_path = os.path.join(os.path.dirname(__file__), '..', 'hand_landmarker.task')
@@ -154,14 +163,22 @@ def main():
     connector = ServerConnector(server_url=args.server)
     print("=" * 60)
     print("[SMART HOME] Connecting to neural link...")
-    if connector.login(args.username, args.password):
+    
+    auth_success = False
+    if args.token:
+        connector.set_token(args.token)
+        auth_success = True
+    elif connector.login(args.username, args.password):
+        auth_success = True
+        
+    if auth_success:
         connector.connect()
         wait_start = time.time()
         while not connector.device_id and (time.time() - wait_start < 10):
             time.sleep(0.5)
         print(f"[OK] Neural Link Active! ID: {connector.device_id}")
     else:
-        print("[FAIL] Login failed. Running offline.")
+        print("[FAIL] Authentication failed. Running offline.")
         connector = None
 
     cap = cv2.VideoCapture(0)
@@ -171,6 +188,7 @@ def main():
     last_gesture = "NONE"
     last_action_time = 0.0
     wrist_history = []
+    emergency_start_time = 0.0
 
     print("=" * 60)
     print("🏠 SMART HOME CONTROLLER ACTIVE")
@@ -179,6 +197,7 @@ def main():
     print("   ✌️  PEACE       = Fan ON")
     print("   ✊ FIST        = Fan OFF")
     print("   🖐️  WAVE        = Toggle Curtains")
+    print("   ✋ OPEN PALM (hold 3s) = EMERGENCY")
     print("=" * 60)
 
     try:
@@ -199,11 +218,26 @@ def main():
                 if len(wrist_history) > 30:
                     wrist_history.pop(0)
 
-                gesture = detect_gesture(lms, wrist_history)
+                detected = detect_gesture(lms, wrist_history)
+                
+                # Check for Emergency (Open Palm hold)
+                if detected == "OPEN_PALM":
+                    if emergency_start_time == 0:
+                        emergency_start_time = time.time()
+                    elif time.time() - emergency_start_time > 3.0:
+                        gesture = "EMERGENCY"
+                        emergency_start_time = time.time() # Reset timer to avoid spam
+                    else:
+                        gesture = "OPEN_PALM"
+                else:
+                    emergency_start_time = 0
+                    gesture = detected
+
                 draw_hand(frame, lms, gesture)
 
                 current_time = time.time()
-                if gesture != "NONE" and gesture != last_gesture and \
+                # Special case: don't cooldown emergency too long, but GESTURE_COOLDOWN is fine
+                if gesture != "NONE" and gesture != "OPEN_PALM" and gesture != last_gesture and \
                    (current_time - last_action_time > GESTURE_COOLDOWN):
                     action_info = GESTURE_ACTIONS.get(gesture)
                     if action_info:
@@ -214,6 +248,7 @@ def main():
                         last_action_time = current_time
             else:
                 wrist_history.clear()
+                emergency_start_time = 0
 
             last_gesture = gesture
 
@@ -229,13 +264,18 @@ def main():
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-    except KeyboardInterrupt:
-        pass
+    except Exception as e:
+        print(f"[FATAL ERROR] {e}")
+        import traceback
+        traceback.print_exc()
+        # Keep window open for a few seconds so user can see error
+        time.sleep(5)
     finally:
         print("[SHUTDOWN] Smart home controller stopped.")
-        if connector:
+        if 'connector' in locals() and connector:
             connector.disconnect()
-        cap.release()
+        if 'cap' in locals():
+            cap.release()
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
