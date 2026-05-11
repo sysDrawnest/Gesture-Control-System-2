@@ -159,8 +159,8 @@ def detect_gesture(lms, prev_wrist_y=None, prev_wrist_x=None) -> tuple[str, floa
     extra_data = {}
     
     # PRIORITY 1: FOUR FINGERS (index, middle, ring, pinky) for scroll and zoom
-    # This is MUCH easier to do consistently!
-    if n_up >= 4 and fingers[1] and fingers[2] and fingers[3] and fingers[4]:
+    # Exactly 4 fingers (thumb NOT up) — n_up == 4 ensures open palm (5 fingers) falls through to OPEN_PALM
+    if n_up == 4 and fingers[1] and fingers[2] and fingers[3] and fingers[4]:
         # Calculate wrist movement for gestures
         if prev_wrist_y is not None and prev_wrist_x is not None:
             delta_y = wrist.y - prev_wrist_y
@@ -454,6 +454,9 @@ def main():
                     cv2.putText(frame, "WAITING FOR DEVICE REGISTRATION...", (10, 28),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2)
             else:
+                if gesture != "OPEN_PALM":
+                    palm_start_time = 0
+
                 # ── Enable / Disable ───────────────────────────────────────────
                 if gesture == "FIST":
                     if gesture_enabled or (current_time - last_server_toggle_time > TOGGLE_REPEAT_INTERVAL):
